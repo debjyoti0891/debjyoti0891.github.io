@@ -1,0 +1,109 @@
+# Welcome to Jekyll!
+#
+# This config file is meant for settings that affect your whole blog, values
+# which you are expected to set up once and rarely edit after that. If you find
+# yourself editing this file very often, consider using Jekyll's data files
+# feature for the data you need to update frequently.
+#
+# For technical reasons, this file is *NOT* reloaded automatically when you use
+# 'bundle exec jekyll serve'. If you change this file, please restart the server process.
+#
+# If you need help with YAML syntax, here are some quick references for you: 
+# https://learn-the-web.algonquindesign.ca/topics/markdown-yaml-cheat-sheet/#yaml
+# https://learnxinyminutes.com/docs/yaml/
+#
+# Site settings
+# These are used to personalize your new site. If you look in the HTML files,
+# you will see them accessed via {{ site.title }}, {{ site.email }}, and so on.
+# You can create any custom variable you would like, and they will be accessible
+# in the templates via {{ site.myvariable }}.
+
+title:  Debjyoti Bhattacharjee
+author:
+  email: debjyoti [dot] bhattacharjee [at] imec [dot] com
+  name: Debjyoti Bhattacharjee
+tagline: Personal website of Dr. Debjyoti Bhattacharjee.  
+description: >- 
+  Snapshots of ideas and things that piqued my interest. The website has information primarily focused on my research in emerging technologies, such as analog-in-memory computing, quantum computing alongside computer architecture. 
+baseurl: "/" # the subpath of your site, e.g. /blog
+url: "https://debjyoti0891.github.io" # the base hostname & protocol for your site, e.g. http://example.com
+minima:
+  social_links:
+    instagram: debjyoti0891
+    github:  debjyoti0891
+    linkedin: debjyotibhattacharjee
+
+# Build settings
+theme: minima
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+
+disqus:
+  shortname: bdebjyoti
+
+header_pages:
+  - about.markdown
+  - research.markdown
+  - publications.markdown
+  - blog.markdown
+  - resources.markdown
+
+scholar:
+
+  last_name: Bhattacharjee
+  first_name: Debjyoti
+
+  style: apa
+  locale: en
+
+  sort_by: year
+  order: descending
+
+  source: /_bibliography/
+  bibliography: papers.bib
+  bibliography_template: bibtemplate
+
+
+  replace_strings: true
+  join_strings: true
+
+  # details_dir: bibliography
+  # details_layout: bibtex.html
+  # details_link: Details
+
+  query: "@*"
+
+### seo related settings
+social:
+  name: Debjyoti Bhattacharjee
+  links:
+    - facebook.com/debjyoti.bhattacharjee1
+    - http://linkedin.com/debjyoti.bhattacharjee
+    - https://github.com/debjyoti0891/
+    - https://www.instagram.com/debjyoti0891/
+
+logo: /assets/D_old.jpg
+webmaster_verifications:
+ google: shmIemKrYpRAIcUmw2hZzRij1uySn9s55BGBbLBsOto
+ bing: F0966E9DC4FDEE6F087ADCDD6E5F6743
+
+# Exclude from processing.
+# The following items will not be processed, by default.
+# Any item listed under the `exclude:` key here will be automatically added to
+# the internal "default list".
+#
+# Excluded items can be processed by explicitly listing the directories or
+# their entries' file path in the `include:` list.
+#
+# exclude:
+#   - .sass-cache/
+#   - .jekyll-cache/
+#   - gemfiles/
+#   - Gemfile
+#   - Gemfile.lock
+#   - node_modules/
+#   - vendor/bundle/
+#   - vendor/cache/
+#   - vendor/gems/
+#   - vendor/ruby/
