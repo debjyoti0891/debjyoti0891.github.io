@@ -1,13 +1,28 @@
-[this is in workbranch]
+cd /jekyll_branch/debjyoti0891.github.io
 git branch
-cd work_bdeb/bdebjyoti/
+[this is in jekyllbuild branch]
+
+[run this to check the website locally]
 bundle exec jekyll serve
+
+[run this to build the website for deployment]
+bundle exec jekyll build
 
 # check the local browser for changes 
 # this is in [gh-pages] branch
-cp -r _sites/* ../../bdebjyoti/
+cd _sites
+cp -r ./ ../../../debjyoti0891.github.io/
 git add -A 
 git commit -m "yaay ! page updated"
-git push origin gh-pages 
+git push origin master
+cd ../jekyll_branch/debjyoti0891.github.io/
 
 # check the settings tab in the github repo for build failure messages if any
+
+# seo instructions : https://github.com/jekyll/jekyll-seo-tag/blob/master/docs/usage.md
+
+    title - The title of the post, page, or document
+    description - A short description of the page's content
+    image - URL to an image associated with the post, page, or document (e.g., /assets/page-pic.jpg)
+    author - Page-, post-, or document-specific author information (see Advanced usage)
+    lang - Page-, post-, or document-specific language information
