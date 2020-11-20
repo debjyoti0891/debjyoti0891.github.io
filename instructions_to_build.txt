@@ -10,10 +10,12 @@ bundle exec jekyll build
 
 # check the local browser for changes 
 # this is in [gh-pages] branch
-cp -r _sites/* ../../debjyoti0891.github.io/
+cd _sites
+cp -r ./ ../../../debjyoti0891.github.io/
 git add -A 
 git commit -m "yaay ! page updated"
 git push origin master
+cd ../jekyll_branch/debjyoti0891.github.io/
 
 # check the settings tab in the github repo for build failure messages if any
 
