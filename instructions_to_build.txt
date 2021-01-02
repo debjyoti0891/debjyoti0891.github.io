@@ -12,10 +12,15 @@ bundle exec jekyll build
 # this is in [gh-pages] branch
 cd _sites
 cp -r ./ ../../../debjyoti0891.github.io/
+cd ../../../debjyoti0891.github.io/
 git add -A 
 git commit -m "yaay ! page updated"
 git push origin master
+
 cd ../jekyll_branch/debjyoti0891.github.io/
+git add -A 
+git commit -m "source of website updated"
+git push origin jekyllbuild
 
 # check the settings tab in the github repo for build failure messages if any
 
