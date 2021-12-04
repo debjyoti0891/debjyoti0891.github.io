@@ -49,7 +49,6 @@ header_pages:
   - research.markdown
   - publications.markdown
   - blog.markdown
-  - tags.markdown
   - resources.markdown
 
 scholar:
