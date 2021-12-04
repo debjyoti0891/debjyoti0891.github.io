@@ -24,7 +24,21 @@ layout: default
             {%- if forloop.last == false %}, {% endif -%}
         {% endfor %}
       {%- endif -%}</p>
+    <i>Tags:</i>
+
+    {% for tag in page.tags %}
+    {% assign tag_slug = tag | slugify: "raw" %}
+      <a class="tag-link"
+        href= {{ site.url | append: site.baseurl | append: "tags/#" | append: tag_slug  }}
+        rel="category tag">
+        #{{ tag }}
+      </a>
+    {% endfor %}
+
+    
   </header>
+
+  
 
   <div class="post-content e-content" itemprop="articleBody">
     {{ content }}

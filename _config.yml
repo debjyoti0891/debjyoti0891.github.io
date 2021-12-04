@@ -49,6 +49,7 @@ header_pages:
   - research.markdown
   - publications.markdown
   - blog.markdown
+  - tags.markdown
   - resources.markdown
 
 scholar:
@@ -87,8 +88,13 @@ social:
 
 logo: /assets/D_old.jpg
 webmaster_verifications:
- google: shmIemKrYpRAIcUmw2hZzRij1uySn9s55BGBbLBsOto
- bing: F0966E9DC4FDEE6F087ADCDD6E5F6743
+  google: shmIemKrYpRAIcUmw2hZzRij1uySn9s55BGBbLBsOto
+  bing: F0966E9DC4FDEE6F087ADCDD6E5F6743
+
+collections:
+  tags:
+    output: true
+    permalink: tags/:path/
 
 # Exclude from processing.
 # The following items will not be processed, by default.
