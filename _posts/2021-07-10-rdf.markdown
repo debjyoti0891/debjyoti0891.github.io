@@ -1,0 +1,55 @@
+---
+layout: post
+title:  "Semantically Organizing Images"
+date:   2021-07-10 10:00:00 +0200
+categories: graph learning RDF images 
+tags: graph inference neo4j RDF "image processing"
+comments: true
+---
+
+<figure class="quote">
+  <blockquote>
+    Take care of all your memories. For you cannot relive them. 
+  </blockquote>
+  <figcaption>
+    &mdash; Bob Dylan 
+    <!-- <cite>Mental models</cite>   -->
+  </figcaption>
+</figure>
+My collection of images have grown to monstrous scales (more than 600GB) and continues to grow everyday.
+The primary culprit being my trigger happy nature, whenever I go out my camera (Nikon D7200). Given my
+rather laid back nature to post process the images and categorize them neatly in folders, my collection currently
+stands fragmented amidst a chaotic mix of folders spread across multiple hard-disks, without 
+any labels in a majority of cases. With this problem in mind, I started planning a "programmatic" way to get 
+out of this mess and to take care of the memories!
+
+With Python as my ally, I started to see which libraries could be used to get started. Turns out [Exiftool](https://exiftool.org/) 
+is a very handy and mature tool to look at the EXIF data of images and it also has a python interface. Using this 
+as a baseline, I built a relatively straight forward script to bring images from multiple locations into a single folder. 
+Thereafter, using Exiftool to extract all the meta data, the images are organized sorted by year. Under each year, events are separately put in a folder. 
+An event is a day which has >= threshold images. If consecutive days have events, then they are merged into a single event.
+The entire script is available on [Github](https://github.com/debjyoti0891/utilities/tree/master/copy_images).
+
+Organizing images in the chronologically named folders solves only a part of the problem. These are still image dumps, but not memories such as the ones 
+offered by [Facebook](https://www.facebook.com/help/1056848067697293/), [Google Photos](https://support.google.com/photos/answer/9454489?hl=en&co=GENIE.Platform%3DAndroid), etc.
+This is where my interest for [semantic networks](https://en.wikipedia.org/wiki/Semantic_network) comes into the picture. Simply put, a semantic network is a knowledge representation structure that represents semantic relations between concepts in a network. 
+Given the fact pictures have multiple entities and a ton of metadata, a semantic network would be useful to navigate images or find images of interest. For example, a query could be to *find all pictures with person A and B*. 
+Of course, detecting faces present in the images and tagging them with a name would be indeed needed before a semantic network could be built. Tools powered by AI such as [Deepface](https://pypi.org/project/deepface/) could be readily used. 
+
+Neo4j is a graph data database, which can be used for storing the semantic network. In order to actually build a semantic network, I started digging into Neo4j RDF and Semantics [toolkit](https://neo4j.com/labs/neosemantics/).  In the 
+context of representing the records, [Resource Description Framework (RDF)](https://www.w3.org/RDF/) came into the picture. RDF is a standard model for data interchange across the web and used extensively apparently. RDF uses XML representation
+for defining relationships of the form *subject->predicate->object*, which is called a *triple*. These RDF records can be directly imported into the graph database and then queried for efficiently navigating all
+the images. There is a nicely presented [tutorial](http://www.linkeddatatools.com/semantic-web-basics) on the topic. As a next step, I plan to build RDF entires for the entire image dump that I have and hopefully have 
+a better way to navigate the memories. 
+
+
+### References 
++ **Code** : Preliminary code for organizing images. [[Link]](https://github.com/debjyoti0891/utilities/tree/master/copy_images)
++ **Good tutorial**: This tutorial provides a relatively detailed introduction to RDF [[Link]](http://www.linkeddatatools.com/semantic-web-basics)
++ **Exiftool**: [[Link]](https://exiftool.org/)
++ **Deepface**: [[Link]](ttps://pypi.org/project/deepface/)
+
+
+
+
+

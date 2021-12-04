@@ -10,13 +10,13 @@ comments: true
 [Sparta](https://sparcians.github.io/map/index.html) is a modeling framework that can be used for a variety of architecture (or otherwise) modelling work. In this blog post, I present 
 an introduction to the basic bells and whistles of the framework. The entire tutorial is available via [Github](https://github.com/debjyoti0891/sparta-simplified).
 
-## Usecase
+### Usecase
 We extend the basic [example](https://sparcians.github.io/map/skeleton_example.html) to introduce a new ```sparta::Unit``` Pipe. 
 Producer sends data to a Pipe. Pipe receives data and forwards this to a consumer. Consumer signals the Pipe that
 data is received. In turn, Pipe signals the producer that data has been received and the cycle continues. 
 
 
-## Pipe definition (Pipe.hpp)
+### Pipe definition (Pipe.hpp)
 
 Each sparta unit should have a ParameterSet (subclass of ```sparta::ParameterSet``` ). With each parameter, there can be a validation method attached,
 to check if valid values were set to the parameter and a name of the unit as well.
@@ -69,7 +69,7 @@ Finally, loggers can be set up per Unit.
 sparta::log::MessageSource pipe_info_;
 ```
 
-## Pipe implementation (Pipe.cpp)
+### Pipe implementation (Pipe.cpp)
 + Start by defining the name of the Unit 
 + The handler methods are tied to the ports in the constructor. 
     ```
@@ -85,7 +85,7 @@ sparta::log::MessageSource pipe_info_;
     This would trigger ```sendData_``` after 5 cycles. 
 
 
-## Building the simulator tree (StageSim{.hpp,.cpp})
+### Building the simulator tree (StageSim{.hpp,.cpp})
 
 + ```StageSim.hpp``` is the top level module definition.
 + In ```StageSim.cpp```, a bunch of setup needs to be done, in order to build the simulator tree.
@@ -103,7 +103,7 @@ sparta::log::MessageSource pipe_info_;
         It can be observed that the port names are hierarchical. ```pipe.ports.pipe_in_port``` : ```pipe``` is the unit, under which
         ```ports``` is the set of ports and ```pipe_in_port``` is the name of the port. 
 
-## Command line simulator setup (main_3s.cpp)
+### Command line simulator setup (main_3s.cpp)
 + Not much changes were made to the original example, except the following. 
     ```
      // Create the simulator object for population -- does not
@@ -119,7 +119,7 @@ sparta::log::MessageSource pipe_info_;
     ```
 
 
-## Running the example 
+### Running the example 
 
 In the current environment, the following modules were available.
 Currently Loaded Modulefiles:
@@ -212,7 +212,7 @@ Sparta has a ton of options, which can be viewed as follows:
 
 
 ### References 
-+ **Sparta Docs** : [[Link]](We extend the basic [example](https://sparcians.github.io/map/skeleton_example.html) to introduce a new ```sparta::Unit``` Pipe. )
++ **Sparta Docs** : [[Link]](https://sparcians.github.io/map/index.html)
 + **Tutorial Code**: [[Github  link]](https://github.com/debjyoti0891/sparta-simplified)
 
 
