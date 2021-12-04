@@ -67,7 +67,7 @@ layout: default
     <div class="post-content e-content" itemprop="articleBody">
       
 {% for tag in tags %}
-<a id="{{tag | slugify}}}}"> <h2 id="{{ tag | slugify }}">{{ tag }}</h2></a>
+<a class="tag-header" id="{{tag | slugify}}}}"> <h2 id="{{ tag | slugify }}">{{ tag }}</h2></a>
 <ul>
  {% for post in site.posts %}
      {% if post.tags contains tag %}

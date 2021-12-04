@@ -29,22 +29,7 @@ Debjyoti Bhattacharjee is a Research and Development engineer at Compute System 
 </div>
 <BR CLEAR="left" /> 
 
-<div class="all-tags">
-  All tags:
-  <ul>
-    {% assign tags = site.posts | all_tags %}
-    {% for tag in tags %}
-      {% assign tag_slug = tag['name'] | slugify: "raw" %}
-      <li>
-        <a class="tag-link"
-          href={{ site.baseurl | append: "/tags/" | append: tag_slug | append: "/" }}
-          rel="category tag">
-          #{{ tag['name'] }} ({{ tag['count'] }})
-        </a>
-      </li>
-    {% endfor %}
-  </ul>
-</div>
+
 
 <!-- 
 <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
