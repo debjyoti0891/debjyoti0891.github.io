@@ -16,7 +16,7 @@ on:
     branches: [ jekyllbuild ]
 
 jobs:
-  test:
+  manual_build:
 
     runs-on: ubuntu-latest
 
