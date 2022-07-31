@@ -41,7 +41,7 @@ jobs:
           git config --global user.email "debjyoti08911@gmail.com" 
           git fetch --all 
           git checkout master 
-          cp -r _sites/* ./
+          cp -r _site/* ./
           git add -u :/
           git commit -m "site updated via github actions"
           git push origin master
