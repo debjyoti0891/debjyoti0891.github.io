@@ -37,8 +37,8 @@ jobs:
         run: bundle exec jekyll build
       - name: Push to master
         run: |
-          git config --global user.name "Debjyoti Bhattachajee|ActionBot" \
-          git config --global user.email "debjyoti08911@gmail.com" \
-          git fetch --all \
-          git checkout master \
+          git config --global user.name "Debjyoti Bhattachajee|ActionBot"
+          git config --global user.email "debjyoti08911@gmail.com" 
+          git fetch --all 
+          git checkout master 
           
