@@ -31,5 +31,7 @@ jobs:
           cache-version: 1
       - name: Install dependencies
         run: bundle install
+      - name: Check content 
+        run: pwd && ls -al 
       - name: Build the website
         run: bundle exec jekyll build
