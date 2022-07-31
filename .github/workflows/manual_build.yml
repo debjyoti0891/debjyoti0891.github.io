@@ -35,3 +35,12 @@ jobs:
         run: pwd && ls -al 
       - name: Build the website
         run: bundle exec jekyll build
+      - name: Push to master
+        run: 
+           git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
+           git config --global user.email "debjyoti08911@gmail.com"
+           git checkout master 
+           cp -r _sites/* ./
+           git add -u :/
+           git commit -m "site updated via github actions"
+           git push origin master 
