@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Disclaimer
-permalink: /disclaimed/
+permalink: /disclaimer/
 ---
 
 The information contained in the website posted represents the views and opinions of the author and does not necessarily represent the views or opinions of my current or previous employers. The mere appearance of a tool or content on the Site does not constitute an endorsement by any of my current or previous employers.
