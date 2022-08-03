@@ -17,23 +17,23 @@ permalink: /personal/
 
 <ul style="list-style-type:square" >
 <li>Research Fellow <span class="datetext">2019</span><br>
-CYSREN, SCSE, Nanyang Technological University, Singapore <br></li>
+<span class="locationtext">CYSREN, SCSE, Nanyang Technological University, Singapore</span> <br></li>
 
 
 <li> Visiting Researcher <span class="datetext">August-October, 2018</span><br>
-Technion ASIC2 Research Group, Haifa, Israel  <br></li>
+<span class="locationtext">Technion ASIC2 Research Group, Haifa, Israel</span>  <br></li>
 
 <li> Research Intern <span class="datetext">June-August, 2017</span><br>
-Integrated Systems Laboratory LSI, EPFL-IC-IINFCOM-LSI, Lausanne, Switzerland  <br></li>
+<span class="locationtext">Integrated Systems Laboratory LSI, EPFL-IC-IINFCOM-LSI, Lausanne, Switzerland</span>  <br></li>
 
 <li> Research Intern <span class="datetext"> May-July, 2014</span><br>
- MPSoC Architectures Research Group,ICE, RWTH Aachen, Germany <br></li>
+<span class="locationtext">MPSoC Architectures Research Group,ICE, RWTH Aachen, Germany</span> <br></li>
 
 <li> Research Intern <span class="datetext"> May-July, 2012</span><br>
-Machine Intelligence Unit, Indian Statistical Institute, Kolkata  <br></li>
+<span class="locationtext">Machine Intelligence Unit, Indian Statistical Institute, Kolkata </span> <br></li>
 
 <li> Software Intern <span class="datetext"> Sept-Nov, 2012</span><br>
-Department of Computer Science and Engineering, University of Calcutta  <br></li>
+<span class="locationtext">Department of Computer Science and Engineering, University of Calcutta</span>  <br></li>
 </ul>
 
 <!-- 
