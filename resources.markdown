@@ -1,8 +1,21 @@
 ---
 layout: page
-title: Tools
+title: Tools and Interesting Webpages
 permalink: /tools/
 ---
+* #### Compute Simulation Infrastructure
+    * _Sparta_: Sparta is a toolkit for modeling/simulation engineers to build CPU, GPU, and platform simulations. 
+        * Webpage: <https://github.com/sparcians/map/tree/master/sparta>
+    * _SST_ : The Structural Simulation Toolkit (SST) was developed to explore innovations in highly concurrent systems where the ISA, microarchitecture, and memory interact with the programming model and communications system.
+        * Webpage: <http://sst-simulator.org/>
+    * _Flamegraph_ : Tool to visualize perf events
+        * Webpage: <https://github.com/brendangregg/FlameGraph>
+    * _Microsoft NNI_: This framework can be used for sytemetically performing Design Space Exploration (with relatively low efforts), even though it is originally intended for neural network exploration.
+        * Webpage: <https://github.com/microsoft/nni>
+    * _Accelergy_ : This is a energy/area estimation methodology for accelerators that allows design specifications comprised of user-defined high-level compound components and user-defined low-level primitive components, which can be characterized by external tools/plugins.
+        * Webpage: <https://accelergy.mit.edu/>
+
+
 * #### Command line programs
     * _ABC_ : ABC is a popular tool in the design automation community. It provides a comphrensive command line system for logic synthesis as well as verification.
         * Webpage: <https://people.eecs.berkeley.edu/~alanmi/abc/>
