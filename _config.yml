@@ -24,7 +24,7 @@ author:
   name: Debjyoti Bhattacharjee
 tagline: Personal website of Dr. Debjyoti Bhattacharjee.  
 description: >- 
-  Snapshots of ideas and things that piqued my interest. The website has information primarily focused on my research in emerging technologies, such as analog-in-memory computing, quantum computing alongside computer architecture. 
+  Snapshots of ideas and things that piqued my interest. The website has information primarily focused on my research in computer architecture and systems, including high performance computing, emerging technologies, alongside design space exploration. 
 
 baseurl: "/" # the subpath of your site, e.g. /blog
 url: "https://debjyoti0891.github.io" # the base hostname & protocol for your site, e.g. http://example.com
