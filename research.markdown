@@ -17,6 +17,8 @@ permalink: /research/
 + "Efficient Hardware Accelerator for AEGIS-128 Authenticated Encryption" in<em> DIAC 2015</em>. <a href="https://www1.spms.ntu.edu.sg/~diac2015/slides/diac2015_07_aegis_accelerator.pdf" target="_blank" rel="noopener noreferrer"><input class="button5" type="button" value="Slides" /></a>
 
 <span class="headHi">Activities</span> 
++ TPC member of Neural Networks and Deep Learning track in ICCAD 2022
++ Quantum Computing Co-Chair for DAC 2022.
 + TPC member of ASP­DAC 2020, 2021.
 + Reviewer of IEEE Transactions on Nanotechnology
 + Reviewer of IEEE Transactions on Computer­Aided Design of Integrated Circuits and
