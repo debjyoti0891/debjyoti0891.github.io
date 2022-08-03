@@ -1,6 +1,6 @@
 ---
 layout: page
-title: Tools and Interesting Webpages
+title: Resources
 permalink: /tools/
 ---
 * #### Compute Simulation Infrastructure
