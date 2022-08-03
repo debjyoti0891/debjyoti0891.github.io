@@ -10,11 +10,11 @@ layout: default
 
 <p align="justify" class="introtext"><img src="/assets/me.jpg" alt="Smiley face" width="300"  align="left" style="padding-right: 20px;">
 <b>Debjyoti Bhattacharjee </b> <br>
-<span class="introhightext">System Level Design team, imec<br>
+<span class="introhightext">COMPASS, CSA, imec<br>
 Kapeldreef 75,  Leuven 3001, Belgium</span>
 <br>
 <br>
-Debjyoti Bhattacharjee is a Research and Development engineer at Compute System Architecture unit at <a href="https://www.imec.be/" target="_blank">imec</a>, Leuven. His current work focuses on design space exploration and performance estimation for high performance accelerator architectures for machine learning workloads. 
+Debjyoti Bhattacharjee is the Research and Development Team Leader of COMPASS, within the <a href="https://www.imec-int.com/en/expertise/compute-system-architecture">Compute System Architecture (CSA)</a> unit at <a href="https://www.imec.be/" target="_blank">imec</a>, Leuven. His current work focuses on design space exploration and performance estimation for exascale architectures for high-performance compute (HPC) workloads. 
 
 <p align="justify" class="introtext">He received the BTech degree in computer science and engineering from the West Bengal University of Technology (WBUT), Kolkata, West Bengal, India, in 2013, the MTech degree in computer science from the Indian Statistical Institute, Kolkata, India, in 2015, and the PhD degree in computer science and engineering from the Nanyang Technological University, Singapore, in 2019. He worked as a research fellow with Nanyang Technological University, Singapore for a year. During his doctoral studies, he worked on design of architectures using emerging technologies for in-memory computing. He developed novel technology mapping algorithms, technology-aware synthesis techniques, and proposed novel methods for multi-valued logic realization. </p>
 
