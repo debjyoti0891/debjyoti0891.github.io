@@ -1,0 +1,43 @@
+---
+layout: post
+title:  "Stumbling with Spike"
+date:   2022-10-31 00:00:00 +0200
+categories: riscv modelling architecture iss
+tags: modelling architecture micro-architecture
+comments: true
+---
+## Install [DTC](https://git.launchpad.net/ubuntu/+source/device-tree-compiler/?h=applied/debian/sid)
+The device tree compiler (dtc) executable is a requirement for spike. It can be compiled from scratch.
+The binary should be available in the PATH environment variable. 
+
+## Install [ProxyKernel](https://github.com/riscv-software-src/riscv-pk)
+``` mkdir build
+    cd build 
+    ../configure --prefix=<install prefix> --host=riscv64-unknown-linux-gnu
+    make -j all
+    make install
+```
+### Note
+- If you try to build in the root of the repository, the output file for `pk` does not get generated, as there is a directory with the same name. Hence, using a build folder helps!
+
+## Install [spike](https://github.com/riscv-software-src/riscv-isa-sim). 
+
+``` 
+./configure --prefix=<install prefix> --with-boost=<path to boost root> --enable-commitlog --with-isa=RV64IMAFDCP 
+make -j all
+make install
+``` 
+
+### Note: 
+- In my specific installation, Boost libraries could not be found
+    even after setting appropriate LD_LIBRARY_PATH. Explictly specifiying the path solved the issue.
+- Take a look at the output of `./configure --help` to find options that might be relevant. For example, `--enable-commitlog` was something that was relevant for me. 
+
+## Spike Execution 
+
+### Creating the executable
+``` riscv64-unknown-elf-gcc -o hello hello.c```
+
+### Actual execution
+To run spike with the proxy kernel and log the commits to a file:
+```spike  --log-commits --log=spike_log.txt $(\which pk) hello```
