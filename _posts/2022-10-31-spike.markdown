@@ -1,11 +1,14 @@
 ---
 layout: post
 title:  "Stumbling with Spike"
-date:   2022-10-31 00:00:00 +0200
+date:   2022-10-30 00:00:00 +0200
 categories: riscv modelling architecture iss
 tags: modelling architecture micro-architecture
 comments: true
 ---
+
+**Assumption**: The `riscv64-unknown-linux-gnu` toolchain is already built and availble on the PATH. 
+
 ## Install [DTC](https://git.launchpad.net/ubuntu/+source/device-tree-compiler/?h=applied/debian/sid)
 The device tree compiler (dtc) executable is a requirement for spike. It can be compiled from scratch.
 The binary should be available in the PATH environment variable. 
@@ -40,4 +43,7 @@ make install
 
 ### Actual execution
 To run spike with the proxy kernel and log the commits to a file:
-```spike  --log-commits --log=spike_log.txt $(\which pk) hello```
+```spike  --log-commits --log=spike_log.txt $(\which pk) hello
+
+spike  -d --log-commits --log=spike_log.txt --pc=0x1000 $(\which pk) gadd2D-1c_2w_1t.elf -m 1G  
+```
