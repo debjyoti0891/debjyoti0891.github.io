@@ -42,8 +42,6 @@ make install
 ``` riscv64-unknown-elf-gcc -o hello hello.c```
 
 ### Actual execution
-To run spike with the proxy kernel and log the commits to a file:
-```spike  --log-commits --log=spike_log.txt $(\which pk) hello
-
-spike  -d --log-commits --log=spike_log.txt --pc=0x1000 $(\which pk) gadd2D-1c_2w_1t.elf -m 1G  
+To run spike with a baremetal program and log the commits to a file:
+```spike  -m 1G --log-commits --log=spike_log.txt $(\which pk) hello 
 ```
