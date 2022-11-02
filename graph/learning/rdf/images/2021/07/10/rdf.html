@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.7.1 -->
+<title>Semantically Organizing Images | Debjyoti Bhattacharjee</title>
+<meta name="generator" content="Jekyll v3.9.0" />
+<meta property="og:title" content="Semantically Organizing Images" />
+<meta name="author" content="Debjyoti Bhattacharjee" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Take care of all your memories. For you cannot relive them. &mdash; Bob Dylan My collection of images have grown to monstrous scales (more than 600GB) and continues to grow everyday. The primary culprit being my trigger happy nature, whenever I go out my camera (Nikon D7200). Given my rather laid back nature to post process the images and categorize them neatly in folders, my collection currently stands fragmented amidst a chaotic mix of folders spread across multiple hard-disks, without any labels in a majority of cases. With this problem in mind, I started planning a “programmatic” way to get out of this mess and to take care of the memories!" />
+<meta property="og:description" content="Take care of all your memories. For you cannot relive them. &mdash; Bob Dylan My collection of images have grown to monstrous scales (more than 600GB) and continues to grow everyday. The primary culprit being my trigger happy nature, whenever I go out my camera (Nikon D7200). Given my rather laid back nature to post process the images and categorize them neatly in folders, my collection currently stands fragmented amidst a chaotic mix of folders spread across multiple hard-disks, without any labels in a majority of cases. With this problem in mind, I started planning a “programmatic” way to get out of this mess and to take care of the memories!" />
+<link rel="canonical" href="https://debjyoti0891.github.io/graph/learning/rdf/images/2021/07/10/rdf.html" />
+<meta property="og:url" content="https://debjyoti0891.github.io/graph/learning/rdf/images/2021/07/10/rdf.html" />
+<meta property="og:site_name" content="Debjyoti Bhattacharjee" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-07-10T08:00:00+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Semantically Organizing Images" />
+<meta name="google-site-verification" content="shmIemKrYpRAIcUmw2hZzRij1uySn9s55BGBbLBsOto" />
+<meta name="msvalidate.01" content="F0966E9DC4FDEE6F087ADCDD6E5F6743" />
+<script type="application/ld+json">
+{"@type":"BlogPosting","headline":"Semantically Organizing Images","dateModified":"2021-07-10T08:00:00+00:00","datePublished":"2021-07-10T08:00:00+00:00","url":"https://debjyoti0891.github.io/graph/learning/rdf/images/2021/07/10/rdf.html","mainEntityOfPage":{"@type":"WebPage","@id":"https://debjyoti0891.github.io/graph/learning/rdf/images/2021/07/10/rdf.html"},"publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"https://debjyoti0891.github.io/assets/D_old.jpg"},"name":"Debjyoti Bhattacharjee"},"author":{"@type":"Person","name":"Debjyoti Bhattacharjee"},"description":"Take care of all your memories. For you cannot relive them. &mdash; Bob Dylan My collection of images have grown to monstrous scales (more than 600GB) and continues to grow everyday. The primary culprit being my trigger happy nature, whenever I go out my camera (Nikon D7200). Given my rather laid back nature to post process the images and categorize them neatly in folders, my collection currently stands fragmented amidst a chaotic mix of folders spread across multiple hard-disks, without any labels in a majority of cases. With this problem in mind, I started planning a “programmatic” way to get out of this mess and to take care of the memories!","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://debjyoti0891.github.io/feed.xml" title="Debjyoti Bhattacharjee" />
+
+<style>
+  .button0 {
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    padding: 6px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    margin: 4px 2px;
+    cursor: pointer;
+  }
+  .button1 {
+    background-color: #4c7aaf;
+    border: none;
+    color: white;
+    padding: 6px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    margin: 4px 2px;
+    cursor: pointer;
+  }
+  .button2 {
+    background-color: #a8af4c;
+    border: none;
+    color: white;
+    padding: 6px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    margin: 4px 2px;
+    cursor: pointer;
+  }
+  .button3 {
+    background-color: #e6518f;
+    border: none;
+    color: white;
+    padding: 6px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    margin: 4px 2px;
+    cursor: pointer;
+  }
+  .button4 {
+    background-color: #5e4caf;
+    border: none;
+    color: white;
+    padding: 6px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    margin: 4px 2px;
+    cursor: pointer;
+  }
+  .button5 {
+    background-color: #7782d3;
+    border: none;
+    color: white;
+    padding: 6px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    margin: 4px 2px;
+    cursor: pointer;
+  }
+
+  .sp{
+  width: 10px;
+  padding-right: 15px;
+  background-color: #bdbbc5;
+  padding: 4px 12px;
+  }
+
+  .highlight{
+  font-family: ABeeZee, sans-serif;
+  background-color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  color: rgba(99, 82, 82, 1);
+  text-transform: none;
+  font-style: normal;
+  text-decoration: none;
+  line-height: 1.6em;
+  letter-spacing: 0.7px;
+  }
+  .headHi{
+    font-family: ABeeZee, sans-serif;
+    font-size: 26px;
+    font-weight: 600;
+    color: rgba(77, 63, 63, 1);
+    text-transform: none;
+    font-style: normal;
+    text-decoration: none;
+    line-height: 1.6em;
+    letter-spacing: 0.7px;
+}
+
+.introtext{
+    font-family: Verdana, sans-serif;
+    font-size: 16px;
+    /* font-weight: 400; */
+    color: rgba(0, 0, 0, 1);
+    text-transform: none;
+    font-style: normal;
+    text-decoration: none;
+    line-height: 1.5em;
+    letter-spacing: -0.1px;
+}
+
+.datetext{
+    font-family: Courier New, sans-serif;
+    font-size: 16px;
+    background-color: #eeeeee;
+    /* font-weight: 400; */
+    color: rgba(0, 0, 0, 1);
+    text-transform: none;
+    font-style: normal;
+    text-decoration: none;
+    line-height: 1.5em;
+    letter-spacing: -0.1px;
+}
+
+.divtext{
+  background-color: rgb(214, 226, 226);
+}
+
+.introhightext{
+    font-family: Optima, sans-serif;
+    font-size: 16px;
+    font-weight: 100;
+    color: #rgba(0, 0, 0, 1);
+    text-transform: none;
+    font-style: normal;
+    text-decoration: none;
+    line-height: 0em;
+    letter-spacing: 0px;
+}
+
+.locationtext {
+font-family: Tahoma, Geneva, sans-serif;
+font-size: 14px;
+letter-spacing: 2px;
+word-spacing: 2px;
+color: #6D1F0F;
+font-weight: normal;
+text-decoration: none;
+font-style: normal;
+font-variant: small-caps;
+text-transform: none;
+}
+
+.tag-link {
+    display: inline-block;
+    background: rgba(106,159,181,0.15);
+    padding: 0 .5rem;
+    margin-right: .5rem;
+    border-radius: 4px;
+    color: #34435e;
+    font-family: "PT Sans",Helvetica,Arial,sans-serif;
+    font-size: 90%;
+    -webkit-transition: all 0.1s ease-in-out;
+    -moz-transition: all 0.1s ease-in-out;
+    transition: all 0.1s ease-in-out;
+}
+.a {
+  color: #6369D1;
+}
+.tag-header {
+    display: inline-block;
+    padding: 0 .5rem;
+    margin-right: .5rem;
+    border-radius: 4px;
+    color: #34435e;
+    font-family: "PT Sans",Helvetica,Arial,sans-serif;
+    font-size: 90%;
+    -webkit-transition: all 0.1s ease-in-out;
+    -moz-transition: all 0.1s ease-in-out;
+    transition: all 0.1s ease-in-out;
+}
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  </style>
+
+  <!-- Begin Jekyll SEO tag v2.7.1 -->
+<title>Semantically Organizing Images | Debjyoti Bhattacharjee</title>
+<meta name="generator" content="Jekyll v3.9.0" />
+<meta property="og:title" content="Semantically Organizing Images" />
+<meta name="author" content="Debjyoti Bhattacharjee" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Take care of all your memories. For you cannot relive them. &mdash; Bob Dylan My collection of images have grown to monstrous scales (more than 600GB) and continues to grow everyday. The primary culprit being my trigger happy nature, whenever I go out my camera (Nikon D7200). Given my rather laid back nature to post process the images and categorize them neatly in folders, my collection currently stands fragmented amidst a chaotic mix of folders spread across multiple hard-disks, without any labels in a majority of cases. With this problem in mind, I started planning a “programmatic” way to get out of this mess and to take care of the memories!" />
+<meta property="og:description" content="Take care of all your memories. For you cannot relive them. &mdash; Bob Dylan My collection of images have grown to monstrous scales (more than 600GB) and continues to grow everyday. The primary culprit being my trigger happy nature, whenever I go out my camera (Nikon D7200). Given my rather laid back nature to post process the images and categorize them neatly in folders, my collection currently stands fragmented amidst a chaotic mix of folders spread across multiple hard-disks, without any labels in a majority of cases. With this problem in mind, I started planning a “programmatic” way to get out of this mess and to take care of the memories!" />
+<link rel="canonical" href="https://debjyoti0891.github.io/graph/learning/rdf/images/2021/07/10/rdf.html" />
+<meta property="og:url" content="https://debjyoti0891.github.io/graph/learning/rdf/images/2021/07/10/rdf.html" />
+<meta property="og:site_name" content="Debjyoti Bhattacharjee" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-07-10T08:00:00+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Semantically Organizing Images" />
+<meta name="google-site-verification" content="shmIemKrYpRAIcUmw2hZzRij1uySn9s55BGBbLBsOto" />
+<meta name="msvalidate.01" content="F0966E9DC4FDEE6F087ADCDD6E5F6743" />
+<script type="application/ld+json">
+{"@type":"BlogPosting","headline":"Semantically Organizing Images","dateModified":"2021-07-10T08:00:00+00:00","datePublished":"2021-07-10T08:00:00+00:00","url":"https://debjyoti0891.github.io/graph/learning/rdf/images/2021/07/10/rdf.html","mainEntityOfPage":{"@type":"WebPage","@id":"https://debjyoti0891.github.io/graph/learning/rdf/images/2021/07/10/rdf.html"},"publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"https://debjyoti0891.github.io/assets/D_old.jpg"},"name":"Debjyoti Bhattacharjee"},"author":{"@type":"Person","name":"Debjyoti Bhattacharjee"},"description":"Take care of all your memories. For you cannot relive them. &mdash; Bob Dylan My collection of images have grown to monstrous scales (more than 600GB) and continues to grow everyday. The primary culprit being my trigger happy nature, whenever I go out my camera (Nikon D7200). Given my rather laid back nature to post process the images and categorize them neatly in folders, my collection currently stands fragmented amidst a chaotic mix of folders spread across multiple hard-disks, without any labels in a majority of cases. With this problem in mind, I started planning a “programmatic” way to get out of this mess and to take care of the memories!","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+</head>
+<body><header class="site-header" style="background-color: #e6e8e6;">
+
+  <div class="wrapper"><span><a class="site-title" rel="author" href="/">
+      <img src="/assets/D_old.jpg" alt="Smiley face" height="40" >
+      Debjyoti Bhattacharjee
+    </a></span><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/personal/">
+               Personal
+            </a><a class="page-link" href="/research/">
+               Research
+            </a><a class="page-link" href="/publications/">
+               Publications
+            </a><a class="page-link" href="/blog/">
+               Blog
+            </a><a class="page-link" href="/tools/">
+               Resources
+            </a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Semantically Organizing Images</h1>
+    <p class="post-meta"><time class="dt-published" datetime="2021-07-10T08:00:00+00:00" itemprop="datePublished">
+        Jul 10, 2021
+      </time></p>
+    <i>Tags:</i>
+
+    
+    
+      <a class="tag-link"
+        href= https://debjyoti0891.github.io/tags/#graph
+        rel="category tag">
+        #graph
+      </a>
+    
+    
+      <a class="tag-link"
+        href= https://debjyoti0891.github.io/tags/#inference
+        rel="category tag">
+        #inference
+      </a>
+    
+    
+      <a class="tag-link"
+        href= https://debjyoti0891.github.io/tags/#neo4j
+        rel="category tag">
+        #neo4j
+      </a>
+    
+    
+      <a class="tag-link"
+        href= https://debjyoti0891.github.io/tags/#rdf
+        rel="category tag">
+        #RDF
+      </a>
+    
+    
+      <a class="tag-link"
+        href= https://debjyoti0891.github.io/tags/#image-processing
+        rel="category tag">
+        #image-processing
+      </a>
+    
+
+    
+  </header>
+
+  
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <figure class="quote">
+  <blockquote>
+    Take care of all your memories. For you cannot relive them. 
+  </blockquote>
+  <figcaption>
+    &mdash; Bob Dylan 
+    <!-- <cite>Mental models</cite>   -->
+  </figcaption>
+</figure>
+<p>My collection of images have grown to monstrous scales (more than 600GB) and continues to grow everyday.
+The primary culprit being my trigger happy nature, whenever I go out my camera (Nikon D7200). Given my
+rather laid back nature to post process the images and categorize them neatly in folders, my collection currently
+stands fragmented amidst a chaotic mix of folders spread across multiple hard-disks, without 
+any labels in a majority of cases. With this problem in mind, I started planning a “programmatic” way to get 
+out of this mess and to take care of the memories!</p>
+
+<p>With Python as my ally, I started to see which libraries could be used to get started. Turns out <a href="https://exiftool.org/">Exiftool</a> 
+is a very handy and mature tool to look at the EXIF data of images and it also has a python interface. Using this 
+as a baseline, I built a relatively straight forward script to bring images from multiple locations into a single folder. 
+Thereafter, using Exiftool to extract all the meta data, the images are organized sorted by year. Under each year, events are separately put in a folder. 
+An event is a day which has &gt;= threshold images. If consecutive days have events, then they are merged into a single event.
+The entire script is available on <a href="https://github.com/debjyoti0891/utilities/tree/master/copy_images">Github</a>.</p>
+
+<p>Organizing images in the chronologically named folders solves only a part of the problem. These are still image dumps, but not memories such as the ones 
+offered by <a href="https://www.facebook.com/help/1056848067697293/">Facebook</a>, <a href="https://support.google.com/photos/answer/9454489?hl=en&amp;co=GENIE.Platform%3DAndroid">Google Photos</a>, etc.
+This is where my interest for <a href="https://en.wikipedia.org/wiki/Semantic_network">semantic networks</a> comes into the picture. Simply put, a semantic network is a knowledge representation structure that represents semantic relations between concepts in a network. 
+Given the fact pictures have multiple entities and a ton of metadata, a semantic network would be useful to navigate images or find images of interest. For example, a query could be to <em>find all pictures with person A and B</em>. 
+Of course, detecting faces present in the images and tagging them with a name would be indeed needed before a semantic network could be built. Tools powered by AI such as <a href="https://pypi.org/project/deepface/">Deepface</a> could be readily used.</p>
+
+<p>Neo4j is a graph data database, which can be used for storing the semantic network. In order to actually build a semantic network, I started digging into Neo4j RDF and Semantics <a href="https://neo4j.com/labs/neosemantics/">toolkit</a>.  In the 
+context of representing the records, <a href="https://www.w3.org/RDF/">Resource Description Framework (RDF)</a> came into the picture. RDF is a standard model for data interchange across the web and used extensively apparently. RDF uses XML representation
+for defining relationships of the form <em>subject-&gt;predicate-&gt;object</em>, which is called a <em>triple</em>. These RDF records can be directly imported into the graph database and then queried for efficiently navigating all
+the images. There is a nicely presented <a href="http://www.linkeddatatools.com/semantic-web-basics">tutorial</a> on the topic. As a next step, I plan to build RDF entires for the entire image dump that I have and hopefully have 
+a better way to navigate the memories.</p>
+
+<h3 id="references">References</h3>
+<ul>
+  <li><strong>Code</strong> : Preliminary code for organizing images. <a href="https://github.com/debjyoti0891/utilities/tree/master/copy_images">[Link]</a></li>
+  <li><strong>Good tutorial</strong>: This tutorial provides a relatively detailed introduction to RDF <a href="http://www.linkeddatatools.com/semantic-web-basics">[Link]</a></li>
+  <li><strong>Exiftool</strong>: <a href="https://exiftool.org/">[Link]</a></li>
+  <li><strong>Deepface</strong>: <a href="ttps://pypi.org/project/deepface/">[Link]</a></li>
+</ul>
+
+
+  </div><a class="u-url" href="/graph/learning/rdf/images/2021/07/10/rdf.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <!-- <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p> -->
+        <ul class="contact-list">
+          <li class="p-name">Debjyoti Bhattacharjee</li>
+          <li><a class="u-email" href="mailto:debjyoti [dot] bhattacharjee [at] imec [dot] be">debjyoti [dot] bhattacharjee [at] imec [dot] be</a></li>
+          
+        </ul>
+      </div>
+      <div class="footer-col">
+        <p>Snapshots of ideas and things that piqued my interest. The website has information primarily focused on my research in computer architecture and systems, including high performance computing, emerging technologies, alongside design space exploration. </p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/debjyoti0891" title="debjyoti0891"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li><li><a rel="me" href="https://www.instagram.com/debjyoti0891" title="debjyoti0891"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#instagram"></use></svg></a></li><li><a rel="me" href="https://www.linkedin.com/in/debjyotibhattacharjee" title="debjyotibhattacharjee"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#linkedin"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
