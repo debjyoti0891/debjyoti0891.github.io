@@ -55,7 +55,7 @@ export PATH=$PATH:<install prefix>/bin
 ``` riscv64-unknown-elf-gcc -o hello hello.c```
 
 ### Actual execution
-To run spike with a baremetal program and log the commits to a file:
+To run spike with a program and log the commits to a file:
 
 ```
 spike  -m 1G --log-commits --log=spike_log.txt $(\which pk) hello 
