@@ -1,9 +1,9 @@
 ---
 layout: post
 title:  "Stumbling with Spike"
-date:   2022-10-31 00:00:00 +0200
+date:   2022-10-31 10:00:00 +0200
 categories: riscv modelling architecture iss
-tags: modelling architecture micro-architecture
+tags: modelling architecture micro architecture
 comments: true
 ---
 
