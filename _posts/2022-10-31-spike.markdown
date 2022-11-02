@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Stumbling with Spike"
-date:   2022-10-30 00:00:00 +0200
+date:   2022-10-31 00:00:00 +0200
 categories: riscv modelling architecture iss
 tags: modelling architecture micro-architecture
 comments: true
@@ -39,10 +39,13 @@ make install
 ## Spike Execution 
 
 ### Creating the executable
+
 ``` riscv64-unknown-elf-gcc -o hello hello.c```
 
 ### Actual execution
 To run spike with a baremetal program and log the commits to a file:
 
-```spike  -m 1G --log-commits --log=spike_log.txt $(\which pk) hello 
+```
+spike  -m 1G --log-commits --log=spike_log.txt $(\which pk) hello 
+
 ```
