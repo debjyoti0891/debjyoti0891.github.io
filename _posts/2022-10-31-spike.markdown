@@ -14,11 +14,12 @@ The device tree compiler (dtc) executable is a requirement for spike. It can be 
 The binary should be available in the PATH environment variable. 
 
 ## Install [ProxyKernel](https://github.com/riscv-software-src/riscv-pk)
-``` mkdir build
-    cd build 
-    ../configure --prefix=<install prefix> --host=riscv64-unknown-linux-gnu
-    make -j all
-    make install
+``` 
+mkdir build
+cd build 
+../configure --prefix=<install prefix> --host=riscv64-unknown-linux-gnu
+make -j all
+make install
 ```
 ### Note
 - If you try to build in the root of the repository, the output file for `pk` does not get generated, as there is a directory with the same name. Hence, using a build folder helps!
@@ -47,5 +48,4 @@ To run spike with a baremetal program and log the commits to a file:
 
 ```
 spike  -m 1G --log-commits --log=spike_log.txt $(\which pk) hello 
-
 ```
