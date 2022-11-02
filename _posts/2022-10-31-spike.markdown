@@ -6,13 +6,22 @@ categories: riscv modelling architecture iss
 tags: modelling architecture micro architecture
 comments: true
 ---
+This post is intended to act as a quick reference guide to 
+installing dependencies, in case you want to build `Spike`
+on a machine where you do not have `sudo` priviledges. 
 
-**Assumption**: The `riscv64-unknown-linux-gnu` toolchain is already built and availble on the PATH. 
+**Assumptions**: 
+- `riscv64-unknown-linux-gnu` toolchain is already built and availble on the PATH. 
+- `Boost` is already available
+- A decent version of `GCC` is available
+In my case, I used `GCC-10.3.0`, with `Boost-1.76.0`.
 
 ## Install [DTC](https://git.launchpad.net/ubuntu/+source/device-tree-compiler/?h=applied/debian/sid)
-The device tree compiler (dtc) executable is a requirement for spike. It can be compiled from scratch.
-The binary should be available in the PATH environment variable. 
-
+The device tree compiler (dtc) executable is a requirement for Spike. It can be compiled from scratch.
+The binary should be made available in the PATH environment variable. 
+```
+export PATH=$PATH:<path to the binary>
+```
 ## Install [ProxyKernel](https://github.com/riscv-software-src/riscv-pk)
 ``` 
 mkdir build
@@ -20,6 +29,7 @@ cd build
 ../configure --prefix=<install prefix> --host=riscv64-unknown-linux-gnu
 make -j all
 make install
+export PATH=$PATH:<install prefix>/bin
 ```
 ### Note
 - If you try to build in the root of the repository, the output file for `pk` does not get generated, as there is a directory with the same name. Hence, using a build folder helps!
@@ -30,12 +40,13 @@ make install
 ./configure --prefix=<install prefix> --with-boost=<path to boost root> --enable-commitlog --with-isa=RV64IMAFDCP 
 make -j all
 make install
+export PATH=$PATH:<install prefix>/bin
 ``` 
 
 ### Note: 
 - In my specific installation, Boost libraries could not be found
     even after setting appropriate LD_LIBRARY_PATH. Explictly specifiying the path solved the issue.
-- Take a look at the output of `./configure --help` to find options that might be relevant. For example, `--enable-commitlog` was something that was relevant for me. 
+- Take a look at the output of `./configure --help` to find options of Spike that might be relevant. For example, `--enable-commitlog` was something that was relevant for me. 
 
 ## Spike Execution 
 
