@@ -1,0 +1,111 @@
+---
+layout: post
+title:  "Hacking you bias #1"
+date:   2023-03-20 00:00:00 +0100
+categories: bias
+tags: reflection personal
+comments: true
+---
+
+# Hacking Your Bias
+- Bias -> implicit /explicit
+	- unconscious bias : acknowledge bias and try to challenge it.
+		- **micro-behaviors**: these are small, subtle signals that we, often unintentionally, communicate through our body language
+- prejudice : more objective perception tied to higher levels of bias
+
+## Bias and brain
+- The **"fast brain"**  organizes information based on intuition and emotional impulses.
+   This processing is quick and often effective. Instead of processing all the informational input that is available, our brain takes a shortcut. The "fast brain" uses its memory to make a quick judgement.
+- The second system, called the **"slow brain"** is more rational. This system tries to have a better and deeper understanding of the world around us and allows us to have more complex thoughts.
+
+### Action items
+-   **Becoming aware**  of how your thoughts, assumptions, beliefs and opinions are formed
+-   **Challenging**  your assumptions
+-   **Unlearning**  learned behavior
+-   **Being open-minded**
+-   **Re-framing** accepted opinions and beliefs
+-   **Having the courage**  to recognize and change your biases
+
+## Affinity Bias (in-group bias)
+Affinity bias describes the unconscious tendency to prefer people who are similar to you in terms of identity traits, interests, experiences and background.
+- *mini-me*: unconsciously choosing to work with people who look, think and act like you.
+- You form an idea of someone based on the group they belong to. This (often oversimplified) image is projected onto any individual.
+- *positive stereotype*: in-group bias  | *negative stereotype*: out-group bias
+- Within a team : You and your team get into a comfortable routine, you don't challenge each other, with boredom, demotivation and decreased productivity as a result.
+- **Action item** : Look out for micro-affirmations vs micro-aggressions
+- **Reflection**: Having less affinity bias would allow teams to explore more ideas and try new aspects, which might be lost when there are in-group biases.
+
+## Confirmation bias
+**Confirmation bias**: You focus on information that confirms your existing beliefs.
+- **Tunnel vision**: only hearing and seeing what you want to.
+- didn't actively look for information that contradicts your opinion or truth | receive input from like minded people | avoid discussing the topic with people who have opposing views
+- Confirmation bias affects our search and interpretation of new information :
+	- **We only pay attention to what reinforces our assumptions**.
+	- **We overlook new information that differs from our current beliefs**.
+- *Reflection* :   When it comes to emotionally charged issues, you are more likely to let confirmation bias influence your opinion about new information.
+- **Action Item**:
+	- See yourself as forever learning new things. Step away from your identity as "the expert".
+	- Dont settle for what you already know and welcome unexpected conclusions.
+	- Be open to compromises and finding the best solution.
+
+## Groupthink
+**Groupthink**: Even though you have different ideas, you stop thinking critically and agree with the group to help create a "false" feeling of consensus.
+ - Groups that prioritize their group identity and behave coldly toward “outsiders”
+ - Groupthink offers groups an illusion of consensus. Differences are pushed into the "undercurrent".
+ - If groupthink happens often, team members with different ideas might start to act out, (un)consciously boycotting teamwork or tasks.
+ ### Red flags to identify
+ - The team discussion is dominated by one person who takes over the conversation entirely.
+- The group is reaching a consensus really quickly and apparently easily: "we all agree!"
+
+## Gender Bias
+- **Gender identity** is each person’s deeply felt internal and individual experience of gender, which may or may not correspond to the sex assigned at birth.
+	-   **Gender:** the roles, behaviors, activities, attributes, and opportunities that any society considers appropriate for individuals of a specific sex.
+	-   **Biological sex:** the biological and physiological characteristics that define humans as female, male or intersex.
+	- it is important to acknowledge that gender identity is a **complex** and **multi-layered**reality.
+- Gendered Pronouns
+	-  **he/him/his**  for people who identify as men
+	-   **she/her/hers**  for people who identify as women
+	- A well-known non-binary alternative in English is **they/them/theirs**.
+- Gender bias is formed both by societal norms and by individual beliefs about gender roles.
+
+### Job adverts might have latent connotations
+Depending on your language and cultural context, words will have a masculine or feminine connotation.
+
+-   **Masculine coded words**: competitive, dominant, challenging, confident, decisive, determined, leader, independent, objective.
+-   **Feminine coded words**: committed, connected, cooperative, interpersonal, loyal, responsible, supportive, trustworthy.
+-   **Neutral words**: assertive, authentic, collegial, critical, engaged, enthusiastic, passionate.
+
+As a result, job adverts with many masculine coded words will attract fewer female candidates, company cultures that are described as competitive, result driven or hierarchical will be less appealing to women.
+
+**Action items**
+- Allow others to label themselves any way they choose (if they even want to label themselves). Consciously ask them about their gender identity.
+- Amplify unheard voices : If women's contributions are invisible and overlooked, louden their voice by actively endorsing, mentioning, promoting, sponsoring, and advocating for them.
+
+# Ethnic identity
+
+-   **Ethnicity** or  **ethnic identity** groups people who share a distinctive cultural heritage, language, religion, origin, background, history, or a common set of traditions. It is a broad concept that can evolve over time.
+-  **Race** is defined as a category of people with similar distinctive physical characteristics, such as skin color, facial structure, or hair texture. It needs to be seen in the context of history and economics.
+	- “Ancestry” reflects the fact that human variations are connected to the **geographical origins** of our ancestors. Unlike the term “race,” it focuses on understanding how a person’s history unfolded, not how they fit into a specific category.
+- **Racism** is a belief that race is a fundamental determinant of human traits and capacities and that racial differences produce an inherent superiority of a particular race.
+	- **Ethnicity bias** is demonstrating a preference for or against a group of people sharing a common and distinctive racial, national, religious, linguistic, or cultural heritage.
+		-  treated differently because of their ethnicity | assumption about someone based on their ethnicity
+		- ethnicity is over-or underrepresented in your company
+		- When they raise attention to inequality, they are not taken seriously or considered "difficult"
+		- **Self-fulfilling prophecy** is when you make assumptions about what is going to happen.
+		- **Tunnel vision** means you only see what you want to see.
+### Red Flags
+- It can be present in explicit racial insults, "jokes" and microaggressions.
+- There are also more subtle expressions that sneak into workplace decisions regarding hiring, talent development and promotions.
+
+- **Intersectionality** is the complex, **cumulative way** in which the effects of discrimination (such as racism, sexism, and classism) **combine, overlap, or intersect**.
+	- Intersectionality helps us understand how one individual can be discriminated against or disadvantaged because of several different aspects of their identity, resulting in a unique position of accumulated discrimination.
+	- Being color blind does not take away your unconscious bias and your prejudices, it can make you blind to the different realities of others.
+
+**Action items**-
+	-  Notice who speaks, and who isn't present when biased talk occurs. Notice code words for ethnicity. Notice implicit stereotypes.
+	- It takes a lot of courage to talk about personal experiences of ethnicity bias. If someone is willing to share these with you, listen consciously and acknowledge their story.
+	- If you witness ethnicity bias at work, speak up.
+
+*To bring about change, you must not be afraid to take the first step. We will fail when we
+fail to try.*- Rosa Parks
+
