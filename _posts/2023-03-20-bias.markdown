@@ -8,16 +8,15 @@ comments: true
 ---
 
 # Hacking Your Bias
-- Bias -> implicit /explicit
-	- unconscious bias : acknowledge bias and try to challenge it.
-		- **micro-behaviors**: these are small, subtle signals that we, often unintentionally, communicate through our body language
-- prejudice : more objective perception tied to higher levels of bias
+- Bias -> It can be implicit or explicit.
+	- Unconscious bias : acknowledge bias and try to challenge it.
+		- **micro-behaviors**: These are small, subtle signals that we, often unintentionally, communicate through our body language
+- Prejudice : more objective perception tied to higher levels of bias
 
 ## Bias and brain
 - The **"fast brain"**  organizes information based on intuition and emotional impulses.
    This processing is quick and often effective. Instead of processing all the informational input that is available, our brain takes a shortcut. The "fast brain" uses its memory to make a quick judgement.
 - The second system, called the **"slow brain"** is more rational. This system tries to have a better and deeper understanding of the world around us and allows us to have more complex thoughts.
-
 ### Action items
 -   **Becoming aware**  of how your thoughts, assumptions, beliefs and opinions are formed
 -   **Challenging**  your assumptions
@@ -38,12 +37,12 @@ Affinity bias describes the unconscious tendency to prefer people who are simila
 ## Confirmation bias
 **Confirmation bias**: You focus on information that confirms your existing beliefs.
 - **Tunnel vision**: only hearing and seeing what you want to.
-- didn't actively look for information that contradicts your opinion or truth | receive input from like minded people | avoid discussing the topic with people who have opposing views
-- Confirmation bias affects our search and interpretation of new information :
+- Not actively looking for information that contradicts your opinion or truth | Receive inputs from like minded people | Avoid discussing the topic with people who have opposing views
+- Confirmation bias affects our search and interpretation of new information:
 	- **We only pay attention to what reinforces our assumptions**.
 	- **We overlook new information that differs from our current beliefs**.
 - *Reflection* :   When it comes to emotionally charged issues, you are more likely to let confirmation bias influence your opinion about new information.
-- **Action Item**:
+- **Action Items**:
 	- See yourself as forever learning new things. Step away from your identity as "the expert".
 	- Dont settle for what you already know and welcome unexpected conclusions.
 	- Be open to compromises and finding the best solution.
