@@ -5,8 +5,8 @@ permalink: /personal/
 ---
 <span class="headHi">Industry Positions</span><br>
 <ul style="list-style-type:square" >
-<li> Researcher, COMPASS <span class="datetext">March, 2023 - onwards</span><br><span class="locationtext">imec, Belgium</span> <br></li>
-
+<li> Researcher, COMPASS <span class="datetext">March, 2023 - onwards</span><br>
+<span class="locationtext">imec, Belgium</span> <br></li>
 <li> Research and Development Team Leader, COMPASS <span class="datetext">March, 2022 - March, 2023</span><br>
 <span class="locationtext">imec, Belgium</span> <br></li>
 <li> Research and Development Engineer <span class="datetext">January, 2020 - Februrary 2022</span><br>
