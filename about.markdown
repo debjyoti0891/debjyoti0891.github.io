@@ -5,7 +5,8 @@ permalink: /personal/
 ---
 <span class="headHi">Industry Positions</span><br>
 <ul style="list-style-type:square" >
-<li> Research and Development Team Leader, COMPASS <span class="datetext">March, 2022 - onwards</span><br>
+<li> Researcher, COMPASS <span class="datetext">March, 2023 - onwards</span><br>
+<li> Research and Development Team Leader, COMPASS <span class="datetext">March, 2022 - March, 2023</span><br>
 <span class="locationtext">imec, Belgium</span> <br></li>
 <li> Research and Development Engineer <span class="datetext">January, 2020 - Februrary 2022</span><br>
 <span class="locationtext">imec, Belgium</span> <br></li>
@@ -36,7 +37,7 @@ permalink: /personal/
 <span class="locationtext">Department of Computer Science and Engineering, University of Calcutta</span>  <br></li>
 </ul>
 
-<!-- 
+<!--
 <li><h5> Visiting Researcher </h5>
 <i class="fa  fa-bank">Technion ASIC2 Research Group, Haifa, Israel </i> <br>
 <i class="fa  fa-calendar"></i>August-October, 2018</li>
@@ -46,7 +47,7 @@ permalink: /personal/
 
 
 <!--<li>Certification under IBM Advanced Training Education On J2EE Programming</li>-->
-<!-- </ul> --> 
+<!-- </ul> -->
 
 
 <span class="headHi">A Few Accomplishments</span>

@@ -14,7 +14,7 @@ layout: default
 Kapeldreef 75,  Leuven 3001, Belgium</span>
 <br>
 <br>
-Debjyoti Bhattacharjee is the Research and Development Team Leader of COMPASS, within the <a href="https://www.imec-int.com/en/expertise/compute-system-architecture">Compute System Architecture (CSA)</a> unit at <a href="https://www.imec.be/" target="_blank">imec</a>, Leuven. His current work focuses on design space exploration and performance estimation for exascale architectures for high-performance compute (HPC) workloads. 
+Debjyoti Bhattacharjee is a Researcher with COMPASS, within the <a href="https://www.imec-int.com/en/expertise/compute-system-architecture">Compute System Architecture (CSA)</a> unit at <a href="https://www.imec.be/" target="_blank">imec</a>, Leuven. His current work focuses on design space exploration and performance estimation for exascale architectures for high-performance compute (HPC) workloads.
 
 <p align="justify" class="introtext">He received the BTech degree in computer science and engineering from the West Bengal University of Technology (WBUT), Kolkata, West Bengal, India, in 2013, the MTech degree in computer science from the Indian Statistical Institute, Kolkata, India, in 2015, and the PhD degree in computer science and engineering from the Nanyang Technological University, Singapore, in 2019. He worked as a research fellow with Nanyang Technological University, Singapore for a year. During his doctoral studies, he worked on design of architectures using emerging technologies for in-memory computing. He developed novel technology mapping algorithms, technology-aware synthesis techniques, and proposed novel methods for multi-valued logic realization. </p>
 
@@ -27,11 +27,11 @@ Debjyoti Bhattacharjee is the Research and Development Team Leader of COMPASS, w
 <li>A collection of interesting <a href="/tools/">tools</a>.</li>
 </ul>
 </div>
-<BR CLEAR="left" /> 
+<BR CLEAR="left" />
 
 
 
-<!-- 
+<!--
 <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
 
 <span class="headHi">Things I can do</span>
