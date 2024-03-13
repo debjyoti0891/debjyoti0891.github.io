@@ -34,7 +34,7 @@ jobs:
       - name: Check content
         run: pwd && ls -al
       - name: Build the website
-        run: bundle exec jekyll build
+        run: JEKYLL_ENV=production bundle exec jekyll build
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
