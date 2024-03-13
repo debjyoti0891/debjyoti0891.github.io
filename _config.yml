@@ -8,7 +8,7 @@
 # For technical reasons, this file is *NOT* reloaded automatically when you use
 # 'bundle exec jekyll serve'. If you change this file, please restart the server process.
 #
-# If you need help with YAML syntax, here are some quick references for you: 
+# If you need help with YAML syntax, here are some quick references for you:
 # https://learn-the-web.algonquindesign.ca/topics/markdown-yaml-cheat-sheet/#yaml
 # https://learnxinyminutes.com/docs/yaml/
 #
@@ -22,9 +22,9 @@ title:  Debjyoti Bhattacharjee
 author:
   email: debjyoti [dot] bhattacharjee [at] imec [dot] be
   name: Debjyoti Bhattacharjee
-tagline: Personal website of Dr. Debjyoti Bhattacharjee.  
-description: >- 
-  Snapshots of ideas and things that piqued my interest. The website has information primarily focused on my research in computer architecture and systems, including high performance computing, emerging technologies, alongside design space exploration. 
+tagline: Personal website of Dr. Debjyoti Bhattacharjee.
+description: >-
+  Snapshots of ideas and things that piqued my interest. The website has information primarily focused on my research in computer architecture and systems, including high performance computing, emerging technologies, alongside design space exploration.
 
 baseurl: "/" # the subpath of your site, e.g. /blog
 url: "https://debjyoti0891.github.io" # the base hostname & protocol for your site, e.g. http://example.com
@@ -104,11 +104,15 @@ collections:
 # Excluded items can be processed by explicitly listing the directories or
 # their entries' file path in the `include:` list.
 #
+sass:
+  quiet_deps: true
+
 exclude:
-#   - .sass-cache/
-#   - .jekyll-cache/
-#  - gemfiles/
-#  - Gemfile
+  - bundle_dir/
+  - .sass-cache/
+  - .jekyll-cache/
+  - gemfiles/
+  - Gemfile
 #  - Gemfile.lock
 #   - node_modules/
 #   - vendor/bundle/
