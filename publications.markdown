@@ -3,7 +3,10 @@ layout: page
 title: Publications
 permalink: /publications/
 ---
-### Book chapters 
+### Patent
+{% bibliography --file patents %}
+
+### Book chapters
 {% bibliography --file bookpapers %}
 
 ### Journal Publications
@@ -15,6 +18,6 @@ permalink: /publications/
 ### Pre-prints
 {% bibliography --file prepapers %}
 
-### Thesis 
+### Thesis
 {% bibliography --file tpapers %}
 
