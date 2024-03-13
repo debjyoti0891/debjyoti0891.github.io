@@ -5,33 +5,33 @@ permalink: /research/
 ---
 
 <span class="headHi">Presentations and Invited Talks</span>
++ Hosted workshop on <span class="event-name">Exascale Simulation of Next-Generation Computing Architectures</span>,  <em class="event-location-date">IISWC</em>, 2023.
++ <span class="event-name">LaTeX Workshop</span>, supported by  <em class="event-location-date">NTU Library,</em> November, 2018.
++ Invited talk on <span class="event-name">"General purpose  logic-in-memory architecture using Resistive RAM (ReRAM)</span> at  <em class="event-location-date">Advanced Computing & Microelectronics Unit, Indian Statistical Institute, Kolkata, India</em> in October, 2018.
++ <span class="event-name">LaTeX Workshop</span>, supported by  <em class="event-location-date">NTU GSA Career Committee,</em> August, 2018.
++ <span class="event-name">LaTeX Workshop</span>, supported by  <em class="event-location-date">NTU GSC Academic Events Committee,</em> March, 2018.<a href="https://blogs.ntu.edu.sg/debjyoti001/files/2018/03/LaTeX_Workshop_NTU-1etfxde.pdf" target="_blank" rel="noopener noreferrer"><input class="button5" type="button" value="Slides" /></a>
++ <span class="event-name">Technology-aware Logic Synthesis For ReRAM Based In-memory Computing</span> in  <em class="event-location-date">DATE 2018, Dresden, Germany.</em><a href="https://blogs.ntu.edu.sg/debjyoti001/files/2018/04/2018_DATE_synthesis_new_upload-1gm7d43.pdf" target="_blank" rel="noopener noreferrer"><input class="button5" type="button" value="Slides" /></a>
++ <span class="event-name">Enabling  <em class="event-location-date">Logic-in-Memory</em> using Resistive RAM (ReRAM)</span> at  <em class="event-location-date">Department of Computer Science & Engineering, IIT Kharagpur, India</em> in February, 2018.</em>
++ <span class="event-name">Delay-Optimal Technology Mapping for In-Memory Computing using ReRAM Devices.</span> in  <em class="event-location-date">The {IEEE/ACM} International Conference on Computer-Aided Design (ICCAD), 2016.</em><a href="https://blogs.ntu.edu.sg/debjyoti001/files/2018/04/iccad_2016_techmapping-1st08q2.pdf" target="_blank" rel="noopener noreferrer"><input class="button5" type="button" value="Slides" /></a>
++ <span class="event-name">Efficient Hardware Accelerator for AEGIS-128 Authenticated Encryption</span>  in  <em class="event-location-date">Final Year Project Presentation, Live Demo and Graduate Students Workshop, IEEE Circuits and Systems Society events</em>, 2015.
++ <span class="event-name">Efficient Hardware Accelerator for AEGIS-128 Authenticated Encryption</span> in <em class="event-location-date"> DIAC 2015</em>. <a href="https://www1.spms.ntu.edu.sg/~diac2015/slides/diac2015_07_aegis_accelerator.pdf" target="_blank" rel="noopener noreferrer"><input class="button5" type="button" value="Slides" /></a>
 
-+ "LaTeX Workshop", supported by <em>NTU Library,</em> November, 2018.
-+ <i> Invited talk on </i> "General purpose <em>logic-in-memory</em> architecture using Resistive RAM (ReRAM)" at <em>Advanced Computing & Microelectronics Unit, Indian Statistical Institute, Kolkata, India</em> in October, 2018.
-+ "LaTeX Workshop", supported by <em>NTU GSA Career Committee,</em> August, 2018.
-+ "LaTeX Workshop", supported by <em>NTU GSC Academic Events Committee,</em> March, 2018.<a href="https://blogs.ntu.edu.sg/debjyoti001/files/2018/03/LaTeX_Workshop_NTU-1etfxde.pdf" target="_blank" rel="noopener noreferrer"><input class="button5" type="button" value="Slides" /></a>
-+ "Technology-aware Logic Synthesis For ReRAM Based In-memory Computing" in <em>DATE 2018, Dresden, Germany.</em><a href="https://blogs.ntu.edu.sg/debjyoti001/files/2018/04/2018_DATE_synthesis_new_upload-1gm7d43.pdf" target="_blank" rel="noopener noreferrer"><input class="button5" type="button" value="Slides" /></a>
-+ "Enabling <em>Logic-in-Memory</em> using Resistive RAM (ReRAM)" at <em>Department of Computer Science & Engineering, IIT Kharagpur, India</em> in February, 2018.</em>
-+ "Delay-Optimal Technology Mapping for In-Memory Computing using ReRAM Devices." in <em>The {IEEE/ACM} International Conference on Computer-Aided Design (ICCAD), 2016.</em><a href="https://blogs.ntu.edu.sg/debjyoti001/files/2018/04/iccad_2016_techmapping-1st08q2.pdf" target="_blank" rel="noopener noreferrer"><input class="button5" type="button" value="Slides" /></a>
-+ "Efficient Hardware Accelerator for AEGIS-128 Authenticated Encryption"  in <em>Final Year Project Presentation, Live Demo and Graduate Students Workshop</em>, IEEE Circuits and Systems Society events, 2015.
-+ "Efficient Hardware Accelerator for AEGIS-128 Authenticated Encryption" in<em> DIAC 2015</em>. <a href="https://www1.spms.ntu.edu.sg/~diac2015/slides/diac2015_07_aegis_accelerator.pdf" target="_blank" rel="noopener noreferrer"><input class="button5" type="button" value="Slides" /></a>
-
-<span class="headHi">Activities</span> 
-+ TPC member of Neural Networks and Deep Learning track in ICCAD 2022
-+ Quantum Computing Co-Chair for DAC 2022.
-+ TPC member of ASP­DAC 2020, 2021.
-+ Reviewer of IEEE Transactions on Nanotechnology
-+ Reviewer of IEEE Transactions on Computer­Aided Design of Integrated Circuits and
-Systems
-+ Reviewer of IEEE Design & Test
-+ Reviewer of IEEE Transactions on Very Large Scale Integration Systems
-+ Reviewer of Integration, the VLSI Journal
-+ Reviewer of ACM Journal on Emerging Technologies in Computing Systems (JETC)
+<span class="headHi">Activities</span>
++ TPC member of Neural Networks and Deep Learning track in <em class="event-location-date">ICCAD</em> 2022
++ Quantum Computing Co-Chair for <em class="event-location-date">DAC</em> 2022.
++ TPC member of <em class="event-location-date">ASP­DAC</em> 2020, 2021.
++ Reviewer of <em class="event-location-date">IEEE Transactions on Nanotechnology
++ Reviewer of <em class="event-location-date">IEEE Transactions on Computer­Aided Design of Integrated Circuits and
+Systems</em>
++ Reviewer of <em class="event-location-date">IEEE Design & Test</em>
++ Reviewer of <em class="event-location-date">IEEE Transactions on Very Large Scale Integration Systems</em>
++ Reviewer of <em class="event-location-date">Integration, the VLSI Journal</em>
++ Reviewer of <em class="event-location-date">ACM Journal on Emerging Technologies in Computing Systems (JETC)</em>
 
 <span class="headHi">Teaching</span>
 
 <b>Post­graduate courses</b>
-+ Algorithms to Architecture [Tutorials + Labs] [2017, 2018, 2019] 
++ Algorithms to Architecture [Tutorials + Labs] [2017, 2018, 2019]
     + Conducted labs and tutorials to teach optimization of algorithms for hardware implementation.
     + Tools used: Xilinx ISE, Vivado HLS.
 + Electronic Design Automation [Tutorials + Labs] [2016, 2017]

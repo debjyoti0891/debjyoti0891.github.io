@@ -24,7 +24,7 @@ Debjyoti Bhattacharjee is a Researcher with COMPASS, within the <a href="https:/
 <li>Learn more about <a href="/personal/">me</a> and my <a href="/research/">research.</a></li>
 <li> Check out my technical <a href="/blog/">blog</a> on a variety of topics. </li>
 <li>Browse my <a href="/publications/">scientific publications</a> including full text papers and supplemental material.</li>
-<li>A collection of interesting <a href="/tools/">tools</a>.</li>
+<li>A collection of <a href="/tools/">modelling and other programming tools</a>.</li>
 </ul>
 </div>
 <BR CLEAR="left" />
