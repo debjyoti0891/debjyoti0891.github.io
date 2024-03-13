@@ -1,0 +1,10 @@
+- name: Pen 1
+  year: 2020
+  thumbnail: /assets/me.jpg
+  rating: 2
+  blog_post: /bias/2023/03/20/bias.html
+
+- name: Pen 2
+  year: 2019
+  thumbnail: /assets/me.jpg
+  rating: 3

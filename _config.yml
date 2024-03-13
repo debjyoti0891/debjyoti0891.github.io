@@ -50,6 +50,8 @@ header_pages:
   - publications.markdown
   - blog.markdown
   - resources.markdown
+  - pens.markdown
+
   # - disclaimer.markdown
 
 scholar:
