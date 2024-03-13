@@ -1,13 +1,12 @@
 ---
 layout: post
-title:  "Hacking you bias #1"
+title:  "Hacking you bias"
 date:   2023-03-20 00:00:00 +0100
 categories: bias
 tags: reflection personal
 comments: true
 ---
 
-# Hacking Your Bias
 - Bias -> It can be implicit or explicit.
 	- Unconscious bias : acknowledge bias and try to challenge it.
 		- **micro-behaviors**: These are small, subtle signals that we, often unintentionally, communicate through our body language
