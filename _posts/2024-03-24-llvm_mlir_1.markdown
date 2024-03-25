@@ -4,6 +4,7 @@ title:  "Optimizing RISC-V Performance with MLIR/LLVM: Custom Extensions and Int
 date:   2024-03-23 10:00:00 +0200
 categories: compilation mlir riscv
 tags: compilation llvm mlir
+mermaid: true
 comments: true
 ---
 ```%mermaid
