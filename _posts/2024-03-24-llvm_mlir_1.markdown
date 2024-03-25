@@ -7,8 +7,8 @@ tags: compilation llvm mlir
 mermaid: true
 comments: true
 ---
-```%mermaid
-%% graph LR;
+
+```mermaid
 graph TD;
 
 subgraph MLIR
