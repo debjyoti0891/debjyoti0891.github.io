@@ -1,0 +1,552 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.3.3">Jekyll</generator><link href="https://debjyoti0891.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://debjyoti0891.github.io/" rel="alternate" type="text/html" /><updated>2024-03-25T16:11:06+00:00</updated><id>https://debjyoti0891.github.io/feed.xml</id><title type="html">Debjyoti Bhattacharjee</title><subtitle>Snapshots of ideas and things that piqued my interest. The website has information primarily focused on my research in computer architecture and systems, including high performance computing, emerging technologies, alongside design space exploration.</subtitle><author><name>Debjyoti Bhattacharjee</name><email>debjyoti [dot] bhattacharjee [at] imec [dot] be</email></author><entry><title type="html">Optimizing RISC-V Performance with MLIR/LLVM: Custom Extensions and Intrinsics [Part 1]</title><link href="https://debjyoti0891.github.io/compilation/mlir/riscv/2024/03/23/llvm_mlir_1.html" rel="alternate" type="text/html" title="Optimizing RISC-V Performance with MLIR/LLVM: Custom Extensions and Intrinsics [Part 1]" /><published>2024-03-23T08:00:00+00:00</published><updated>2024-03-23T08:00:00+00:00</updated><id>https://debjyoti0891.github.io/compilation/mlir/riscv/2024/03/23/llvm_mlir_1</id><content type="html" xml:base="https://debjyoti0891.github.io/compilation/mlir/riscv/2024/03/23/llvm_mlir_1.html"><![CDATA[<pre><code class="language-mermaid">graph TD;
+
+subgraph MLIR
+    A[High-Level Operation] --&gt; D[MLIR Generic Operations]
+    D --&gt;|Optimization Passes &lt;br&gt; Target Specific Pass| C[Partial LLVM IR &lt;br&gt; Lower to llvm custom intrinsic]
+    C --&gt; E[MLIR LLVM Dialect]
+end
+
+subgraph LLVM
+    E --&gt;|mlir-translate| F[LLVM IR]
+    F --&gt; G[Standard LLVM RISC-V target lowering]
+end
+
+subgraph Output
+    G --&gt; H[Binary Object File]
+end
+</code></pre>
+
+<p><a id="part1"></a></p>
+<h2 id="part-1-define-the-instruction-encoding">PART 1: Define the Instruction Encoding</h2>
+
+<p>In this example, the addition of four new approximate multiplication instructions for floating point numbers is considered. These instructions, known as <code class="language-plaintext highlighter-rouge">fmul_exp_m_s</code>, <code class="language-plaintext highlighter-rouge">fmul_exp_s</code>, <code class="language-plaintext highlighter-rouge">fmul_exp_m</code>, and <code class="language-plaintext highlighter-rouge">fmul_exp</code>, serve as proxies for approximate multiplication operations within RISC-V processors. The hardware implementation details are not discussed in this blog. The individual instruction encodings are provided below.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># instruction encoding
+fmul_exp_m_s rs2 rs1 rd 31..25=0b1111100 14..12=0b111 6..0=0b0001011
+fmul_exp_s rs2 rs1 rd 31..25=0b1011100 14..12=0b111 6..0=0b0001011
+fmul_exp_m rs2 rs1 rd 31..25=0b1101100 14..12=0b111 6..0=0b0001011
+fmul_exp rs2 rs1 rd 31..25=0b1001100 14..12=0b111 6..0=0b0001011
+</code></pre></div></div>
+
+<h3 id="references">References</h3>
+<ul>
+  <li><strong>Sparta Docs</strong> : <a href="https://sparcians.github.io/map/index.html">[Link]</a></li>
+  <li><strong>Tutorial Code</strong>: <a href="https://github.com/debjyoti0891/sparta-simplified">[Github  link]</a></li>
+</ul>]]></content><author><name>Debjyoti Bhattacharjee</name><email>debjyoti [dot] bhattacharjee [at] imec [dot] be</email></author><category term="compilation" /><category term="mlir" /><category term="riscv" /><category term="compilation" /><category term="llvm" /><category term="mlir" /><summary type="html"><![CDATA[```mermaid graph TD;]]></summary></entry><entry><title type="html">Hacking you bias</title><link href="https://debjyoti0891.github.io/bias/2023/03/19/bias.html" rel="alternate" type="text/html" title="Hacking you bias" /><published>2023-03-19T23:00:00+00:00</published><updated>2023-03-19T23:00:00+00:00</updated><id>https://debjyoti0891.github.io/bias/2023/03/19/bias</id><content type="html" xml:base="https://debjyoti0891.github.io/bias/2023/03/19/bias.html"><![CDATA[<ul>
+  <li>Bias -&gt; It can be implicit or explicit.
+    <ul>
+      <li>Unconscious bias : acknowledge bias and try to challenge it.
+        <ul>
+          <li><strong>micro-behaviors</strong>: These are small, subtle signals that we, often unintentionally, communicate through our body language</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li>Prejudice : more objective perception tied to higher levels of bias</li>
+</ul>
+
+<h2 id="bias-and-brain">Bias and brain</h2>
+<ul>
+  <li>The <strong>“fast brain”</strong>  organizes information based on intuition and emotional impulses.
+ This processing is quick and often effective. Instead of processing all the informational input that is available, our brain takes a shortcut. The “fast brain” uses its memory to make a quick judgement.</li>
+  <li>The second system, called the <strong>“slow brain”</strong> is more rational. This system tries to have a better and deeper understanding of the world around us and allows us to have more complex thoughts.
+    <h3 id="action-items">Action items</h3>
+  </li>
+  <li><strong>Becoming aware</strong>  of how your thoughts, assumptions, beliefs and opinions are formed</li>
+  <li><strong>Challenging</strong>  your assumptions</li>
+  <li><strong>Unlearning</strong>  learned behavior</li>
+  <li><strong>Being open-minded</strong></li>
+  <li><strong>Re-framing</strong> accepted opinions and beliefs</li>
+  <li><strong>Having the courage</strong>  to recognize and change your biases</li>
+</ul>
+
+<h2 id="affinity-bias-in-group-bias">Affinity Bias (in-group bias)</h2>
+<p>Affinity bias describes the unconscious tendency to prefer people who are similar to you in terms of identity traits, interests, experiences and background.</p>
+<ul>
+  <li><em>mini-me</em>: unconsciously choosing to work with people who look, think and act like you.</li>
+  <li>You form an idea of someone based on the group they belong to. This (often oversimplified) image is projected onto any individual.</li>
+  <li>
+    <table>
+      <tbody>
+        <tr>
+          <td><em>positive stereotype</em>: in-group bias</td>
+          <td><em>negative stereotype</em>: out-group bias</td>
+        </tr>
+      </tbody>
+    </table>
+  </li>
+  <li>Within a team : You and your team get into a comfortable routine, you don’t challenge each other, with boredom, demotivation and decreased productivity as a result.</li>
+  <li><strong>Action item</strong> : Look out for micro-affirmations vs micro-aggressions</li>
+  <li><strong>Reflection</strong>: Having less affinity bias would allow teams to explore more ideas and try new aspects, which might be lost when there are in-group biases.</li>
+</ul>
+
+<h2 id="confirmation-bias">Confirmation bias</h2>
+<p><strong>Confirmation bias</strong>: You focus on information that confirms your existing beliefs.</p>
+<ul>
+  <li><strong>Tunnel vision</strong>: only hearing and seeing what you want to.</li>
+  <li>
+    <table>
+      <tbody>
+        <tr>
+          <td>Not actively looking for information that contradicts your opinion or truth</td>
+          <td>Receive inputs from like minded people</td>
+          <td>Avoid discussing the topic with people who have opposing views</td>
+        </tr>
+      </tbody>
+    </table>
+  </li>
+  <li>Confirmation bias affects our search and interpretation of new information:
+    <ul>
+      <li><strong>We only pay attention to what reinforces our assumptions</strong>.</li>
+      <li><strong>We overlook new information that differs from our current beliefs</strong>.</li>
+    </ul>
+  </li>
+  <li><em>Reflection</em> :   When it comes to emotionally charged issues, you are more likely to let confirmation bias influence your opinion about new information.</li>
+  <li><strong>Action Items</strong>:
+    <ul>
+      <li>See yourself as forever learning new things. Step away from your identity as “the expert”.</li>
+      <li>Dont settle for what you already know and welcome unexpected conclusions.</li>
+      <li>Be open to compromises and finding the best solution.</li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="groupthink">Groupthink</h2>
+<p><strong>Groupthink</strong>: Even though you have different ideas, you stop thinking critically and agree with the group to help create a “false” feeling of consensus.</p>
+<ul>
+  <li>Groups that prioritize their group identity and behave coldly toward “outsiders”</li>
+  <li>Groupthink offers groups an illusion of consensus. Differences are pushed into the “undercurrent”.</li>
+  <li>If groupthink happens often, team members with different ideas might start to act out, (un)consciously boycotting teamwork or tasks.
+ ### Red flags to identify</li>
+  <li>The team discussion is dominated by one person who takes over the conversation entirely.</li>
+  <li>The group is reaching a consensus really quickly and apparently easily: “we all agree!”</li>
+</ul>
+
+<h2 id="gender-bias">Gender Bias</h2>
+<ul>
+  <li><strong>Gender identity</strong> is each person’s deeply felt internal and individual experience of gender, which may or may not correspond to the sex assigned at birth.
+    <ul>
+      <li><strong>Gender:</strong> the roles, behaviors, activities, attributes, and opportunities that any society considers appropriate for individuals of a specific sex.</li>
+      <li><strong>Biological sex:</strong> the biological and physiological characteristics that define humans as female, male or intersex.</li>
+      <li>it is important to acknowledge that gender identity is a <strong>complex</strong> and <strong>multi-layered</strong>reality.</li>
+    </ul>
+  </li>
+  <li>Gendered Pronouns
+    <ul>
+      <li><strong>he/him/his</strong>  for people who identify as men</li>
+      <li><strong>she/her/hers</strong>  for people who identify as women</li>
+      <li>A well-known non-binary alternative in English is <strong>they/them/theirs</strong>.</li>
+    </ul>
+  </li>
+  <li>Gender bias is formed both by societal norms and by individual beliefs about gender roles.</li>
+</ul>
+
+<h3 id="job-adverts-might-have-latent-connotations">Job adverts might have latent connotations</h3>
+<p>Depending on your language and cultural context, words will have a masculine or feminine connotation.</p>
+
+<ul>
+  <li><strong>Masculine coded words</strong>: competitive, dominant, challenging, confident, decisive, determined, leader, independent, objective.</li>
+  <li><strong>Feminine coded words</strong>: committed, connected, cooperative, interpersonal, loyal, responsible, supportive, trustworthy.</li>
+  <li><strong>Neutral words</strong>: assertive, authentic, collegial, critical, engaged, enthusiastic, passionate.</li>
+</ul>
+
+<p>As a result, job adverts with many masculine coded words will attract fewer female candidates, company cultures that are described as competitive, result driven or hierarchical will be less appealing to women.</p>
+
+<p><strong>Action items</strong></p>
+<ul>
+  <li>Allow others to label themselves any way they choose (if they even want to label themselves). Consciously ask them about their gender identity.</li>
+  <li>Amplify unheard voices : If women’s contributions are invisible and overlooked, louden their voice by actively endorsing, mentioning, promoting, sponsoring, and advocating for them.</li>
+</ul>
+
+<h1 id="ethnic-identity">Ethnic identity</h1>
+
+<ul>
+  <li><strong>Ethnicity</strong> or  <strong>ethnic identity</strong> groups people who share a distinctive cultural heritage, language, religion, origin, background, history, or a common set of traditions. It is a broad concept that can evolve over time.</li>
+  <li><strong>Race</strong> is defined as a category of people with similar distinctive physical characteristics, such as skin color, facial structure, or hair texture. It needs to be seen in the context of history and economics.
+    <ul>
+      <li>“Ancestry” reflects the fact that human variations are connected to the <strong>geographical origins</strong> of our ancestors. Unlike the term “race,” it focuses on understanding how a person’s history unfolded, not how they fit into a specific category.</li>
+    </ul>
+  </li>
+  <li><strong>Racism</strong> is a belief that race is a fundamental determinant of human traits and capacities and that racial differences produce an inherent superiority of a particular race.
+    <ul>
+      <li><strong>Ethnicity bias</strong> is demonstrating a preference for or against a group of people sharing a common and distinctive racial, national, religious, linguistic, or cultural heritage.
+        <ul>
+          <li>
+            <table>
+              <tbody>
+                <tr>
+                  <td>treated differently because of their ethnicity</td>
+                  <td>assumption about someone based on their ethnicity</td>
+                </tr>
+              </tbody>
+            </table>
+          </li>
+          <li>ethnicity is over-or underrepresented in your company</li>
+          <li>When they raise attention to inequality, they are not taken seriously or considered “difficult”</li>
+          <li><strong>Self-fulfilling prophecy</strong> is when you make assumptions about what is going to happen.</li>
+          <li><strong>Tunnel vision</strong> means you only see what you want to see.
+            <h3 id="red-flags">Red Flags</h3>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li>It can be present in explicit racial insults, “jokes” and microaggressions.</li>
+  <li>
+    <p>There are also more subtle expressions that sneak into workplace decisions regarding hiring, talent development and promotions.</p>
+  </li>
+  <li><strong>Intersectionality</strong> is the complex, <strong>cumulative way</strong> in which the effects of discrimination (such as racism, sexism, and classism) <strong>combine, overlap, or intersect</strong>.
+    <ul>
+      <li>Intersectionality helps us understand how one individual can be discriminated against or disadvantaged because of several different aspects of their identity, resulting in a unique position of accumulated discrimination.</li>
+      <li>Being color blind does not take away your unconscious bias and your prejudices, it can make you blind to the different realities of others.</li>
+    </ul>
+  </li>
+</ul>
+
+<p><strong>Action items</strong>-
+	-  Notice who speaks, and who isn’t present when biased talk occurs. Notice code words for ethnicity. Notice implicit stereotypes.
+	- It takes a lot of courage to talk about personal experiences of ethnicity bias. If someone is willing to share these with you, listen consciously and acknowledge their story.
+	- If you witness ethnicity bias at work, speak up.</p>
+
+<p><em>To bring about change, you must not be afraid to take the first step. We will fail when we
+fail to try.</em>- Rosa Parks</p>]]></content><author><name>Debjyoti Bhattacharjee</name><email>debjyoti [dot] bhattacharjee [at] imec [dot] be</email></author><category term="bias" /><category term="reflection" /><category term="personal" /><summary type="html"><![CDATA[Bias -&gt; It can be implicit or explicit. Unconscious bias : acknowledge bias and try to challenge it. micro-behaviors: These are small, subtle signals that we, often unintentionally, communicate through our body language Prejudice : more objective perception tied to higher levels of bias Bias and brain The “fast brain” organizes information based on intuition and emotional impulses. This processing is quick and often effective. Instead of processing all the informational input that is available, our brain takes a shortcut. The “fast brain” uses its memory to make a quick judgement. The second system, called the “slow brain” is more rational. This system tries to have a better and deeper understanding of the world around us and allows us to have more complex thoughts. Action items Becoming aware of how your thoughts, assumptions, beliefs and opinions are formed Challenging your assumptions Unlearning learned behavior Being open-minded Re-framing accepted opinions and beliefs Having the courage to recognize and change your biases Affinity Bias (in-group bias) Affinity bias describes the unconscious tendency to prefer people who are similar to you in terms of identity traits, interests, experiences and background. mini-me: unconsciously choosing to work with people who look, think and act like you. You form an idea of someone based on the group they belong to. This (often oversimplified) image is projected onto any individual. positive stereotype: in-group bias negative stereotype: out-group bias Within a team : You and your team get into a comfortable routine, you don’t challenge each other, with boredom, demotivation and decreased productivity as a result. Action item : Look out for micro-affirmations vs micro-aggressions Reflection: Having less affinity bias would allow teams to explore more ideas and try new aspects, which might be lost when there are in-group biases. Confirmation bias Confirmation bias: You focus on information that confirms your existing beliefs. Tunnel vision: only hearing and seeing what you want to. Not actively looking for information that contradicts your opinion or truth Receive inputs from like minded people Avoid discussing the topic with people who have opposing views Confirmation bias affects our search and interpretation of new information: We only pay attention to what reinforces our assumptions. We overlook new information that differs from our current beliefs. Reflection : When it comes to emotionally charged issues, you are more likely to let confirmation bias influence your opinion about new information. Action Items: See yourself as forever learning new things. Step away from your identity as “the expert”. Dont settle for what you already know and welcome unexpected conclusions. Be open to compromises and finding the best solution. Groupthink Groupthink: Even though you have different ideas, you stop thinking critically and agree with the group to help create a “false” feeling of consensus. Groups that prioritize their group identity and behave coldly toward “outsiders” Groupthink offers groups an illusion of consensus. Differences are pushed into the “undercurrent”. If groupthink happens often, team members with different ideas might start to act out, (un)consciously boycotting teamwork or tasks. ### Red flags to identify The team discussion is dominated by one person who takes over the conversation entirely. The group is reaching a consensus really quickly and apparently easily: “we all agree!” Gender Bias Gender identity is each person’s deeply felt internal and individual experience of gender, which may or may not correspond to the sex assigned at birth. Gender: the roles, behaviors, activities, attributes, and opportunities that any society considers appropriate for individuals of a specific sex. Biological sex: the biological and physiological characteristics that define humans as female, male or intersex. it is important to acknowledge that gender identity is a complex and multi-layeredreality. Gendered Pronouns he/him/his for people who identify as men she/her/hers for people who identify as women A well-known non-binary alternative in English is they/them/theirs. Gender bias is formed both by societal norms and by individual beliefs about gender roles. Job adverts might have latent connotations Depending on your language and cultural context, words will have a masculine or feminine connotation. Masculine coded words: competitive, dominant, challenging, confident, decisive, determined, leader, independent, objective. Feminine coded words: committed, connected, cooperative, interpersonal, loyal, responsible, supportive, trustworthy. Neutral words: assertive, authentic, collegial, critical, engaged, enthusiastic, passionate. As a result, job adverts with many masculine coded words will attract fewer female candidates, company cultures that are described as competitive, result driven or hierarchical will be less appealing to women. Action items Allow others to label themselves any way they choose (if they even want to label themselves). Consciously ask them about their gender identity. Amplify unheard voices : If women’s contributions are invisible and overlooked, louden their voice by actively endorsing, mentioning, promoting, sponsoring, and advocating for them. Ethnic identity Ethnicity or ethnic identity groups people who share a distinctive cultural heritage, language, religion, origin, background, history, or a common set of traditions. It is a broad concept that can evolve over time. Race is defined as a category of people with similar distinctive physical characteristics, such as skin color, facial structure, or hair texture. It needs to be seen in the context of history and economics. “Ancestry” reflects the fact that human variations are connected to the geographical origins of our ancestors. Unlike the term “race,” it focuses on understanding how a person’s history unfolded, not how they fit into a specific category. Racism is a belief that race is a fundamental determinant of human traits and capacities and that racial differences produce an inherent superiority of a particular race. Ethnicity bias is demonstrating a preference for or against a group of people sharing a common and distinctive racial, national, religious, linguistic, or cultural heritage. treated differently because of their ethnicity assumption about someone based on their ethnicity ethnicity is over-or underrepresented in your company When they raise attention to inequality, they are not taken seriously or considered “difficult” Self-fulfilling prophecy is when you make assumptions about what is going to happen. Tunnel vision means you only see what you want to see. Red Flags It can be present in explicit racial insults, “jokes” and microaggressions. There are also more subtle expressions that sneak into workplace decisions regarding hiring, talent development and promotions. Intersectionality is the complex, cumulative way in which the effects of discrimination (such as racism, sexism, and classism) combine, overlap, or intersect. Intersectionality helps us understand how one individual can be discriminated against or disadvantaged because of several different aspects of their identity, resulting in a unique position of accumulated discrimination. Being color blind does not take away your unconscious bias and your prejudices, it can make you blind to the different realities of others. Action items- - Notice who speaks, and who isn’t present when biased talk occurs. Notice code words for ethnicity. Notice implicit stereotypes. - It takes a lot of courage to talk about personal experiences of ethnicity bias. If someone is willing to share these with you, listen consciously and acknowledge their story. - If you witness ethnicity bias at work, speak up. To bring about change, you must not be afraid to take the first step. We will fail when we fail to try.- Rosa Parks]]></summary></entry><entry><title type="html">Stumbling with Spike</title><link href="https://debjyoti0891.github.io/riscv/modelling/architecture/iss/2022/10/31/spike.html" rel="alternate" type="text/html" title="Stumbling with Spike" /><published>2022-10-31T08:00:00+00:00</published><updated>2022-10-31T08:00:00+00:00</updated><id>https://debjyoti0891.github.io/riscv/modelling/architecture/iss/2022/10/31/spike</id><content type="html" xml:base="https://debjyoti0891.github.io/riscv/modelling/architecture/iss/2022/10/31/spike.html"><![CDATA[<p>This post is intended to act as a quick reference guide to 
+installing dependencies, in case you want to build <code class="language-plaintext highlighter-rouge">Spike</code>
+on a machine where you do not have <code class="language-plaintext highlighter-rouge">sudo</code> priviledges.</p>
+
+<p><strong>Assumptions</strong>:</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">riscv64-unknown-linux-gnu</code> toolchain is already built and availble on the PATH.</li>
+  <li><code class="language-plaintext highlighter-rouge">Boost</code> is already available</li>
+  <li>A decent version of <code class="language-plaintext highlighter-rouge">GCC</code> is available
+In my case, I used <code class="language-plaintext highlighter-rouge">GCC-10.3.0</code>, with <code class="language-plaintext highlighter-rouge">Boost-1.76.0</code>.</li>
+</ul>
+
+<h2 id="install-dtc">Install <a href="https://git.launchpad.net/ubuntu/+source/device-tree-compiler/?h=applied/debian/sid">DTC</a></h2>
+<p>The device tree compiler (dtc) executable is a requirement for Spike. It can be compiled from scratch.
+The binary should be made available in the PATH environment variable.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>export PATH=$PATH:&lt;path to the binary&gt;
+</code></pre></div></div>
+<h2 id="install-proxykernel">Install <a href="https://github.com/riscv-software-src/riscv-pk">ProxyKernel</a></h2>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mkdir build
+cd build 
+../configure --prefix=&lt;install prefix&gt; --host=riscv64-unknown-linux-gnu
+make -j all
+make install
+export PATH=$PATH:&lt;install prefix&gt;/bin
+</code></pre></div></div>
+<h3 id="note">Note</h3>
+<ul>
+  <li>If you try to build in the root of the repository, the output file for <code class="language-plaintext highlighter-rouge">pk</code> does not get generated, as there is a directory with the same name. Hence, using a build folder helps!</li>
+</ul>
+
+<h2 id="install-spike">Install <a href="https://github.com/riscv-software-src/riscv-isa-sim">spike</a>.</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./configure --prefix=&lt;install prefix&gt; --with-boost=&lt;path to boost root&gt; --enable-commitlog --with-isa=RV64IMAFDCP 
+make -j all
+make install
+export PATH=$PATH:&lt;install prefix&gt;/bin
+</code></pre></div></div>
+
+<h3 id="note-1">Note:</h3>
+<ul>
+  <li>In my specific installation, Boost libraries could not be found
+  even after setting appropriate LD_LIBRARY_PATH. Explictly specifiying the path solved the issue.</li>
+  <li>Take a look at the output of <code class="language-plaintext highlighter-rouge">./configure --help</code> to find options of Spike that might be relevant. For example, <code class="language-plaintext highlighter-rouge">--enable-commitlog</code> was something that was relevant for me.</li>
+</ul>
+
+<h2 id="spike-execution">Spike Execution</h2>
+
+<h3 id="creating-the-executable">Creating the executable</h3>
+
+<p><code class="language-plaintext highlighter-rouge">riscv64-unknown-elf-gcc -o hello hello.c</code></p>
+
+<h3 id="actual-execution">Actual execution</h3>
+<p>To run spike with a program and log the commits to a file:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>spike  -m 1G --log-commits --log=spike_log.txt $(\which pk) hello 
+</code></pre></div></div>]]></content><author><name>Debjyoti Bhattacharjee</name><email>debjyoti [dot] bhattacharjee [at] imec [dot] be</email></author><category term="riscv" /><category term="modelling" /><category term="architecture" /><category term="iss" /><category term="modelling" /><category term="architecture" /><category term="micro" /><category term="architecture" /><summary type="html"><![CDATA[This post is intended to act as a quick reference guide to installing dependencies, in case you want to build Spike on a machine where you do not have sudo priviledges. Assumptions: riscv64-unknown-linux-gnu toolchain is already built and availble on the PATH. Boost is already available A decent version of GCC is available In my case, I used GCC-10.3.0, with Boost-1.76.0. Install DTC The device tree compiler (dtc) executable is a requirement for Spike. It can be compiled from scratch. The binary should be made available in the PATH environment variable. export PATH=$PATH:&lt;path to the binary&gt; Install ProxyKernel mkdir build cd build ../configure --prefix=&lt;install prefix&gt; --host=riscv64-unknown-linux-gnu make -j all make install export PATH=$PATH:&lt;install prefix&gt;/bin Note If you try to build in the root of the repository, the output file for pk does not get generated, as there is a directory with the same name. Hence, using a build folder helps! Install spike. ./configure --prefix=&lt;install prefix&gt; --with-boost=&lt;path to boost root&gt; --enable-commitlog --with-isa=RV64IMAFDCP make -j all make install export PATH=$PATH:&lt;install prefix&gt;/bin Note: In my specific installation, Boost libraries could not be found even after setting appropriate LD_LIBRARY_PATH. Explictly specifiying the path solved the issue. Take a look at the output of ./configure --help to find options of Spike that might be relevant. For example, --enable-commitlog was something that was relevant for me. Spike Execution Creating the executable riscv64-unknown-elf-gcc -o hello hello.c Actual execution To run spike with a program and log the commits to a file: spike -m 1G --log-commits --log=spike_log.txt $(\which pk) hello]]></summary></entry><entry><title type="html">A Fast and Furious Introduction to Sparta</title><link href="https://debjyoti0891.github.io/sparta/modelling/architecture/2021/11/07/sparta.html" rel="alternate" type="text/html" title="A Fast and Furious Introduction to Sparta" /><published>2021-11-07T08:00:00+00:00</published><updated>2021-11-07T08:00:00+00:00</updated><id>https://debjyoti0891.github.io/sparta/modelling/architecture/2021/11/07/sparta</id><content type="html" xml:base="https://debjyoti0891.github.io/sparta/modelling/architecture/2021/11/07/sparta.html"><![CDATA[<p><a href="https://sparcians.github.io/map/index.html">Sparta</a> is a modeling framework that can be used for a variety of architecture (or otherwise) modelling work. In this blog post, I present 
+an introduction to the basic bells and whistles of the framework. The entire tutorial is available via <a href="https://github.com/debjyoti0891/sparta-simplified">Github</a>.</p>
+
+<h3 id="usecase">Usecase</h3>
+<p>We extend the basic <a href="https://sparcians.github.io/map/skeleton_example.html">example</a> to introduce a new <code class="language-plaintext highlighter-rouge">sparta::Unit</code> Pipe. 
+Producer sends data to a Pipe. Pipe receives data and forwards this to a consumer. Consumer signals the Pipe that
+data is received. In turn, Pipe signals the producer that data has been received and the cycle continues.</p>
+
+<h3 id="pipe-definition-pipehpp">Pipe definition (Pipe.hpp)</h3>
+
+<p>Each sparta unit should have a ParameterSet (subclass of <code class="language-plaintext highlighter-rouge">sparta::ParameterSet</code> ). With each parameter, there can be a validation method attached,
+to check if valid values were set to the parameter and a name of the unit as well.</p>
+
+<p>For the Pipe, we consider 4 ports — two data ports and two signal ports.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    sparta::DataOutPort&lt;uint32_t&gt; pipe_out_port_{&amp;unit_port_set_, "pipe_out_port"};
+    sparta::DataInPort&lt;uint32_t&gt;  pipe_in_port_ {&amp;unit_port_set_, "pipe_in_port", sparta::SchedulingPhase::PortUpdate, 1};
+    sparta::SignalInPort          pipe_go_port_ {&amp;unit_port_set_, "pipe_go_port"};
+    sparta::SignalOutPort         pipe_go_producer_port_ {&amp;unit_port_set_, "pipe_go_producer_port"};
+</code></pre></div></div>
+
+<p>The DataInPort receives the data from the producer and sends it to the consumer
+using the DataOutPort. Similarly, it receives acknowledgement of the receipt by the consumer using the SignalInPort,
+which it passes along to the producer using the SignalOutPort.</p>
+
+<p>Corresponding to each input port, we can define a handler to perform some action on the received data.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+    // Pipe receive handler
+    // receive the data from the producer 
+    void receiveData_(const uint32_t &amp; dat);
+
+    // receive signal from the consumer and send a singal to the producer
+    void receiveSignal_();
+
+</code></pre></div></div>
+
+<p>We can also define events, that will be triggered after a specified duration on scheduling. For example,
+we define a event to delay signalling the producer,  after a signal is received from the consumer. In this case,
+delay is 5 cycles and <code class="language-plaintext highlighter-rouge">sendData_</code> is called as its handler.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    // An event to be scheduled in the sparta::SchedulingPhase::Tick
+    // phase if data is received
+    sparta::Event&lt;&gt; event_do_some_work_{&amp;unit_event_set_, "do_work_event",
+                                        CREATE_SPARTA_HANDLER(Pipe, sendData_),5};
+</code></pre></div></div>
+
+<p>Statistics can be measured quite easily.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Stats
+    sparta::Counter num_processed_{&amp;unit_stat_set_, "num_processed_",
+                                  "Number of items produced", sparta::Counter::COUNT_NORMAL};
+</code></pre></div></div>
+<p>To use such a counter, a simple <code class="language-plaintext highlighter-rouge">++num_processed_</code> would suffice.</p>
+
+<p>Finally, loggers can be set up per Unit.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sparta::log::MessageSource pipe_info_;
+</code></pre></div></div>
+
+<h3 id="pipe-implementation-pipecpp">Pipe implementation (Pipe.cpp)</h3>
+<ul>
+  <li>Start by defining the name of the Unit</li>
+  <li>The handler methods are tied to the ports in the constructor.
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  // Register a handler when the producer sends a data
+  pipe_in_port_.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Pipe, receiveData_, uint32_t));
+
+  // Register a go-handler when the consumer sends a go request
+  pipe_go_port_.registerConsumerHandler(CREATE_SPARTA_HANDLER(Pipe, receiveSignal_));
+</code></pre></div>    </div>
+    <p>These methods are called when the data is received at the port.</p>
+  </li>
+  <li>We schedule the event inside <code class="language-plaintext highlighter-rouge">receiveData_</code>.
+  <code class="language-plaintext highlighter-rouge">event_do_some_work_.schedule();</code>
+  This would trigger <code class="language-plaintext highlighter-rouge">sendData_</code> after 5 cycles.</li>
+</ul>
+
+<h3 id="building-the-simulator-tree-stagesimhppcpp">Building the simulator tree (StageSim{.hpp,.cpp})</h3>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">StageSim.hpp</code> is the top level module definition.</li>
+  <li>In <code class="language-plaintext highlighter-rouge">StageSim.cpp</code>, a bunch of setup needs to be done, in order to build the simulator tree.
+    <ul>
+      <li>In the constructor, the units and the corresponding parameter sets are made available.
+  <code class="language-plaintext highlighter-rouge">getResourceSet()-&gt;addResourceFactory&lt;sparta::ResourceFactory&lt;Pipe, Pipe::PipeParameterSet&gt;&gt;();</code></li>
+      <li>The destructor is relatively simple.</li>
+      <li><code class="language-plaintext highlighter-rouge">buildTree_</code> is one of the important things. Basically, each node is created as a <code class="language-plaintext highlighter-rouge">ResourceTreeNode</code>
+  and added to the <code class="language-plaintext highlighter-rouge">to_delete_</code> vector. Reading the parameters is performed and the constructor is called using these parameters.</li>
+      <li><code class="language-plaintext highlighter-rouge">configureTree_</code> is not used in the current context.</li>
+      <li><code class="language-plaintext highlighter-rouge">bindTree_</code> is used to connect the different ports! An example is
+  <code class="language-plaintext highlighter-rouge">// bind pipe to the producer
+  sparta::bind(root_tree_node-&gt;getChildAs&lt;sparta::Port&gt;(nodeName.str() + ".ports.producer_out_port"),
+             root_tree_node-&gt;getChildAs&lt;sparta::Port&gt;("pipe.ports.pipe_in_port"));
+ </code>
+  It can be observed that the port names are hierarchical. <code class="language-plaintext highlighter-rouge">pipe.ports.pipe_in_port</code> : <code class="language-plaintext highlighter-rouge">pipe</code> is the unit, under which
+  <code class="language-plaintext highlighter-rouge">ports</code> is the set of ports and <code class="language-plaintext highlighter-rouge">pipe_in_port</code> is the name of the port.</li>
+    </ul>
+  </li>
+</ul>
+
+<h3 id="command-line-simulator-setup-main_3scpp">Command line simulator setup (main_3s.cpp)</h3>
+<ul>
+  <li>Not much changes were made to the original example, except the following.
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   // Create the simulator object for population -- does not
+      // instantiate nor run it.
+      sparta::Scheduler scheduler;
+      StageSim sim(scheduler, be_noisy);
+</code></pre></div>    </div>
+  </li>
+  <li>Now, we are ready to run the simulation
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  cls.populateSimulation(&amp;sim);
+  cls.runSimulator(&amp;sim);
+  cls.postProcess(&amp;sim);
+</code></pre></div>    </div>
+  </li>
+</ul>
+
+<h3 id="running-the-example">Running the example</h3>
+
+<p>In the current environment, the following modules were available.
+Currently Loaded Modulefiles:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code> 1) GCCcore/10.3.0                   5) numactl/2.0.14-GCCcore-10.3.0      9) hwloc/2.4.1-GCCcore-10.3.0      13) libfabric/1.12.1-GCCcore-10.3.0  17) FlexiBLAS/3.0.4-GCC-10.3.0      21) foss/2021a                      25) Tcl/8.6.11-GCCcore-10.3.0     29) RapidJSON/1.1.0-GCCcore-10.3.0  33) cmake-3.17.5  
+ 2) zlib/1.2.11-GCCcore-10.3.0       6) XZ/5.2.5-GCCcore-10.3.0           10) OpenSSL/1.1                     14) PMIx/3.2.3-GCCcore-10.3.0        18) gompi/2021a                     22) yaml-cpp-0.6.2                  26) SQLite/3.35.4-GCCcore-10.3.0  30) bzip2/1.0.8-GCCcore-10.3.0      
+ 3) binutils/2.36.1-GCCcore-10.3.0   7) libxml2/2.9.10-GCCcore-10.3.0     11) libevent/2.1.12-GCCcore-10.3.0  15) OpenMPI/4.1.1-GCC-10.3.0         19) FFTW/3.3.9-gompi-2021a          23) ncurses/6.2-GCCcore-10.3.0      27) Szip/2.1.1-GCCcore-10.3.0     31) GMP/6.2.1-GCCcore-10.3.0        
+ 4) GCC/10.3.0                       8) libpciaccess/0.16-GCCcore-10.3.0  12) UCX/1.10.0-GCCcore-10.3.0       16) OpenBLAS/0.3.15-GCC-10.3.0       20) ScaLAPACK/2.1.0-gompi-2021a-fb  24) libreadline/8.1-GCCcore-10.3.0  28) HDF5/1.10.7-gompi-2021a       32) boost-1.77.0   ```
+</code></pre></div></div>
+
+<p>To build the simulator,</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code> mkdir build
+ cd build
+ cmake ..
+ make sparta_3stage
+</code></pre></div></div>
+
+<p>Sparta has a ton of options, which can be viewed as follows:
+<code class="language-plaintext highlighter-rouge">sparta_3stage --help</code></p>
+
+<ul>
+  <li>
+    <p>To see the <strong>simulation tree</strong>,<code class="language-plaintext highlighter-rouge">sparta_3stage --show-tree</code></p>
+
+    <p>This is a relatively simple way to see which ports are connected to what.</p>
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  top : &lt;top (root)&gt; (privacy: 0)
+  +-descendant_attached : &lt;top.descendant_attached name:"descendant_attached" datat:(sparta::TreeNode)  observers:1 posted:55&gt; (privacy: 0)
+  +-consumer : &lt;top.consumer resource: "consumer"&gt; (privacy: 0)
+  | +-params : &lt;top.consumer.params 1 params&gt; {builtin} (privacy: 0)
+  | | +-num_producers : [&lt;top.consumer.params.num_producers tags:[SPARTA_Parameter]&gt;]&lt;param uint32_t num_producers=1, def=1, write=0 read: 1 ignored: 0&gt; (privacy: 0)
+  | +-ports : &lt;top.consumer.ports&gt; (privacy: 0)
+  | | +-consumer_in_port : [bound to] {pipe_out_port (top.pipe.ports.pipe_out_port)} (privacy: 0)
+  | | | +-events : &lt;top.consumer.ports.consumer_in_port.events 1 events&gt; {builtin} (privacy: 0)
+  | | | | +-consumer_in_port_forward_event : &lt;top.consumer.ports.consumer_in_port.events.consumer_in_port_forward_event&gt; (privacy: 0)
+  | | +-producer0_go_port : [bound to] {pipe_go_port (top.pipe.ports.pipe_go_port)} (privacy: 0)
+  | +-events : &lt;top.consumer.events 1 events&gt; {builtin} (privacy: 0)
+  | | +-ev_data_arrived : &lt;top.consumer.events.ev_data_arrived&gt; (privacy: 0)
+  | +-stats : &lt;top.consumer.stats 0 stats, 1 counters&gt; {builtin} (privacy: 0)
+  | | +-num_consumed : &lt;top.consumer.stats.num_consumed val:100 normal vis:100000000&gt; (privacy: 0)
+  | +-? : &lt;top.consumer:log_msg_src cat:"info" observed:false msgs:0&gt; (_sparta_log_msg_source_[0])  (privacy: 0)
+  | +-? : &lt;top.consumer:log_msg_src cat:"warning" observed:true msgs:0&gt; (_sparta_log_msg_source_[1])  (privacy: 0)
+  | +-? : &lt;top.consumer:log_msg_src cat:"debug" observed:false msgs:0&gt; (_sparta_log_msg_source_[2])  (privacy: 0)
+  | +-? : &lt;top.consumer:log_msg_src cat:"info" observed:false msgs:0&gt; (_sparta_log_msg_source_[3])  (privacy: 0)
+  +-pipe : &lt;top.pipe resource: "pipe"&gt; (privacy: 0)
+  | +-params : &lt;top.pipe.params 0 params&gt; {builtin} (privacy: 0)
+  | +-ports : &lt;top.pipe.ports&gt; (privacy: 0)
+  | | +-pipe_out_port : [bound to] {consumer_in_port (top.consumer.ports.consumer_in_port)} (privacy: 0)
+  | | +-pipe_in_port : [bound to] {producer_out_port (top.producer0.ports.producer_out_port)} (privacy: 0)
+  | | | +-events : &lt;top.pipe.ports.pipe_in_port.events 1 events&gt; {builtin} (privacy: 0)
+  | | | | +-pipe_in_port_forward_event : &lt;top.pipe.ports.pipe_in_port.events.pipe_in_port_forward_event&gt; (privacy: 0)
+  | | +-pipe_go_port : [bound to] {producer0_go_port (top.consumer.ports.producer0_go_port)} (privacy: 0)
+  | | | +-events : &lt;top.pipe.ports.pipe_go_port.events 1 events&gt; {builtin} (privacy: 0)
+  | | | | +-pipe_go_port_forward_event : &lt;top.pipe.ports.pipe_go_port.events.pipe_go_port_forward_event&gt; (privacy: 0)
+  | | +-pipe_go_producer_port : [bound to] {producer_go_port (top.producer0.ports.producer_go_port)} (privacy: 0)
+  | +-events : &lt;top.pipe.events 1 events&gt; {builtin} (privacy: 0)
+  | | +-do_work_event : &lt;top.pipe.events.do_work_event&gt; (privacy: 0)
+  | +-stats : &lt;top.pipe.stats 0 stats, 1 counters&gt; {builtin} (privacy: 0)
+  | | +-num_processed_ : &lt;top.pipe.stats.num_processed_ val:101 normal vis:100000000&gt; (privacy: 0)
+  | +-? : &lt;top.pipe:log_msg_src cat:"info" observed:false msgs:0&gt; (_sparta_log_msg_source_[0])  (privacy: 0)
+  | +-? : &lt;top.pipe:log_msg_src cat:"warning" observed:true msgs:0&gt; (_sparta_log_msg_source_[1])  (privacy: 0)
+  | +-? : &lt;top.pipe:log_msg_src cat:"debug" observed:false msgs:0&gt; (_sparta_log_msg_source_[2])  (privacy: 0)
+  | +-? : &lt;top.pipe:log_msg_src cat:"info" observed:false msgs:0&gt; (_sparta_log_msg_source_[3])  (privacy: 0)
+  +-producer0 : &lt;top.producer0 resource: "producer"&gt; (producer[0])  (privacy: 0)
+  | +-params : &lt;top.producer0.params 3 params&gt; {builtin} (privacy: 0)
+  | | +-max_ints_to_send : [&lt;top.producer0.params.max_ints_to_send tags:[SPARTA_Parameter]&gt;]&lt;param uint32_t max_ints_to_send=100, def=100, write=0 read: 1 ignored: 0&gt; (privacy: 0)
+  | | +-test_param : [&lt;top.producer0.params.test_param tags:[SPARTA_Parameter]&gt;]&lt;param uint32_t test_param=1, def=0, write=1 read: 1 ignored: 0 VOLATILE&gt; (privacy: 0)
+  | | +-arch_override_test_param : [&lt;top.producer0.params.arch_override_test_param tags:[SPARTA_Parameter]&gt;]&lt;param std::string arch_override_test_param=reset_in_constructor, def=arch_override_default_value, write=1 read: 0 ignored: 1&gt; (privacy: 0)
+  | +-ports : &lt;top.producer0.ports&gt; (privacy: 0)
+  | | +-producer_out_port : [bound to] {pipe_in_port (top.pipe.ports.pipe_in_port)} (privacy: 0)
+  | | +-producer_go_port : [bound to] {pipe_go_producer_port (top.pipe.ports.pipe_go_producer_port)} (privacy: 0)
+  | | | +-events : &lt;top.producer0.ports.producer_go_port.events 1 events&gt; {builtin} (privacy: 0)
+  | | | | +-producer_go_port_forward_event : &lt;top.producer0.ports.producer_go_port.events.producer_go_port_forward_event&gt; (privacy: 0)
+  | +-events : &lt;top.producer0.events 1 events&gt; {builtin} (privacy: 0)
+  | | +-ev_producing_event : &lt;top.producer0.events.ev_producing_event&gt; (privacy: 0)
+  | +-stats : &lt;top.producer0.stats 0 stats, 1 counters&gt; {builtin} (privacy: 0)
+  | | +-num_produced : &lt;top.producer0.stats.num_produced val:100 normal vis:100000000&gt; (privacy: 0)
+  | +-? : &lt;top.producer0:log_msg_src cat:"info" observed:false msgs:0&gt; (_sparta_log_msg_source_[0])  (privacy: 0)
+  | +-? : &lt;top.producer0:log_msg_src cat:"warning" observed:true msgs:1&gt; (_sparta_log_msg_source_[1])  (privacy: 0)
+  | +-? : &lt;top.producer0:log_msg_src cat:"debug" observed:false msgs:0&gt; (_sparta_log_msg_source_[2])  (privacy: 0)
+  | +-? : &lt;top.producer0:log_msg_src cat:"info" observed:false msgs:0&gt; (_sparta_log_msg_source_[3])  (privacy: 0)
+  +-sparta_expression_trigger_fired : &lt;top.sparta_expression_trigger_fired name:"sparta_expression_trigger_fired" datat:(std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;)  observers:0 posted:0&gt; (privacy: 0)
+</code></pre></div>    </div>
+  </li>
+  <li>To generate an html report, <code class="language-plaintext highlighter-rouge">./sparta_3stage --report-all output.html html</code> . The report format could also be <code class="language-plaintext highlighter-rouge">yaml</code>.</li>
+  <li>
+    <p>Selective logging can be done. For example to view logs related to <code class="language-plaintext highlighter-rouge">pipe</code>,</p>
+
+    <p><code class="language-plaintext highlighter-rouge"> ./sparta_3stage -l top.pipe info pipe_info.txt</code>
+  This would dump the information in a log file, <code class="language-plaintext highlighter-rouge">pipe_info.txt</code>.</p>
+  </li>
+  <li>A list of command line usage scenarios is already documented in the main (documentation](https://sparcians.github.io/map/core_example.html) of Sparta.</li>
+</ul>
+
+<h3 id="references">References</h3>
+<ul>
+  <li><strong>Sparta Docs</strong> : <a href="https://sparcians.github.io/map/index.html">[Link]</a></li>
+  <li><strong>Tutorial Code</strong>: <a href="https://github.com/debjyoti0891/sparta-simplified">[Github  link]</a></li>
+</ul>]]></content><author><name>Debjyoti Bhattacharjee</name><email>debjyoti [dot] bhattacharjee [at] imec [dot] be</email></author><category term="sparta" /><category term="modelling" /><category term="architecture" /><category term="modelling" /><category term="architecture" /><category term="micro-architecture" /><summary type="html"><![CDATA[Sparta is a modeling framework that can be used for a variety of architecture (or otherwise) modelling work. In this blog post, I present an introduction to the basic bells and whistles of the framework. The entire tutorial is available via Github.]]></summary></entry><entry><title type="html">Semantically Organizing Images</title><link href="https://debjyoti0891.github.io/graph/learning/rdf/images/2021/07/10/rdf.html" rel="alternate" type="text/html" title="Semantically Organizing Images" /><published>2021-07-10T08:00:00+00:00</published><updated>2021-07-10T08:00:00+00:00</updated><id>https://debjyoti0891.github.io/graph/learning/rdf/images/2021/07/10/rdf</id><content type="html" xml:base="https://debjyoti0891.github.io/graph/learning/rdf/images/2021/07/10/rdf.html"><![CDATA[<figure class="quote">
+  <blockquote>
+    Take care of all your memories. For you cannot relive them. 
+  </blockquote>
+  <figcaption>
+    &mdash; Bob Dylan 
+    <!-- <cite>Mental models</cite>   -->
+  </figcaption>
+</figure>
+<p>My collection of images have grown to monstrous scales (more than 600GB) and continues to grow everyday.
+The primary culprit being my trigger happy nature, whenever I go out my camera (Nikon D7200). Given my
+rather laid back nature to post process the images and categorize them neatly in folders, my collection currently
+stands fragmented amidst a chaotic mix of folders spread across multiple hard-disks, without 
+any labels in a majority of cases. With this problem in mind, I started planning a “programmatic” way to get 
+out of this mess and to take care of the memories!</p>
+
+<p>With Python as my ally, I started to see which libraries could be used to get started. Turns out <a href="https://exiftool.org/">Exiftool</a> 
+is a very handy and mature tool to look at the EXIF data of images and it also has a python interface. Using this 
+as a baseline, I built a relatively straight forward script to bring images from multiple locations into a single folder. 
+Thereafter, using Exiftool to extract all the meta data, the images are organized sorted by year. Under each year, events are separately put in a folder. 
+An event is a day which has &gt;= threshold images. If consecutive days have events, then they are merged into a single event.
+The entire script is available on <a href="https://github.com/debjyoti0891/utilities/tree/master/copy_images">Github</a>.</p>
+
+<p>Organizing images in the chronologically named folders solves only a part of the problem. These are still image dumps, but not memories such as the ones 
+offered by <a href="https://www.facebook.com/help/1056848067697293/">Facebook</a>, <a href="https://support.google.com/photos/answer/9454489?hl=en&amp;co=GENIE.Platform%3DAndroid">Google Photos</a>, etc.
+This is where my interest for <a href="https://en.wikipedia.org/wiki/Semantic_network">semantic networks</a> comes into the picture. Simply put, a semantic network is a knowledge representation structure that represents semantic relations between concepts in a network. 
+Given the fact pictures have multiple entities and a ton of metadata, a semantic network would be useful to navigate images or find images of interest. For example, a query could be to <em>find all pictures with person A and B</em>. 
+Of course, detecting faces present in the images and tagging them with a name would be indeed needed before a semantic network could be built. Tools powered by AI such as <a href="https://pypi.org/project/deepface/">Deepface</a> could be readily used.</p>
+
+<p>Neo4j is a graph data database, which can be used for storing the semantic network. In order to actually build a semantic network, I started digging into Neo4j RDF and Semantics <a href="https://neo4j.com/labs/neosemantics/">toolkit</a>.  In the 
+context of representing the records, <a href="https://www.w3.org/RDF/">Resource Description Framework (RDF)</a> came into the picture. RDF is a standard model for data interchange across the web and used extensively apparently. RDF uses XML representation
+for defining relationships of the form <em>subject-&gt;predicate-&gt;object</em>, which is called a <em>triple</em>. These RDF records can be directly imported into the graph database and then queried for efficiently navigating all
+the images. There is a nicely presented <a href="http://www.linkeddatatools.com/semantic-web-basics">tutorial</a> on the topic. As a next step, I plan to build RDF entires for the entire image dump that I have and hopefully have 
+a better way to navigate the memories.</p>
+
+<h3 id="references">References</h3>
+<ul>
+  <li><strong>Code</strong> : Preliminary code for organizing images. <a href="https://github.com/debjyoti0891/utilities/tree/master/copy_images">[Link]</a></li>
+  <li><strong>Good tutorial</strong>: This tutorial provides a relatively detailed introduction to RDF <a href="http://www.linkeddatatools.com/semantic-web-basics">[Link]</a></li>
+  <li><strong>Exiftool</strong>: <a href="https://exiftool.org/">[Link]</a></li>
+  <li><strong>Deepface</strong>: <a href="ttps://pypi.org/project/deepface/">[Link]</a></li>
+</ul>]]></content><author><name>Debjyoti Bhattacharjee</name><email>debjyoti [dot] bhattacharjee [at] imec [dot] be</email></author><category term="graph" /><category term="learning" /><category term="RDF" /><category term="images" /><category term="graph" /><category term="inference" /><category term="neo4j" /><category term="RDF" /><category term="image-processing" /><summary type="html"><![CDATA[Take care of all your memories. For you cannot relive them. &mdash; Bob Dylan My collection of images have grown to monstrous scales (more than 600GB) and continues to grow everyday. The primary culprit being my trigger happy nature, whenever I go out my camera (Nikon D7200). Given my rather laid back nature to post process the images and categorize them neatly in folders, my collection currently stands fragmented amidst a chaotic mix of folders spread across multiple hard-disks, without any labels in a majority of cases. With this problem in mind, I started planning a “programmatic” way to get out of this mess and to take care of the memories!]]></summary></entry><entry><title type="html">Code Generation with TVM</title><link href="https://debjyoti0891.github.io/machine/learning/tvm/2021/04/30/tvm-getting-started.html" rel="alternate" type="text/html" title="Code Generation with TVM" /><published>2021-04-30T23:32:56+00:00</published><updated>2021-04-30T23:32:56+00:00</updated><id>https://debjyoti0891.github.io/machine/learning/tvm/2021/04/30/tvm-getting%20started</id><content type="html" xml:base="https://debjyoti0891.github.io/machine/learning/tvm/2021/04/30/tvm-getting-started.html"><![CDATA[<p><a href="https://tvm.apache.org/">Apache TVM</a> is yet another compiler framework (<a href="https://github.com/ONNC/onnc">ONNC</a>, <a href="https://mlir.llvm.org/">MLIR</a>, etc.) for machine learning workloads targeted at supporting variety of hardware backends. It supports “Just in Time compilation” for the supported backends. It represents the workloads using “Relay” program, which 
+can be then lowered to “<a href="https://tvm.apache.org/docs/api/python/ir.html#tvm.ir.Attrs.list_field_info">TVM IR</a>” and scheduled for execution.</p>
+
+<p>I started to look at the <a href="https://tvm.apache.org/2020/07/15/how-to-bring-your-own-codegen-to-tvm">tutorial</a> for code generation using <a href="https://github.com/oneapi-src/oneDNN">DNNL</a>. The tutorial provides a relatively comprehensive guide towards 
+TVM with a custom code generator, which emits JSON for certain Relay operators marked for the specific code generation backend (in this case “dnnl”).</p>
+
+<p>By simply enabling the DNNL codegen in the config.cmake and compiling tvm, it is possible to generate the json from a model using the following piece of code.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mod = relay.transform.AnnotateTarget(["dnnl"])(mod)
+mod = relay.transform.MergeCompilerRegions()(mod)
+mod = relay.transform.PartitionGraph()(mod)
+graph_json, lib, params = relay.build(mod, target='llvm')
+print('Graph json:', graph_json)
+</code></pre></div></div>
+<p>In the first step, the operators supported by the backend are annotated, which are then merged. The relay graph is partitioned and using the “build” step, the code is generated. For the operators which are not supported by the code generator, these would be executed in TVM. The generated lib includes the host module and the execution modules for the part that cannot be offloaded to the custom backend accelerator. The host module will invoke the accelerator module in runtime when it executes a graph node that is annotated for the accelerator. Currently, TVM does not support ahead of time compilation, which would allow generation of executable at compile time itself, which made TVM unsuitable for my current work.</p>
+
+<p>In summary, the framework has a lot of features for optimizing machine learning workloads without a lot of effort. However, it might be a bit complex to get started off with the documentation fragmented over a variety of pages. A relatively good order to look at the tutorials in my opinion is listed below.</p>
+
+<h3 id="references">References</h3>
+<ul>
+  <li><strong>Good tutorial</strong>: This tutorial provides the quickest way to understand the primitives of a relay program. <a href="http://tvm.d2l.ai/chapter_getting_started/vector_add.html">[Link]</a></li>
+  <li><strong>TVM + Cuda</strong> : A jupyter notebook that shows how to use CUDA as a backend. <a href="https://github.com/andersy005/tvm-in-action/blob/master/tvm-tutorials/getting-started.ipynb">[Link]</a></li>
+  <li><strong>Beginner guide</strong> : This is a good starting point to understand the TVM code base structure. <a href="https://tvm.apache.org/docs/dev/codebase_walkthrough.html">[Link]</a></li>
+  <li><strong>Good code gen tutorial</strong> : The tutorial provides a relatively comprehensive guide towards 
+TVM with a custom code generator, which emits codes for certain Relay operators marked for the specific code generation backend.  <a href="https://tvm.apache.org/2020/07/15/how-to-bring-your-own-codegen-to-tvm">[Link]</a></li>
+  <li><strong>Available relay passes</strong>: A number of built-in passes are already provided to optimize the relay graph. However, the passes might emit errors if the input relay graph has custom operators. <a href="https://tvm.apache.org/docs/api/python/relay/transform.html">[Link]</a></li>
+</ul>]]></content><author><name>Debjyoti Bhattacharjee</name><email>debjyoti [dot] bhattacharjee [at] imec [dot] be</email></author><category term="machine" /><category term="learning" /><category term="TVM" /><category term="ai" /><category term="ml" /><category term="&quot;neural" /><category term="network&quot;" /><category term="tvm" /><category term="compiler" /><summary type="html"><![CDATA[Apache TVM is yet another compiler framework (ONNC, MLIR, etc.) for machine learning workloads targeted at supporting variety of hardware backends. It supports “Just in Time compilation” for the supported backends. It represents the workloads using “Relay” program, which can be then lowered to “TVM IR” and scheduled for execution.]]></summary></entry><entry><title type="html">Welcome to my blog</title><link href="https://debjyoti0891.github.io/eda/2020/03/04/first-post.html" rel="alternate" type="text/html" title="Welcome to my blog" /><published>2020-03-04T16:32:56+00:00</published><updated>2020-03-04T16:32:56+00:00</updated><id>https://debjyoti0891.github.io/eda/2020/03/04/first-post</id><content type="html" xml:base="https://debjyoti0891.github.io/eda/2020/03/04/first-post.html"><![CDATA[<p>My keen interest in hardware technologies, coupled with my background in computer science, has driven me to pursue research in the direction of design automation algorithms and tools for architectures, for a variety of technologies. Recently, I am learning about the state-of-the-art in Deep Neural Networks~(NN) and understanding the NN strutures (<a href="https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf" target="_blank">Alexnet</a>, <a href="https://arxiv.org/abs/1512.03385" target="_blank">Resnet</a>, etc).</p>
+
+<p>In parallel, I have started using <a href="https://pytorch.org/">PyTorch</a> for implementation of DNNs. For the purpose of designing efficient NN accelerators, the first step is to find a way to extract an exact description of the NN graph. I found out the possiblity of finding the execution traces of the defined NNs using <a href="https://pytorch.org/docs/stable/jit.html#mixing-tracing-and-scripting">Torchscript</a> and then parsing them into a directed graph. However, this is almost an hack! A better alternative was to look at the Open Neural Network Exchange (<a href="https://onnx.ai/">ONNX</a>) format for NNs. Each ONNX model is self contained and can be accessed as a <a href="#proto">ProtoBuf</a> object. PyTorch and most other deep NN frameworks allows models to be directly written to ONNX format, which makes it a common representation to be used for the process of design automation of NN accelerators.</p>
+
+<p>In the upcoming blogs, expect more details of design automation process for NN accelerators to be unveiled.</p>
+
+<h3 id="references">References</h3>
+<ul>
+  <li><a href="https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf" target="_blank">ImageNet Classification with Deep ConvolutionalNeural Networks</a></li>
+  <li><a href="https://arxiv.org/abs/1512.03385" target="_blank">Deep Residual Learning for Image Recognition</a></li>
+  <li><a href="https://developers.google.com/protocol-buffers/docs/overview" target="_blank">Introduction to protocol buffers</a></li>
+</ul>]]></content><author><name>Debjyoti Bhattacharjee</name><email>debjyoti [dot] bhattacharjee [at] imec [dot] be</email></author><category term="eda" /><category term="introduction" /><category term="ai" /><category term="ml" /><category term="eda" /><category term="pytorch" /><summary type="html"><![CDATA[My keen interest in hardware technologies, coupled with my background in computer science, has driven me to pursue research in the direction of design automation algorithms and tools for architectures, for a variety of technologies. Recently, I am learning about the state-of-the-art in Deep Neural Networks~(NN) and understanding the NN strutures (Alexnet, Resnet, etc).]]></summary></entry></feed>
