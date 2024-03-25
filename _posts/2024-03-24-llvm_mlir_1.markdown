@@ -1,0 +1,49 @@
+---
+layout: post
+title:  "Optimizing RISC-V Performance with MLIR/LLVM: Custom Extensions and Intrinsics [Part 1]"
+date:   2024-03-23 10:00:00 +0200
+categories: compilation mlir riscv
+tags: compilation llvm mlir
+comments: true
+---
+```%mermaid
+%% graph LR;
+graph TD;
+
+subgraph MLIR
+    A[High-Level Operation] --> D[MLIR Generic Operations]
+    D -->|Optimization Passes <br> Target Specific Pass| C[Partial LLVM IR <br> Lower to llvm custom intrinsic]
+    C --> E[MLIR LLVM Dialect]
+end
+
+subgraph LLVM
+    E -->|mlir-translate| F[LLVM IR]
+    F --> G[Standard LLVM RISC-V target lowering]
+end
+
+subgraph Output
+    G --> H[Binary Object File]
+end
+```
+
+<a id="part1"></a>
+## PART 1: Define the Instruction Encoding
+
+In this example, the addition of four new approximate multiplication instructions for floating point numbers is considered. These instructions, known as `fmul_exp_m_s`, `fmul_exp_s`, `fmul_exp_m`, and `fmul_exp`, serve as proxies for approximate multiplication operations within RISC-V processors. The hardware implementation details are not discussed in this blog. The individual instruction encodings are provided below.
+ ```
+# instruction encoding
+fmul_exp_m_s rs2 rs1 rd 31..25=0b1111100 14..12=0b111 6..0=0b0001011
+fmul_exp_s rs2 rs1 rd 31..25=0b1011100 14..12=0b111 6..0=0b0001011
+fmul_exp_m rs2 rs1 rd 31..25=0b1101100 14..12=0b111 6..0=0b0001011
+fmul_exp rs2 rs1 rd 31..25=0b1001100 14..12=0b111 6..0=0b0001011
+ ```
+
+
+### References
++ **Sparta Docs** : [[Link]](https://sparcians.github.io/map/index.html)
++ **Tutorial Code**: [[Github  link]](https://github.com/debjyoti0891/sparta-simplified)
+
+
+
+
+
