@@ -18,12 +18,12 @@ For most of the neural networks, floating point multiply-accumulate (MAC) operat
 dominate majority of the computation. One of the approaches to reduce the compute overhead
 could be to use approximate operations. For example, the floating point multiply could be approximated . For the sake
 of simplicity, we can consider 4 variants of this.
-- `fmul_exp`: multiply  considering the exponent bits only of a floating point 32b (fp32) number
-- `fmul_exp_s`: multiply  considering the exponent and sign bits of a floating point 32b (fp32) number
-- `fmul_exp_m`: multiply  considering the exponent and mantissa bits of a floating point 32b (fp32) number
-- `fmul_exp_s_m`multiply  considering all the sign, mantissa and exponent bits  of a floating point 32b (fp32) number
-We ignore the underlying details of each of these the exact behavior for simplicity.
+- `fmul_exp`: multiply  considering the exponent bits only of floating point 32b (fp32) numbers
+- `fmul_exp_s`: multiply  considering the exponent and sign bits of two fp32 numbers
+- `fmul_exp_m`: multiply  considering the exponent and mantissa bits of two fp32 numbers
+- `fmul_exp_s_m`multiply  considering all the sign, mantissa and exponent bits  two fp32 numbers
 
+For sake of simplicity, we ignore the underlying mathematical and hardware implementation details of each of these instructions.
 The goal is to have a flow starting from a high level description of the algorithm in one of the MLIR Dialects that can eventually run on a RISC-V processor with custom hardware support.
 
 
@@ -108,7 +108,7 @@ We break this problem into multiple parts and explain the solution for each part
   ```
 
 - *Adding support for new instructions in LLVM RISC-V Target*: This involves defining the instruction encoding based
- on the RISC-V opcode space and writing the code in RISC-V target of the LLVM backend to lower the intrinsics appropriately into the corresponding custom instruction. [Additional details coming soon]()
+ on the RISC-V opcode space and writing the code in RISC-V target of the LLVM backend to lower the intrinsics appropriately into the corresponding custom instruction (`fmul_exp`). [Additional details coming soon]()
 
   ```bash
   llc -march=riscv64 -mattr=+f,+xnn -target-abi=lp64 -O2 -filetype=asm benchmark_llvm.ll > benchmark_llvm.s
