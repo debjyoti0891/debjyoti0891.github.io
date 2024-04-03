@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Optimizing RISC-V Performance with MLIR/LLVM: Custom Extensions and Intrinsics [Part 1]"
+title:  "HW-SW co-design in the RISC-V Ecosystem"
 date:   2024-03-23 10:00:00 +0200
 categories: compilation mlir riscv
 tags: compilation llvm mlir
@@ -8,43 +8,164 @@ mermaid: true
 comments: true
 ---
 
-```mermaid
-graph TD;
+In the ever-evolving landscape of computing, the synergy between hardware and software has become increasingly crucial for enabling efficient computation. Hardware-software co-design
+ is the bridge that connects these two realms, allowing us to create efficient, optimized systems. In this blog post, we delve into an end-to-end example of enabling
+approximate computation instructions, starting from MLIR (Multi-Level Intermediate Representation) representation, lowering via LLVM (Low-Level Virtual Machine) and eventually runs on a RISC-V based processing system using Spike, a RISC-V ISA simulator.
 
-subgraph MLIR
-    A[High-Level Operation] --> D[MLIR Generic Operations]
-    D -->|Optimization Passes <br> Target Specific Pass| C[Partial LLVM IR <br> Lower to llvm custom intrinsic]
-    C --> E[MLIR LLVM Dialect]
-end
+## The problem statement
 
-subgraph LLVM
-    E -->|mlir-translate| F[LLVM IR]
-    F --> G[Standard LLVM RISC-V target lowering]
-end
+For most of the neural networks, floating point multiply-accumulate (MAC) operations
+dominate majority of the computation. One of the approaches to reduce the compute overhead
+could be to use approximate operations. For example, the floating point multiply could be approximated . For the sake
+of simplicity, we can consider 4 variants of this.
+- `fmul_exp`: multiply  considering the exponent bits only of a floating point 32b (fp32) number
+- `fmul_exp_s`: multiply  considering the exponent and sign bits of a floating point 32b (fp32) number
+- `fmul_exp_m`: multiply  considering the exponent and mantissa bits of a floating point 32b (fp32) number
+- `fmul_exp_s_m`multiply  considering all the sign, mantissa and exponent bits  of a floating point 32b (fp32) number
+We ignore the underlying details of each of these the exact behavior for simplicity.
 
-subgraph Output
-    G --> H[Binary Object File]
-end
-```
+The goal is to have a flow starting from a high level description of the algorithm in one of the MLIR Dialects that can eventually run on a RISC-V processor with custom hardware support.
 
-<a id="part1"></a>
-## PART 1: Define the Instruction Encoding
 
-In this example, the addition of four new approximate multiplication instructions for floating point numbers is considered. These instructions, known as `fmul_exp_m_s`, `fmul_exp_s`, `fmul_exp_m`, and `fmul_exp`, serve as proxies for approximate multiplication operations within RISC-V processors. The hardware implementation details are not discussed in this blog. The individual instruction encodings are provided below.
- ```
-# instruction encoding
-fmul_exp_m_s rs2 rs1 rd 31..25=0b1111100 14..12=0b111 6..0=0b0001011
-fmul_exp_s rs2 rs1 rd 31..25=0b1011100 14..12=0b111 6..0=0b0001011
-fmul_exp_m rs2 rs1 rd 31..25=0b1101100 14..12=0b111 6..0=0b0001011
-fmul_exp rs2 rs1 rd 31..25=0b1001100 14..12=0b111 6..0=0b0001011
- ```
+## Solution Approach
+
+We break this problem into multiple parts and explain the solution for each part.
+
+- *High level input*: We start by introducing a new attribute to the "arith.mulf" operation, namely `approx` which is set to value
+  `exp`. This is shown in the code snippet below
+
+  ```c++
+    func.func @main() -> () {
+        %1 = arith.constant 1.0e1 : f32
+        %2 = arith.constant 2.0e2 : f32
+        %3 = call @arith_func(%1, %2) : (f32, f32) -> (f32)
+        return
+    }
+
+    func.func @arith_func(%arg0: f32, %arg1: f32) -> (f32) {
+        // this is our approximate multiplication
+        %1 = arith.mulf %arg0, %arg1 {approx = "exp"}: f32
+        %2 = arith.addf %arg0, %1 : f32
+        return %2: f32
+    }
+
+  ```
+
+- *Lowering MLIR with custom attributes to LLVM*: In this step, we define a custom pass (`convert-arith-to-riscvnn`) to lower the `arith.mulf {approx=true}` to a llvm intrinsic call (`llvm.riscv.floatexp.mul`). Also, we leverage the standard MLIR infrastructure to lower the rest of the operations into the LLVM dialect of MLIR. [Additional details coming soon]()
+
+  ```
+  mlir-opt \
+    -pass-pipeline="builtin.module(func.func(convert-arith-to-riscvnn,convert-arith-to-llvm,convert-math-to-llvm),convert-func-to-llvm,convert-vector-to-llvm)" \
+    benchmark.mlir > benchmark_llvm.mlir
+  ```
+
+  ```c++
+  module {
+  llvm.func @llvm.riscv.floatexp.mul(f32, f32) -> f32
+  llvm.func @main() {
+    %0 = llvm.mlir.constant(1.000000e+01 : f32) : f32
+    %1 = llvm.mlir.constant(2.000000e+02 : f32) : f32
+    %2 = llvm.call @arith_func(%0, %1) : (f32, f32) -> f32
+    llvm.return
+  }
+  llvm.func @arith_func(%arg0: f32, %arg1: f32) -> f32 {
+    %0 = llvm.call @llvm.riscv.floatexp.mul(%arg0, %arg1) : (f32, f32) -> f32
+    %1 = llvm.fadd %arg0, %0  : f32
+    llvm.return %1 : f32
+  }
+  }
+  ```
+- *Adding intrinsics for new instructions in LLVM RISC-V Target*: In order to lower the call that was introduced in MLIR's LLVM dialect, we should define an equivalent intrinsic in LLVM, that can be lowered into the corresponding custom instruction. To translate the mlir file, we leverage the `mlir-translate` tool. [Additional details coming soon]()
+
+  ```bash
+  mlir-translate -mlir-to-llvmir -split-input-file \
+    -verify-diagnostics benchmark_llvm.mlir > benchmark_llvm.ll
+  ```
+
+  ```c++
+  ; ModuleID = 'LLVMDialectModule'
+  source_filename = "LLVMDialectModule"
+
+  ; Function Attrs: nounwind memory(none)
+  declare float @llvm.riscv.floatexp.mul(float, float) #0
+
+  define void @main() {
+    %1 = call float @arith_func(float 1.000000e+01, float 2.000000e+02)
+    ret void
+  }
+
+  define float @arith_func(float %0, float %1) {
+    %3 = call float @llvm.riscv.floatexp.mul(float %0, float %1)
+    %4 = fadd float %0, %3
+    ret float %4
+  }
+
+  attributes #0 = { nounwind memory(none) }
+
+  !llvm.module.flags = !{!0}
+
+  !0 = !{i32 2, !"Debug Info Version", i32 3}
+  ```
+
+- *Adding support for new instructions in LLVM RISC-V Target*: This involves defining the instruction encoding based
+ on the RISC-V opcode space and writing the code in RISC-V target of the LLVM backend to lower the intrinsics appropriately into the corresponding custom instruction. [Additional details coming soon]()
+
+  ```bash
+  llc -march=riscv64 -mattr=+f,+xnn -target-abi=lp64 -O2 -filetype=asm benchmark_llvm.ll > benchmark_llvm.s
+  clang -target riscv64 -march=rv64imaf_xnn -mabi=lp64f -I. benchmark_llvm.s > benchmark.o
+  clang -target riscv64-unknown-elf \
+		-march=rv64imaf_xnn -mabi=lp64f \
+		-static \
+		-Tcommon/riscv.ld \
+		-nostdlib -nostartfiles \
+		--sysroot="<>/homebrew/opt/riscv-gnu-toolchain/riscv64-unknown-elf/" --gcc-toolchain="<>/homebrew/opt/riscv-gnu-toolchain/"  \
+		benchmark.o spike_lib.a -o benchmark.elf
+  llvm-objdump --mattr=+xnn,+f -S benchmark.elf > benchmark.objdump
+  ```
+
+  ```NASM
+  cat benchmark.objdump
+  ...
+  0000000080002030 <arith_func>:
+  80002030: d3 87 05 f0  	fmv.w.x	fa5, a1
+  80002034: 53 07 05 f0  	fmv.w.x	fa4, a0
+  80002038: 8b 77 f7 98  	fmul_exp	fa5, fa4, fa5 # this is the custom RISC-V instruction
+  8000203c: d3 77 f7 00  	fadd.s	fa5, fa4, fa5
+  80002040: 53 85 07 e0  	fmv.x.w	a0, fa5
+  80002044: 67 80 00 00  	ret
+  ...
+  ```
+
+- *Adding support for new instructions in RISC-V Spike Simulator*: Now with the instructions generated and available in the executable file (`benchmark.elf`). We need to update Spike to support these new instructions. [Additional details coming soon]()
+
+  Spike can execute the generated elf in the following manner and the debug output can be seen.  The `xnnmul` is the Spike implementation of the `fmul_exp` assembly instruction.
+  ```shell
+  ../riscv-isa-sim/build/spike --isa=rv64gc_xnn -d  \
+    benchmark_llvm.elf -m0x80000000:0x10000 --pc 0x80000000
+  ```
+
+  ```nasm
+  ...
+  (spike)
+  core   0: >>>>
+  core   0: 0x0000000080002030 (0xf00587d3) fmv.w.x fa5, a1
+  (spike)
+  core   0: 0x0000000080002034 (0xf0050753) fmv.w.x fa4, a0
+  (spike)
+  core   0: 0x0000000080002038 (0x98f7778b) xnnmul  a5, a4, a5
+  (spike)
+  core   0: 0x000000008000203c (0x00f777d3) fadd.s  fa5, fa4, fa5
+  (spike)
+  core   0: 0x0000000080002040 (0xe0078553) fmv.x.w a0, fa5
+  (spike)
+  ...
+  ```
+
+This completes the hardware-software co-design loop, where we started from an MLIR operation with custom attributes and eventually executed on a RISC-V ISS simulator with custom instructions implemented. Hardware-software co-design, powered by MLIR, LLVM, and processor simulation tools like Spike, is essential for creating efficient, customized systems. Whether you're designing a new processor or enhancing an existing one, understanding this co-design process is key to unlocking innovation in the world of computing.
 
 
 ### References
-+ **Sparta Docs** : [[Link]](https://sparcians.github.io/map/index.html)
-+ **Tutorial Code**: [[Github  link]](https://github.com/debjyoti0891/sparta-simplified)
-
-
-
-
-
++ [Getting Started - MLIR - LLVM](https://mlir.llvm.org/getting_started/)
++ [Tutorials - MLIR - LLVM](https://mlir.llvm.org/docs/Tutorials/)
++ [Extending LLVM:  Adding instructions, intrinsics, types, etc.](https://llvm.org/docs/ExtendingLLVM.html)
++ [riscv-software-src/riscv-isa-sim: Spike, a RISC-V ISA Simulator - GitHub](https://github.com/riscv-software-src/riscv-isa-sim)

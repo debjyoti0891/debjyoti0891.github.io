@@ -41,6 +41,7 @@ plugins:
   - jekyll-seo-tag
   - jekyll-sitemap
 
+highlighter: rouge
 disqus:
   shortname: bdebjyoti
 
