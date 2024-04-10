@@ -6,6 +6,7 @@ categories: compilation mlir riscv
 tags: compilation llvm mlir
 mermaid: true
 comments: true
+permalink: /mlir/part1
 ---
 
 In the ever-evolving landscape of computing, the synergy between hardware and software has become increasingly crucial for enabling efficient computation. Hardware-software co-design
