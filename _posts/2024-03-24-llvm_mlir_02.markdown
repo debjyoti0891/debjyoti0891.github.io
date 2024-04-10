@@ -16,7 +16,7 @@ In this particular pass, our objective is to convert a singular operation (`arit
 
 It's important to note that if the `approx` attribute is not set to `exp`, or if the inputs of `arith.mulf` are not `f32`, no action should be taken.
 
-The overall implementation of the pass is in this [patch](). We go over
+The overall implementation of the pass is in this [patch](https://github.com/debjyoti0891/CoVeriS/blob/main/patches/patch_llvm). We go over
 each part of the pass implementation below.
 
 ### [mlir/include/mlir/Conversion/Passes.h]()
