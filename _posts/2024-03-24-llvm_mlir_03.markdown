@@ -132,7 +132,7 @@ The provided code segment defines a set of LLVM intrinsics prefixed with "riscv"
 
 Moreover, the extension's availability is governed by a predicate called `HasCustomExtNN`, which is utilized to conditionally include the instructions based on whether the custom extension is enabled. By incorporating this predicate into the definition of the instructions, it ensures that they are only generated and included during compilation when the custom extension is supported. This approach enables seamless integration of the custom extension into the RISC-V instruction set architecture (ISA), providing flexibility for developers to utilize approximate multiplication operations tailored to their specific needs while maintaining compatibility with the RISC-V ecosystem.
 
-The overall patch and the code can be viewed on (CoVeris)[https://github.com/debjyoti0891/CoVeriS/blob/main/patches/patch_llvm] repository.
+The overall patch and the code can be viewed on [CoVeris repository](https://github.com/debjyoti0891/CoVeriS/blob/main/patches/patch_llvm).
 
 ### References
 + [Github Code Repository](https://github.com/debjyoti0891/CoVeriS)
