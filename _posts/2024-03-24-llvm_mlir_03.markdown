@@ -9,7 +9,7 @@ mermaid: true
 comments: true
 ---
 
-In [Part 1]({% link 2024-03-24-llvm_mlir_1.markdown %}), we explored the overarching concept of hardware-software co-design. In [Part 2]({%link 2024-03-2024-llvm_mlir_02.markdown %}), we delved into the specifics of implementing an MLIR pass. In this part, we explore the details of adding new custom instructions to the RISC-V backend and using them via intrinsics.
+In [Part 1]({% link 2024-03-24-llvm_mlir_01.markdown %}), we explored the overarching concept of hardware-software co-design. In [Part 2]({%link 2024-03-2024-llvm_mlir_02.markdown %}), we delved into the specifics of implementing an MLIR pass. In this part, we explore the details of adding new custom instructions to the RISC-V backend and using them via intrinsics.
 
 ## Instruction Encoding
 
