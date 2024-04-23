@@ -1,0 +1,145 @@
+---
+layout: post
+title:  "HW-SW co-design in the RISC-V Ecosystem [Part 3]: RISC-V Custom Instructions "
+date:   2024-04-22 10:00:00 +0200
+categories: compilation mlir riscv
+tags: compilation llvm mlir
+permalink: /mlir/part3
+mermaid: true
+comments: true
+---
+
+In [Part 1]({% link 2024-03-24-llvm_mlir_1.markdown %}), we explored the overarching concept of hardware-software co-design. In [Part 2]({%link 2024-03-2024-llvm_mlir_02.markdown %}), we delved into the specifics of implementing an MLIR pass. In this part, we explore the details of adding new custom instructions to the RISC-V backend and using them via intrinsics.
+
+## Instruction Encoding
+
+In this example, the addition of four new approximate multiplication instructions for floating point numbers is considered. These instructions, known as `fmul_exp_m_s`, `fmul_exp_s`, `fmul_exp_m`, and `fmul_exp`, serve as proxies for approximate multiplication operations within RISC-V processors. The hardware implementation details are not discussed in this blog. The individual instruction encodings are provided below.
+```shell
+# instruction encoding
+fmul_exp_m_s rs2 rs1 rd 31..25=0b1111100 14..12=0b111 6..0=0b0001011
+fmul_exp_s rs2 rs1 rd 31..25=0b1011100 14..12=0b111 6..0=0b0001011
+fmul_exp_m rs2 rs1 rd 31..25=0b1101100 14..12=0b111 6..0=0b0001011
+fmul_exp rs2 rs1 rd 31..25=0b1001100 14..12=0b111 6..0=0b0001011
+```
+
+
+## Adding instructions and assembler support in LLVM
+
+### [llvm/lib/Target/RISCV/RISCVInstrInfo.td]()
+```
+    include "RISCVInstrInfoCustExtNN.td"
+```
+The new extension is termed as as "CustExtNN" and a new [TableGen](https://llvm.org/docs/TableGen/) file is added. This is included in the high level RISCV instruction info file, which has details of the RISC-V target.
+By defining the details of the new extension in a separate file (`RISCVInstrInfoCustExtNN.td`), the changes for related to extension can be self-contained.
+
+### [llvm/lib/Target/RISCV/RISCVFeatures.td]()
+This code excerpt defines a custom feature called "CustomExtNN," which represents a neural network (NN) compute extension for inference tasks in RISC-V processors. The feature is enabled by setting the "HasCustomExtNN" predicate to true. This extension can be activated in the Clang compiler by specifying the "+xnn" feature string. For a custom instruction set, this is where the description goes in.
+
+```c++
+bool hasCustomExtNN() const { return HasCustomExtNN; }
+// This is a custom  NN feature
+def FeatureCustomExtNN
+: SubtargetFeature<"xnn", "HasCustomExtNN", "true",
+                "NN (Compute Extension for Neural Network Inference)",
+                []>;
+
+def HasCustomExtNN : Predicate<"Subtarget->hasCustomExtNN()">,
+                        AssemblerPredicate<(all_of FeatureCustomExtNN),
+                        "NN (Compute Extension for Neural Network Inference)">;
+```
+
+
+### [llvm/lib/Target/RISCV/RISCVInstrInfoCustExtNN.td]()
+```c++
+class INSTR_nn_0xfe00707f_1 <bits<7> f0, bits<3> f1, RISCVOpcode opcode,  string opcodestr>
+: RVInstR<f0, f1, opcode, (outs FPR32:$rd),(ins FPR32:$rs1,FPR32:$rs2),opcodestr, "$rd, $rs1, $rs2"> {
+    bits<5> rs2;
+    bits<5> rs1;
+    bits<5> rd;
+    let Inst {24-20} = rs2;
+    let Inst {19-15} = rs1;
+    let Inst {11-7} = rd;
+    let Inst {31-25} = f0;
+    let Inst {14-12} = f1;
+    let Inst {6-0} = opcode.Value;
+    } // end of class INSTR_nn_0xfe00707f_1
+
+
+    def OPC_FMUL_EXP_M_S  : RISCVOpcode<"FMUL_EXP_M_S",    0b0001011>;
+
+        //===----------------------------------------------------------------------===//
+        // RISC-V specific DAG Nodes.
+        //===----------------------------------------------------------------------===//
+
+
+        /* Use the same variable as defined in the RISCV.td for the extension as the predicate */
+        let Predicates = [HasCustomExtNN] in {
+        /* set the values appropriately. use more than one group if there are different kinds of
+            instructions in the extension */
+    let hasSideEffects=0, mayLoad=0, mayStore=0 in {
+    def FMUL_EXP_M_S: INSTR_nn_0xfe00707f_1<0b1111100, 0b111, OPC_FMUL_EXP_M_S, "fmul_exp_m_s">;
+    def FMUL_EXP_S: INSTR_nn_0xfe00707f_1<0b1011100, 0b111, OPC_FMUL_EXP_M_S, "fmul_exp_s">;
+    def FMUL_EXP_M: INSTR_nn_0xfe00707f_1<0b1101100, 0b111, OPC_FMUL_EXP_M_S, "fmul_exp_m">;
+    def FMUL_EXP: INSTR_nn_0xfe00707f_1<0b1001100, 0b111, OPC_FMUL_EXP_M_S, "fmul_exp">;
+    }
+}
+```
+
+The provided code defines the set of RISC-V instructions in TableGen format, based on the encoding. Each instruction is represented as a subclass of a base instruction class, incorporating specific bit patterns for opcode and operand fields. For instance, the `INSTR_nn_0xfe00707f_1` class is instantiated with different bit patterns to represent distinct instructions within the extension, namely `FMUL_EXP_M_S`, `FMUL_EXP_S`, `FMUL_EXP_M`, and `FMUL_EXP`.
+
+## Adding built ins for the custom instructions
+
+Intrinsics are special functions recognizable by compilers like LLVM, representing specific operations or sequences of instructions that might not have direct representations in the high-level source code but are essential for generating efficient machine code.
+The intrisnics for this custom instruction are defined in the `IntrinsicsRISCVCustExtNN.td` file.
+As a starting point, the official [LLVM guide](https://llvm.org/docs/ExtendingLLVM.html) helps in understanding the larger context.
+### [llvm/include/llvm/IR/IntrinsicsRISCV.td]()
+```c
+include "llvm/IR/IntrinsicsRISCVCustExtNN.td"
+```
+
+### [clang/include/clang/Basic/BuiltinsRISCV.def]()
+```c++
+TARGET_BUILTIN(__builtin_riscv_fmul_exp, "fff", "nc", "xnn")
+TARGET_BUILTIN(__builtin_riscv_fmul_exp_s, "fff", "nc", "xnn")
+TARGET_BUILTIN(__builtin_riscv_fmul_exp_m, "fff", "nc", "xnn")
+TARGET_BUILTIN(__builtin_riscv_fmul_exp_m_s, "fff", "nc", "xnn")
+```
+This patch defines LLVM built-in functions for the custom instructions that were added above. These built-ins are named
+- `__builtin_riscv_fmul_exp`
+- `__builtin_riscv_fmul_exp_s`
+- `__builtin_riscv_fmul_exp_m`
+- `__builtin_riscv_fmul_exp_m_s`
+They all take two floating-point operands (`ff`) as inputs and one floating point output (`f`). Each instruction has a corresponding builtin defined. The feature is defined as `xnn`.
+
+### [llvm/include/llvm/IR/IntrinsicsRISCVCustExtNN.td]()
+```c++
+// Approx Floating Point Multiply Intrinsics
+let TargetPrefix = "riscv" in {
+
+  class FloatExpGPRGPRIntrinsics
+      : Intrinsic<[llvm_float_ty],
+                              [llvm_float_ty, llvm_float_ty],
+                              [IntrNoMem]>;
+  def int_riscv_floatexp_mul : FloatExpGPRGPRIntrinsics;
+  def int_riscv_floatexp_mul_sign : FloatExpGPRGPRIntrinsics;
+  def int_riscv_floatexp_mul_man : FloatExpGPRGPRIntrinsics;
+  def int_riscv_floatexp_mul_man_sign : FloatExpGPRGPRIntrinsics;
+} // TargetPrefix = "riscv"
+```
+The provided code segment defines a set of LLVM intrinsics prefixed with "riscv". The `FloatExpGPRGPRIntrinsics` class represents these intrinsics, specifying that they take two floating-point operands and return a single floating-point result. These intrinsics are designed to operate on general-purpose registers (GPRs) and are marked with the attribute "IntrNoMem," indicating that they do not access memory.
+
+ The prefix "int_" shows that these intrinsics are internal to LLVM and targeted specifically for RISC-V architectures. By encapsulating these operations as intrinsics, LLVM provides a standardized interface, which can be targeted easily from higher level of the compilation stack, such as MLIR.
+
+Moreover, the extension's availability is governed by a predicate called `HasCustomExtNN`, which is utilized to conditionally include the instructions based on whether the custom extension is enabled. By incorporating this predicate into the definition of the instructions, it ensures that they are only generated and included during compilation when the custom extension is supported. This approach enables seamless integration of the custom extension into the RISC-V instruction set architecture (ISA), providing flexibility for developers to utilize approximate multiplication operations tailored to their specific needs while maintaining compatibility with the RISC-V ecosystem.
+
+The overall patch and the code can be viewed on (CoVeris)[https://github.com/debjyoti0891/CoVeriS/blob/main/patches/patch_llvm] repository.
+
+### References
++ [Github Code Repository](https://github.com/debjyoti0891/CoVeriS)
++ [TableGen fundamentals](https://llvm.org/docs/TableGen/)
++ [LLVM Guide for adding new intrinsics](https://llvm.org/docs/ExtendingLLVM.html)
+
+
+
+
+
