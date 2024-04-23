@@ -8,7 +8,7 @@ mermaid: true
 comments: true
 permalink: /mlir/part2
 ---
-In [Part 1]({% link 2024-03-24-llvm_mlir_1.markdown %}), we explored the overarching concept of hardware-software co-design. Now, in Part 2, we delve into the specifics of implementing an MLIR pass. Passes are transformative actions applied to MLIR code during compilation, serving to optimize, analyze, or manipulate the code. They can be utilized for both IR analysis and Dialect-to-Dialect transformations. For further insights, refer to the documentation available [here](https://mlir.llvm.org/docs/PassManagement/).
+In [Part 1]({/compilation/mlir/llvm/riscv/2024/04/09/llvm_mlir_02.html), we explored the overarching concept of hardware-software co-design. Now, in Part 2, we delve into the specifics of implementing an MLIR pass. Passes are transformative actions applied to MLIR code during compilation, serving to optimize, analyze, or manipulate the code. They can be utilized for both IR analysis and Dialect-to-Dialect transformations. For further insights, refer to the documentation available [here](https://mlir.llvm.org/docs/PassManagement/).
 
 In this particular pass, our objective is to convert a singular operation (`arith.mulf`) to an equivalent LLVM intrinsic, dependent on certain conditions. Essentially, an LLVM intrinsic can be regarded as a specialized function. At a high level, the process entails replacing instances of
 - `arith.mulf (approx = "exp")` with an LLVM call to
