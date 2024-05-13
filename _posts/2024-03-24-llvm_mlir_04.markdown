@@ -1,32 +1,13 @@
 ---
 layout: post
 title:  "HW-SW co-design in the RISC-V Ecosystem [Part 4]: Executing Custom Instructions on Spike"
-date:   2024-03-23 10:00:00 +0200
+date:   2024-05-12 10:00:00 +0200
 categories: compilation mlir riscv
 tags: compilation llvm mlir
 mermaid: true
 comments: true
 permalink: /mlir/part4
 ---
-```%mermaid
-%% graph LR;
-graph TD;
-
-subgraph MLIR
-    A[High-Level Operation] --> D[MLIR Generic Operations]
-    D -->|Optimization Passes <br> Target Specific Pass| C[Partial LLVM IR <br> Lower to llvm custom intrinsic]
-    C --> E[MLIR LLVM Dialect]
-end
-
-subgraph LLVM
-    E -->|mlir-translate| F[LLVM IR]
-    F --> G[Standard LLVM RISC-V target lowering]
-end
-
-subgraph Output
-    G --> H[Binary Object File]
-end
-```
 This is the final part of the 4 part blog series of Hardware-Software codesign, starting from MLIR to execution of custom instructions on a RISC-V Instruction set simulator (ISS). In this part, we will focus specifically on adding the custom instructions to [Spike](https://github.com/riscv-software-src/riscv-isa-sim), which is the golden reference ISS for RISC-V.
 
 Recall the encoding of the approximate multiplication instructions for floating point numbers from the previous [post](/mlir/part3). These instructions, known as `fmul_exp_m_s`, `fmul_exp_s`, `fmul_exp_m`, and `fmul_exp`, serve as proxies for approximate multiplication operations within RISC-V processors.
@@ -119,21 +100,22 @@ It was interesting to note that Spike by default executes boot code and then jum
 
 ## Conclusion
 This completes the hardware-software co-design loop, where we started from an MLIR operation with custom attributes and eventually executed on a RISC-V ISS simulator with custom instructions implemented.
-![Overall MLIR to RISC-V binary flow](/assets/overall_flow.png){: width="20" }
+![Overall MLIR to RISC-V binary flow](/assets/overall_flow.png)
 
 Hardware-software co-design, powered by MLIR, LLVM, and processor simulation tools like Spike, is essential for creating efficient, customized systems. Whether you're designing a new processor or enhancing an existing one, understanding this co-design process is key to unlocking innovation in the world of computing.
 
 
 ### References
+The entire blog was made possible by a variety of open-source code, tutorials and other resources. Some of the interesting ones are listed below.
 + [Getting Started - MLIR - LLVM](https://mlir.llvm.org/getting_started/)
 + [Tutorials - MLIR - LLVM](https://mlir.llvm.org/docs/Tutorials/)
++ [MLIR onboarding tutorial for the HEIR project](https://github.com/j2kun/mlir-tutorial#mlir-tutorial)
++ [The Open CIM Compiler](https://github.com/adam-smnk/Open-CIM-Compiler)
 + [Extending LLVM:  Adding instructions, intrinsics, types, etc.](https://llvm.org/docs/ExtendingLLVM.html)
 + [riscv-software-src/riscv-isa-sim: Spike, a RISC-V ISA Simulator - GitHub](https://github.com/riscv-software-src/riscv-isa-sim)
++ [Bare metal RISC-V assembly examples for Spike](https://github.com/ilya-sotnikov/riscv-asm-spike)
 
 
-### References
-+ **Sparta Docs** : [[Link]](https://sparcians.github.io/map/index.html)
-+ **Tutorial Code**: [[Github  link]](https://github.com/debjyoti0891/sparta-simplified)
 
 
 
