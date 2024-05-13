@@ -1,0 +1,141 @@
+---
+layout: post
+title:  "HW-SW co-design in the RISC-V Ecosystem [Part 4]: Executing Custom Instructions on Spike"
+date:   2024-03-23 10:00:00 +0200
+categories: compilation mlir riscv
+tags: compilation llvm mlir
+mermaid: true
+comments: true
+permalink: /mlir/part4
+---
+```%mermaid
+%% graph LR;
+graph TD;
+
+subgraph MLIR
+    A[High-Level Operation] --> D[MLIR Generic Operations]
+    D -->|Optimization Passes <br> Target Specific Pass| C[Partial LLVM IR <br> Lower to llvm custom intrinsic]
+    C --> E[MLIR LLVM Dialect]
+end
+
+subgraph LLVM
+    E -->|mlir-translate| F[LLVM IR]
+    F --> G[Standard LLVM RISC-V target lowering]
+end
+
+subgraph Output
+    G --> H[Binary Object File]
+end
+```
+This is the final part of the 4 part blog series of Hardware-Software codesign, starting from MLIR to execution of custom instructions on a RISC-V Instruction set simulator (ISS). In this part, we will focus specifically on adding the custom instructions to [Spike](https://github.com/riscv-software-src/riscv-isa-sim), which is the golden reference ISS for RISC-V.
+
+Recall the encoding of the approximate multiplication instructions for floating point numbers from the previous [post](/mlir/part3). These instructions, known as `fmul_exp_m_s`, `fmul_exp_s`, `fmul_exp_m`, and `fmul_exp`, serve as proxies for approximate multiplication operations within RISC-V processors.
+ ```
+# instruction encoding
+fmul_exp_m_s rs2 rs1 rd 31..25=0b1111100 14..12=0b111 6..0=0b0001011
+fmul_exp_s rs2 rs1 rd 31..25=0b1011100 14..12=0b111 6..0=0b0001011
+fmul_exp_m rs2 rs1 rd 31..25=0b1101100 14..12=0b111 6..0=0b0001011
+fmul_exp rs2 rs1 rd 31..25=0b1001100 14..12=0b111 6..0=0b0001011
+ ```
+Based on the [patch to LLVM](/mlir/part3) that we defined, we can create an executable that can be directly executed in spike. These commands are already available via a [Makefile](https://github.com/debjyoti0891/CoVeriS/blob/main/examples/Makefile) in the accompanying [github repository](https://github.com/debjyoti0891/CoVeriS/tree/main).
+  ```bash
+  llc -march=riscv64 -mattr=+f,+xnn -target-abi=lp64 -O2 -filetype=asm benchmark_llvm.ll > benchmark_llvm.s
+  clang -target riscv64 -march=rv64imaf_xnn -mabi=lp64f -I. benchmark_llvm.s > benchmark.o
+  clang -target riscv64-unknown-elf \
+		-march=rv64imaf_xnn -mabi=lp64f \
+		-static \
+		-Tcommon/riscv.ld \
+		-nostdlib -nostartfiles \
+		--sysroot="<>/homebrew/opt/riscv-gnu-toolchain/riscv64-unknown-elf/" --gcc-toolchain="<>/homebrew/opt/riscv-gnu-toolchain/"  \
+		benchmark.o spike_lib.a -o benchmark.elf
+  llvm-objdump --mattr=+xnn,+f -S benchmark.elf > benchmark.objdump
+  ```
+
+  ```NASM
+  cat benchmark.objdump
+  ...
+  0000000080002030 <arith_func>:
+  80002030: d3 87 05 f0  	fmv.w.x	fa5, a1
+  80002034: 53 07 05 f0  	fmv.w.x	fa4, a0
+  80002038: 8b 77 f7 98  	fmul_exp	fa5, fa4, fa5 # this is the custom RISC-V instruction
+  8000203c: d3 77 f7 00  	fadd.s	fa5, fa4, fa5
+  80002040: 53 85 07 e0  	fmv.x.w	a0, fa5
+  80002044: 67 80 00 00  	ret
+  ...
+  ```
+
+### Adding support for new instructions in RISC-V Spike Simulator
+
+Now with the instructions generated and available in the executable file (`benchmark.elf`). We need to update Spike to support these new instructions. The overall patch of Spike is available [here](https://github.com/debjyoti0891/CoVeriS/blob/main/patches/patch_riscv_isa_sim).
+
+```
+|-- disasm
+|   |-- disasm.cc
+|   |-- isa_parser.cc
+|
+|-- riscv
+|   |-- insns
+|   |   |-- xnnmul.h
+|   |-- encoding.h
+|   |-- isa_parser.h
+|   |-- riscv.mk.in
+|
+|-- softfloat
+|   |-- f32_mulAdd.c
+|   |-- softfloat.h
+```
+
+- The mask and match for the instructions are defined in the `encoding.h` file.
+- The `isa_parser.cc` is used to selectively enable the features of the simulator, based on the ISA architecture string.
+- In the `isa_parser.h`, we define the extension enum `EXT_XNN`, which is used in the extension table. Similarly, `disasm.cc` defines the disassembly of the instruction if the extension is enabled.
+- In the `xnnmul.h` file, the behaviour of the instruction is defined. The approximate multiplication behaviour (`f32_nn_mul`) is itself defined in the `f32_mulAdd.c`. Other instruction can be added similarly.
+
+
+
+Spike can execute the generated elf in the following manner and the debug output can be seen.  The `xnnmul` is the Spike implementation of the `fmul_exp` assembly instruction.
+  ```shell
+  ../riscv-isa-sim/build/spike --isa=rv64gc_xnn -d  \
+    benchmark_llvm.elf -m0x80000000:0x10000 --pc 0x80000000
+  ```
+
+  ```nasm
+  ...
+  (spike)
+  core   0: >>>>
+  core   0: 0x0000000080002030 (0xf00587d3) fmv.w.x fa5, a1
+  (spike)
+  core   0: 0x0000000080002034 (0xf0050753) fmv.w.x fa4, a0
+  (spike)
+  core   0: 0x0000000080002038 (0x98f7778b) xnnmul  a5, a4, a5
+  (spike)
+  core   0: 0x000000008000203c (0x00f777d3) fadd.s  fa5, fa4, fa5
+  (spike)
+  core   0: 0x0000000080002040 (0xe0078553) fmv.x.w a0, fa5
+  (spike)
+  ...
+  ```
+It was interesting to note that Spike by default executes boot code and then jumps to the supplied Program Counter (PC). So while tracing the instructions, you will observe code being executed at the start that is not part of the elf binary.
+
+
+## Conclusion
+This completes the hardware-software co-design loop, where we started from an MLIR operation with custom attributes and eventually executed on a RISC-V ISS simulator with custom instructions implemented.
+![Overall MLIR to RISC-V binary flow](/assets/overall_flow.png){: width="20" }
+
+Hardware-software co-design, powered by MLIR, LLVM, and processor simulation tools like Spike, is essential for creating efficient, customized systems. Whether you're designing a new processor or enhancing an existing one, understanding this co-design process is key to unlocking innovation in the world of computing.
+
+
+### References
++ [Getting Started - MLIR - LLVM](https://mlir.llvm.org/getting_started/)
++ [Tutorials - MLIR - LLVM](https://mlir.llvm.org/docs/Tutorials/)
++ [Extending LLVM:  Adding instructions, intrinsics, types, etc.](https://llvm.org/docs/ExtendingLLVM.html)
++ [riscv-software-src/riscv-isa-sim: Spike, a RISC-V ISA Simulator - GitHub](https://github.com/riscv-software-src/riscv-isa-sim)
+
+
+### References
++ **Sparta Docs** : [[Link]](https://sparcians.github.io/map/index.html)
++ **Tutorial Code**: [[Github  link]](https://github.com/debjyoti0891/sparta-simplified)
+
+
+
+
+
