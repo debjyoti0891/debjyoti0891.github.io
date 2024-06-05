@@ -7,9 +7,12 @@ permalink: /research/
 <span class="headHi">Services</span>
 
 <b>Organizing Committee Member</b>
-+ Workshop on <span class="event-name">Exascale Simulation of Next-Generation Computing Architectures</span>,  <em class="event-location-date">IISWC</em>, 2023
++ <em class="event-location-date">IEEE International Symposium on Workload Characterization (IISWC)</em>
+    + Workshop: <span class="event-name">Exascale Simulation of Next-Generation Computing Architectures</span>,2023
 + <em class="event-location-date">Design Automation Conference (DAC)</em>
     + Quantum Computing Co-Chair, 2022
++ <em class="event-location-date">IEEE International Symposium on Circuits and Systems (ISCAS)</em>
+    + Special session: <span class="event-name">Artificial Intelligence Computation In Memory & Their Applications Utilizing Next-generation Memory</span>,2021
 
 <b>Program Committee Member</b>
 +  <em class="event-location-date">ACM/IEEE International Conference on Computer-Aided Design (ICCAD)</em>
