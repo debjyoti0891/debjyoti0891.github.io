@@ -16,7 +16,7 @@ permalink: /research/
     + Tools and Design Methods with and for Artificial Intelligence (Al) track, 2023
     + AI Algorithms and Applications track, 2024
 + <em class="event-location-date">Asia and South Pacific Design Automation Conference (ASP­DAC)</em> 2020, 2021.
-+ <em class="event-location-dateß">ACM/IEEE International Symposium on Low Power Electronics and Design (ISPLED)</em>
++ <em class="event-location-date">ACM/IEEE International Symposium on Low Power Electronics and Design (ISPLED)</em>
     + Hardware and system security track, 2023, 2024
 
 <b>Journal Reviewer</b>
@@ -31,7 +31,6 @@ permalink: /research/
 + <em class="event-location-date">IEEE Transactions on Very Large Scale Integration Systems</em>
 + <em class="event-location-date">Integration, the VLSI Journal</em>
 + <em class="event-location-date">Quantum Information Processing</em>
-+ <em class="event-location-date">Embedded Systems Letters</em>
 
 
 
