@@ -4,8 +4,32 @@ title: Research
 permalink: /research/
 ---
 
+<span class="headHi">Services</span>
+
+<b>Organizing Committee Member</b>
++ Workshop on <span class="event-name">Exascale Simulation of Next-Generation Computing Architectures</span>,  <em class="event-location-date">IISWC</em>, 2023
++ Quantum Computing Co-Chair for <em class="event-location-date">Design Automation Conference (DAC)</em> 2022.
+
+<b>Program Committee Member</b>
++  <em class="event-location-date">ACM/IEEE International Conference on Computer-Aided Design (ICCAD)</em>
+    + Neural Networks and Deep Learning track, 2022
+    + Tools and Design Methods with and for Artificial Intelligence (Al) track, 2023
+    + AI Algorithms and Applications track, 2024
++ <em class="event-location-date">Asia and South Pacific Design Automation Conference (ASP­DAC)</em> 2020, 2021.
++ <em class="event-location-data">ACM/IEEE International Symposium on Low Power Electronics and Design (ISPLED)</em>
+    + Hardware and system security track, 2023, 2024
+
+<b>Journal Reviewer</b>
++ <em class="event-location-date">IEEE Transactions on Nanotechnology</em>
++ <em class="event-location-date">IEEE Transactions on Computer­ Aided Design of Integrated Circuits and
+Systems</em>
++ <em class="event-location-date">IEEE Design & Test</em>
++ <em class="event-location-date">IEEE Transactions on Very Large Scale Integration Systems</em>
++ <em class="event-location-date">Integration, the VLSI Journal</em>
++ <em class="event-location-date">ACM Journal on Emerging Technologies in Computing Systems (JETC)</em>
+
 <span class="headHi">Presentations and Invited Talks</span>
-+ Hosted workshop on <span class="event-name">Exascale Simulation of Next-Generation Computing Architectures</span>,  <em class="event-location-date">IISWC</em>, 2023.
+
 + <span class="event-name">LaTeX Workshop</span>, supported by  <em class="event-location-date">NTU Library,</em> November, 2018.
 + Invited talk on <span class="event-name">"General purpose  logic-in-memory architecture using Resistive RAM (ReRAM)</span> at  <em class="event-location-date">Advanced Computing & Microelectronics Unit, Indian Statistical Institute, Kolkata, India</em> in October, 2018.
 + <span class="event-name">LaTeX Workshop</span>, supported by  <em class="event-location-date">NTU GSA Career Committee,</em> August, 2018.
@@ -16,17 +40,6 @@ permalink: /research/
 + <span class="event-name">Efficient Hardware Accelerator for AEGIS-128 Authenticated Encryption</span>  in  <em class="event-location-date">Final Year Project Presentation, Live Demo and Graduate Students Workshop, IEEE Circuits and Systems Society events</em>, 2015.
 + <span class="event-name">Efficient Hardware Accelerator for AEGIS-128 Authenticated Encryption</span> in <em class="event-location-date"> DIAC 2015</em>. <a href="https://www1.spms.ntu.edu.sg/~diac2015/slides/diac2015_07_aegis_accelerator.pdf" target="_blank" rel="noopener noreferrer"><input class="button5" type="button" value="Slides" /></a>
 
-<span class="headHi">Activities</span>
-+ TPC member of Neural Networks and Deep Learning track in <em class="event-location-date">ICCAD</em> 2022
-+ Quantum Computing Co-Chair for <em class="event-location-date">DAC</em> 2022.
-+ TPC member of <em class="event-location-date">ASP­DAC</em> 2020, 2021.
-+ Reviewer of <em class="event-location-date">IEEE Transactions on Nanotechnology
-+ Reviewer of <em class="event-location-date">IEEE Transactions on Computer­Aided Design of Integrated Circuits and
-Systems</em>
-+ Reviewer of <em class="event-location-date">IEEE Design & Test</em>
-+ Reviewer of <em class="event-location-date">IEEE Transactions on Very Large Scale Integration Systems</em>
-+ Reviewer of <em class="event-location-date">Integration, the VLSI Journal</em>
-+ Reviewer of <em class="event-location-date">ACM Journal on Emerging Technologies in Computing Systems (JETC)</em>
 
 <span class="headHi">Teaching</span>
 
