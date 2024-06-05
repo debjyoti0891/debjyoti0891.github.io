@@ -16,17 +16,25 @@ permalink: /research/
     + Tools and Design Methods with and for Artificial Intelligence (Al) track, 2023
     + AI Algorithms and Applications track, 2024
 + <em class="event-location-date">Asia and South Pacific Design Automation Conference (ASP­DAC)</em> 2020, 2021.
-+ <em class="event-location-data">ACM/IEEE International Symposium on Low Power Electronics and Design (ISPLED)</em>
++ <em class="event-location-dateß">ACM/IEEE International Symposium on Low Power Electronics and Design (ISPLED)</em>
     + Hardware and system security track, 2023, 2024
 
 <b>Journal Reviewer</b>
-+ <em class="event-location-date">IEEE Transactions on Nanotechnology</em>
-+ <em class="event-location-date">IEEE Transactions on Computer­ Aided Design of Integrated Circuits and
-Systems</em>
++ <em class="event-location-date">ACM Journal on Emerging Technologies in Computing Systems (JETC)</em>
++ <em class="event-location-date">IEEE Embedded Systems Letters</em>
 + <em class="event-location-date">IEEE Design & Test</em>
++ <em class="event-location-date">IEEE Journal of Solid State Circuits</em>
++ <em class="event-location-date">IEEE Transactions on Circuits and Systems II: Express Briefs</em>
++ <em class="event-location-date">IEEE Transactions on Computer­ Aided Design of Integrated Circuits and Systems</em>
++ <em class="event-location-date">IEEE Computer Architecture Letters</em>
++ <em class="event-location-date">IEEE Transactions on Nanotechnology</em>
 + <em class="event-location-date">IEEE Transactions on Very Large Scale Integration Systems</em>
 + <em class="event-location-date">Integration, the VLSI Journal</em>
-+ <em class="event-location-date">ACM Journal on Emerging Technologies in Computing Systems (JETC)</em>
++ <em class="event-location-date">Quantum Information Processing</em>
++ <em class="event-location-date">Embedded Systems Letters</em>
+
+
+
 
 <span class="headHi">Presentations and Invited Talks</span>
 
