@@ -8,7 +8,8 @@ permalink: /research/
 
 <b>Organizing Committee Member</b>
 + Workshop on <span class="event-name">Exascale Simulation of Next-Generation Computing Architectures</span>,  <em class="event-location-date">IISWC</em>, 2023
-+ Quantum Computing Co-Chair for <em class="event-location-date">Design Automation Conference (DAC)</em> 2022.
++ <em class="event-location-date">Design Automation Conference (DAC)</em>
+    + Quantum Computing Co-Chair, 2022
 
 <b>Program Committee Member</b>
 +  <em class="event-location-date">ACM/IEEE International Conference on Computer-Aided Design (ICCAD)</em>
