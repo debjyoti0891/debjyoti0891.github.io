@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>A Fast and Furious Introduction to Sparta | Debjyoti Bhattacharjee</title>
+<meta name="generator" content="Jekyll v4.3.4" />
+<meta property="og:title" content="A Fast and Furious Introduction to Sparta" />
+<meta name="author" content="Debjyoti Bhattacharjee" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Sparta is a modeling framework that can be used for a variety of architecture (or otherwise) modelling work. In this blog post, I present an introduction to the basic bells and whistles of the framework. The entire tutorial is available via Github." />
+<meta property="og:description" content="Sparta is a modeling framework that can be used for a variety of architecture (or otherwise) modelling work. In this blog post, I present an introduction to the basic bells and whistles of the framework. The entire tutorial is available via Github." />
+<link rel="canonical" href="https://debjyoti0891.github.io/sparta/modelling/architecture/2021/11/07/sparta.html" />
+<meta property="og:url" content="https://debjyoti0891.github.io/sparta/modelling/architecture/2021/11/07/sparta.html" />
+<meta property="og:site_name" content="Debjyoti Bhattacharjee" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-11-07T08:00:00+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="A Fast and Furious Introduction to Sparta" />
+<meta name="google-site-verification" content="shmIemKrYpRAIcUmw2hZzRij1uySn9s55BGBbLBsOto" />
+<meta name="msvalidate.01" content="F0966E9DC4FDEE6F087ADCDD6E5F6743" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Debjyoti Bhattacharjee"},"dateModified":"2021-11-07T08:00:00+00:00","datePublished":"2021-11-07T08:00:00+00:00","description":"Sparta is a modeling framework that can be used for a variety of architecture (or otherwise) modelling work. In this blog post, I present an introduction to the basic bells and whistles of the framework. The entire tutorial is available via Github.","headline":"A Fast and Furious Introduction to Sparta","mainEntityOfPage":{"@type":"WebPage","@id":"https://debjyoti0891.github.io/sparta/modelling/architecture/2021/11/07/sparta.html"},"publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"https://debjyoti0891.github.io/assets/D_old.jpg"},"name":"Debjyoti Bhattacharjee"},"url":"https://debjyoti0891.github.io/sparta/modelling/architecture/2021/11/07/sparta.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://debjyoti0891.github.io/feed.xml" title="Debjyoti Bhattacharjee" />
+
+<style>
+
+  <!-- pre {
+
+    border: 1px solid #ddd;
+    border-radius: 1px;
+    padding: 1em;
+    overflow-x: auto;
+}
+
+pre code {
+  background-color: #d1daf8; /* Dark gray background color */
+  color: #504a5f; /* Light gray text color */
+    display: block;
+    overflow-x: auto;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 14px;
+}
+
+/* Specific language styles */
+pre code[class*="language-"] {
+    color: #333; /* Default code color */
+} -->
+
+
+
+/* Add more language styles as needed */
+
+
+  /* Apply a different color when links are hovered */
+  <!-- a:hover {
+    color: #3e1209; /* Dark Red */
+    text-decoration: underline;
+  } -->
+
+  .button0 {
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    padding: 6px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    margin: 4px 2px;
+    cursor: pointer;
+  }
+  .button1 {
+    background-color: #4c7aaf;
+    border: none;
+    color: white;
+    padding: 6px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    margin: 4px 2px;
+    cursor: pointer;
+  }
+  .button2 {
+    background-color: #a8af4c;
+    border: none;
+    color: white;
+    padding: 6px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    margin: 4px 2px;
+    cursor: pointer;
+  }
+  .button3 {
+    background-color: #e6518f;
+    border: none;
+    color: white;
+    padding: 6px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    margin: 4px 2px;
+    cursor: pointer;
+  }
+  .button4 {
+    background-color: #5e4caf;
+    border: none;
+    color: white;
+    padding: 6px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    margin: 4px 2px;
+    cursor: pointer;
+  }
+  .button5 {
+    background-color: #7782d3;
+    border: none;
+    color: white;
+    padding: 6px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    margin: 4px 2px;
+    cursor: pointer;
+  }
+
+  .sp{
+  width: 10px;
+  padding-right: 15px;
+  background-color: #bdbbc5;
+  padding: 4px 12px;
+  }
+
+  .highlight{
+  font-family: ABeeZee, sans-serif;
+  background-color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  color: rgba(99, 82, 82, 1);
+  text-transform: none;
+  font-style: normal;
+  text-decoration: none;
+  line-height: 1.6em;
+  letter-spacing: 0.7px;
+  }
+  .headHi{
+    font-family: ABeeZee, sans-serif;
+    font-size: 26px;
+    font-weight: 600;
+    color: rgba(77, 63, 63, 1);
+    text-transform: none;
+    font-style: normal;
+    text-decoration: none;
+    line-height: 1.6em;
+    letter-spacing: 0.7px;
+}
+
+.introtext{
+    font-family: Verdana, sans-serif;
+    font-size: 16px;
+    /* font-weight: 400; */
+    color: rgba(0, 0, 0, 1);
+    text-transform: none;
+    font-style: normal;
+    text-decoration: none;
+    line-height: 1.5em;
+    letter-spacing: -0.1px;
+}
+
+.datetext{
+    font-family: Courier New, sans-serif;
+    font-size: 16px;
+    background-color: #eeeeee;
+    /* font-weight: 400; */
+    color: rgba(0, 0, 0, 1);
+    text-transform: none;
+    font-style: normal;
+    text-decoration: none;
+    line-height: 1.5em;
+    letter-spacing: -0.1px;
+}
+
+<!-- .divtext{
+  background-color: rgb(214, 226, 226);
+} -->
+
+.event-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+.event-list-item {
+  margin-bottom: 20px;
+}
+
+.event-name {
+  color: #6597ce; /* Highlight color for event name */
+}
+
+.event-location-date {
+  font-style: italic;
+  color: #6D1F0F; /* Highlight color for location/date */
+}
+
+
+.divtext {
+  background-color: #f0f0f0;
+  border: 2px solid #e5e5e5;
+  border-radius: 5px;
+  padding: 10px;
+  margin-bottom: 5px;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  color: #444;
+}
+
+.introhightext{
+    font-family: Optima, sans-serif;
+    font-size: 16px;
+    font-weight: 100;
+    color: #rgba(0, 0, 0, 1);
+    text-transform: none;
+    font-style: normal;
+    text-decoration: none;
+    line-height: 0em;
+    letter-spacing: 0px;
+}
+
+.locationtext {
+font-family: Tahoma, Geneva, sans-serif;
+font-size: 14px;
+letter-spacing: 2px;
+word-spacing: 2px;
+color: #6D1F0F;
+font-weight: normal;
+text-decoration: none;
+font-style: normal;
+font-variant: small-caps;
+text-transform: none;
+}
+
+.tag-link {
+    display: inline-block;
+    background: rgba(106,159,181,0.15);
+    padding: 0 .5rem;
+    margin-right: .5rem;
+    border-radius: 4px;
+    color: #34435e;
+    font-family: "PT Sans",Helvetica,Arial,sans-serif;
+    font-size: 90%;
+    -webkit-transition: all 0.1s ease-in-out;
+    -moz-transition: all 0.1s ease-in-out;
+    transition: all 0.1s ease-in-out;
+}
+.a {
+  color: #6369D1;
+}
+.tag-header {
+    display: inline-block;
+    padding: 0 .5rem;
+    margin-right: .5rem;
+    border-radius: 4px;
+    color: #34435e;
+    font-family: "PT Sans",Helvetica,Arial,sans-serif;
+    font-size: 90%;
+    -webkit-transition: all 0.1s ease-in-out;
+    -moz-transition: all 0.1s ease-in-out;
+    transition: all 0.1s ease-in-out;
+}
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  </style>
+
+  <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>A Fast and Furious Introduction to Sparta | Debjyoti Bhattacharjee</title>
+<meta name="generator" content="Jekyll v4.3.4" />
+<meta property="og:title" content="A Fast and Furious Introduction to Sparta" />
+<meta name="author" content="Debjyoti Bhattacharjee" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Sparta is a modeling framework that can be used for a variety of architecture (or otherwise) modelling work. In this blog post, I present an introduction to the basic bells and whistles of the framework. The entire tutorial is available via Github." />
+<meta property="og:description" content="Sparta is a modeling framework that can be used for a variety of architecture (or otherwise) modelling work. In this blog post, I present an introduction to the basic bells and whistles of the framework. The entire tutorial is available via Github." />
+<link rel="canonical" href="https://debjyoti0891.github.io/sparta/modelling/architecture/2021/11/07/sparta.html" />
+<meta property="og:url" content="https://debjyoti0891.github.io/sparta/modelling/architecture/2021/11/07/sparta.html" />
+<meta property="og:site_name" content="Debjyoti Bhattacharjee" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-11-07T08:00:00+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="A Fast and Furious Introduction to Sparta" />
+<meta name="google-site-verification" content="shmIemKrYpRAIcUmw2hZzRij1uySn9s55BGBbLBsOto" />
+<meta name="msvalidate.01" content="F0966E9DC4FDEE6F087ADCDD6E5F6743" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Debjyoti Bhattacharjee"},"dateModified":"2021-11-07T08:00:00+00:00","datePublished":"2021-11-07T08:00:00+00:00","description":"Sparta is a modeling framework that can be used for a variety of architecture (or otherwise) modelling work. In this blog post, I present an introduction to the basic bells and whistles of the framework. The entire tutorial is available via Github.","headline":"A Fast and Furious Introduction to Sparta","mainEntityOfPage":{"@type":"WebPage","@id":"https://debjyoti0891.github.io/sparta/modelling/architecture/2021/11/07/sparta.html"},"publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"https://debjyoti0891.github.io/assets/D_old.jpg"},"name":"Debjyoti Bhattacharjee"},"url":"https://debjyoti0891.github.io/sparta/modelling/architecture/2021/11/07/sparta.html"}</script>
+<!-- End Jekyll SEO tag -->
+</head>
+<body><header class="site-header" style="background-color: #e6e8e6;">
+
+  <div class="wrapper"><span><a class="site-title" rel="author" href="/">
+      <img src="/assets/D_old.jpg" alt="Smiley face" height="40" >
+      Debjyoti Bhattacharjee
+    </a></span><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/personal/">
+               Personal
+            </a><a class="page-link" href="/research/">
+               Research
+            </a><a class="page-link" href="/publications/">
+               Publications
+            </a><a class="page-link" href="/blog/">
+               Blog
+            </a><a class="page-link" href="/tools/">
+               Resources
+            </a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="post">
+  <h1 class="post-title"> A Fast and Furious Introduction to Sparta</h1>
+  <span class="post-date">07 Nov 2021</span>
+  
+  
+    <a class="tag-link"
+      href= https://debjyoti0891.github.io/tags/#modelling
+      rel="category tag">
+      #modelling
+    </a>
+  
+  
+    <a class="tag-link"
+      href= https://debjyoti0891.github.io/tags/#architecture
+      rel="category tag">
+      #architecture
+    </a>
+  
+  
+    <a class="tag-link"
+      href= https://debjyoti0891.github.io/tags/#micro-architecture
+      rel="category tag">
+      #micro-architecture
+    </a>
+  
+   <p><a href="https://sparcians.github.io/map/index.html">Sparta</a> is a modeling framework that can be used for a variety of architecture (or otherwise) modelling work. In this blog post, I present 
+an introduction to the basic bells and whistles of the framework. The entire tutorial is available via <a href="https://github.com/debjyoti0891/sparta-simplified">Github</a>.</p>
+
+<h3 id="usecase">Usecase</h3>
+<p>We extend the basic <a href="https://sparcians.github.io/map/skeleton_example.html">example</a> to introduce a new <code class="language-plaintext highlighter-rouge">sparta::Unit</code> Pipe. 
+Producer sends data to a Pipe. Pipe receives data and forwards this to a consumer. Consumer signals the Pipe that
+data is received. In turn, Pipe signals the producer that data has been received and the cycle continues.</p>
+
+<h3 id="pipe-definition-pipehpp">Pipe definition (Pipe.hpp)</h3>
+
+<p>Each sparta unit should have a ParameterSet (subclass of <code class="language-plaintext highlighter-rouge">sparta::ParameterSet</code> ). With each parameter, there can be a validation method attached,
+to check if valid values were set to the parameter and a name of the unit as well.</p>
+
+<p>For the Pipe, we consider 4 ports — two data ports and two signal ports.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    sparta::DataOutPort&lt;uint32_t&gt; pipe_out_port_{&amp;unit_port_set_, "pipe_out_port"};
+    sparta::DataInPort&lt;uint32_t&gt;  pipe_in_port_ {&amp;unit_port_set_, "pipe_in_port", sparta::SchedulingPhase::PortUpdate, 1};
+    sparta::SignalInPort          pipe_go_port_ {&amp;unit_port_set_, "pipe_go_port"};
+    sparta::SignalOutPort         pipe_go_producer_port_ {&amp;unit_port_set_, "pipe_go_producer_port"};
+</code></pre></div></div>
+
+<p>The DataInPort receives the data from the producer and sends it to the consumer
+using the DataOutPort. Similarly, it receives acknowledgement of the receipt by the consumer using the SignalInPort,
+which it passes along to the producer using the SignalOutPort.</p>
+
+<p>Corresponding to each input port, we can define a handler to perform some action on the received data.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+    // Pipe receive handler
+    // receive the data from the producer 
+    void receiveData_(const uint32_t &amp; dat);
+
+    // receive signal from the consumer and send a singal to the producer
+    void receiveSignal_();
+
+</code></pre></div></div>
+
+<p>We can also define events, that will be triggered after a specified duration on scheduling. For example,
+we define a event to delay signalling the producer,  after a signal is received from the consumer. In this case,
+delay is 5 cycles and <code class="language-plaintext highlighter-rouge">sendData_</code> is called as its handler.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    // An event to be scheduled in the sparta::SchedulingPhase::Tick
+    // phase if data is received
+    sparta::Event&lt;&gt; event_do_some_work_{&amp;unit_event_set_, "do_work_event",
+                                        CREATE_SPARTA_HANDLER(Pipe, sendData_),5};
+</code></pre></div></div>
+
+<p>Statistics can be measured quite easily.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Stats
+    sparta::Counter num_processed_{&amp;unit_stat_set_, "num_processed_",
+                                  "Number of items produced", sparta::Counter::COUNT_NORMAL};
+</code></pre></div></div>
+<p>To use such a counter, a simple <code class="language-plaintext highlighter-rouge">++num_processed_</code> would suffice.</p>
+
+<p>Finally, loggers can be set up per Unit.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sparta::log::MessageSource pipe_info_;
+</code></pre></div></div>
+
+<h3 id="pipe-implementation-pipecpp">Pipe implementation (Pipe.cpp)</h3>
+<ul>
+  <li>Start by defining the name of the Unit</li>
+  <li>The handler methods are tied to the ports in the constructor.
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  // Register a handler when the producer sends a data
+  pipe_in_port_.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Pipe, receiveData_, uint32_t));
+
+  // Register a go-handler when the consumer sends a go request
+  pipe_go_port_.registerConsumerHandler(CREATE_SPARTA_HANDLER(Pipe, receiveSignal_));
+</code></pre></div>    </div>
+    <p>These methods are called when the data is received at the port.</p>
+  </li>
+  <li>We schedule the event inside <code class="language-plaintext highlighter-rouge">receiveData_</code>.
+  <code class="language-plaintext highlighter-rouge">event_do_some_work_.schedule();</code>
+  This would trigger <code class="language-plaintext highlighter-rouge">sendData_</code> after 5 cycles.</li>
+</ul>
+
+<h3 id="building-the-simulator-tree-stagesimhppcpp">Building the simulator tree (StageSim{.hpp,.cpp})</h3>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">StageSim.hpp</code> is the top level module definition.</li>
+  <li>In <code class="language-plaintext highlighter-rouge">StageSim.cpp</code>, a bunch of setup needs to be done, in order to build the simulator tree.
+    <ul>
+      <li>In the constructor, the units and the corresponding parameter sets are made available.
+  <code class="language-plaintext highlighter-rouge">getResourceSet()-&gt;addResourceFactory&lt;sparta::ResourceFactory&lt;Pipe, Pipe::PipeParameterSet&gt;&gt;();</code></li>
+      <li>The destructor is relatively simple.</li>
+      <li><code class="language-plaintext highlighter-rouge">buildTree_</code> is one of the important things. Basically, each node is created as a <code class="language-plaintext highlighter-rouge">ResourceTreeNode</code>
+  and added to the <code class="language-plaintext highlighter-rouge">to_delete_</code> vector. Reading the parameters is performed and the constructor is called using these parameters.</li>
+      <li><code class="language-plaintext highlighter-rouge">configureTree_</code> is not used in the current context.</li>
+      <li><code class="language-plaintext highlighter-rouge">bindTree_</code> is used to connect the different ports! An example is
+  <code class="language-plaintext highlighter-rouge">// bind pipe to the producer
+  sparta::bind(root_tree_node-&gt;getChildAs&lt;sparta::Port&gt;(nodeName.str() + ".ports.producer_out_port"),
+             root_tree_node-&gt;getChildAs&lt;sparta::Port&gt;("pipe.ports.pipe_in_port"));
+ </code>
+  It can be observed that the port names are hierarchical. <code class="language-plaintext highlighter-rouge">pipe.ports.pipe_in_port</code> : <code class="language-plaintext highlighter-rouge">pipe</code> is the unit, under which
+  <code class="language-plaintext highlighter-rouge">ports</code> is the set of ports and <code class="language-plaintext highlighter-rouge">pipe_in_port</code> is the name of the port.</li>
+    </ul>
+  </li>
+</ul>
+
+<h3 id="command-line-simulator-setup-main_3scpp">Command line simulator setup (main_3s.cpp)</h3>
+<ul>
+  <li>Not much changes were made to the original example, except the following.
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   // Create the simulator object for population -- does not
+      // instantiate nor run it.
+      sparta::Scheduler scheduler;
+      StageSim sim(scheduler, be_noisy);
+</code></pre></div>    </div>
+  </li>
+  <li>Now, we are ready to run the simulation
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  cls.populateSimulation(&amp;sim);
+  cls.runSimulator(&amp;sim);
+  cls.postProcess(&amp;sim);
+</code></pre></div>    </div>
+  </li>
+</ul>
+
+<h3 id="running-the-example">Running the example</h3>
+
+<p>In the current environment, the following modules were available.
+Currently Loaded Modulefiles:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code> 1) GCCcore/10.3.0                   5) numactl/2.0.14-GCCcore-10.3.0      9) hwloc/2.4.1-GCCcore-10.3.0      13) libfabric/1.12.1-GCCcore-10.3.0  17) FlexiBLAS/3.0.4-GCC-10.3.0      21) foss/2021a                      25) Tcl/8.6.11-GCCcore-10.3.0     29) RapidJSON/1.1.0-GCCcore-10.3.0  33) cmake-3.17.5  
+ 2) zlib/1.2.11-GCCcore-10.3.0       6) XZ/5.2.5-GCCcore-10.3.0           10) OpenSSL/1.1                     14) PMIx/3.2.3-GCCcore-10.3.0        18) gompi/2021a                     22) yaml-cpp-0.6.2                  26) SQLite/3.35.4-GCCcore-10.3.0  30) bzip2/1.0.8-GCCcore-10.3.0      
+ 3) binutils/2.36.1-GCCcore-10.3.0   7) libxml2/2.9.10-GCCcore-10.3.0     11) libevent/2.1.12-GCCcore-10.3.0  15) OpenMPI/4.1.1-GCC-10.3.0         19) FFTW/3.3.9-gompi-2021a          23) ncurses/6.2-GCCcore-10.3.0      27) Szip/2.1.1-GCCcore-10.3.0     31) GMP/6.2.1-GCCcore-10.3.0        
+ 4) GCC/10.3.0                       8) libpciaccess/0.16-GCCcore-10.3.0  12) UCX/1.10.0-GCCcore-10.3.0       16) OpenBLAS/0.3.15-GCC-10.3.0       20) ScaLAPACK/2.1.0-gompi-2021a-fb  24) libreadline/8.1-GCCcore-10.3.0  28) HDF5/1.10.7-gompi-2021a       32) boost-1.77.0   ```
+</code></pre></div></div>
+
+<p>To build the simulator,</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code> mkdir build
+ cd build
+ cmake ..
+ make sparta_3stage
+</code></pre></div></div>
+
+<p>Sparta has a ton of options, which can be viewed as follows:
+<code class="language-plaintext highlighter-rouge">sparta_3stage --help</code></p>
+
+<ul>
+  <li>
+    <p>To see the <strong>simulation tree</strong>,<code class="language-plaintext highlighter-rouge">sparta_3stage --show-tree</code></p>
+
+    <p>This is a relatively simple way to see which ports are connected to what.</p>
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  top : &lt;top (root)&gt; (privacy: 0)
+  +-descendant_attached : &lt;top.descendant_attached name:"descendant_attached" datat:(sparta::TreeNode)  observers:1 posted:55&gt; (privacy: 0)
+  +-consumer : &lt;top.consumer resource: "consumer"&gt; (privacy: 0)
+  | +-params : &lt;top.consumer.params 1 params&gt; {builtin} (privacy: 0)
+  | | +-num_producers : [&lt;top.consumer.params.num_producers tags:[SPARTA_Parameter]&gt;]&lt;param uint32_t num_producers=1, def=1, write=0 read: 1 ignored: 0&gt; (privacy: 0)
+  | +-ports : &lt;top.consumer.ports&gt; (privacy: 0)
+  | | +-consumer_in_port : [bound to] {pipe_out_port (top.pipe.ports.pipe_out_port)} (privacy: 0)
+  | | | +-events : &lt;top.consumer.ports.consumer_in_port.events 1 events&gt; {builtin} (privacy: 0)
+  | | | | +-consumer_in_port_forward_event : &lt;top.consumer.ports.consumer_in_port.events.consumer_in_port_forward_event&gt; (privacy: 0)
+  | | +-producer0_go_port : [bound to] {pipe_go_port (top.pipe.ports.pipe_go_port)} (privacy: 0)
+  | +-events : &lt;top.consumer.events 1 events&gt; {builtin} (privacy: 0)
+  | | +-ev_data_arrived : &lt;top.consumer.events.ev_data_arrived&gt; (privacy: 0)
+  | +-stats : &lt;top.consumer.stats 0 stats, 1 counters&gt; {builtin} (privacy: 0)
+  | | +-num_consumed : &lt;top.consumer.stats.num_consumed val:100 normal vis:100000000&gt; (privacy: 0)
+  | +-? : &lt;top.consumer:log_msg_src cat:"info" observed:false msgs:0&gt; (_sparta_log_msg_source_[0])  (privacy: 0)
+  | +-? : &lt;top.consumer:log_msg_src cat:"warning" observed:true msgs:0&gt; (_sparta_log_msg_source_[1])  (privacy: 0)
+  | +-? : &lt;top.consumer:log_msg_src cat:"debug" observed:false msgs:0&gt; (_sparta_log_msg_source_[2])  (privacy: 0)
+  | +-? : &lt;top.consumer:log_msg_src cat:"info" observed:false msgs:0&gt; (_sparta_log_msg_source_[3])  (privacy: 0)
+  +-pipe : &lt;top.pipe resource: "pipe"&gt; (privacy: 0)
+  | +-params : &lt;top.pipe.params 0 params&gt; {builtin} (privacy: 0)
+  | +-ports : &lt;top.pipe.ports&gt; (privacy: 0)
+  | | +-pipe_out_port : [bound to] {consumer_in_port (top.consumer.ports.consumer_in_port)} (privacy: 0)
+  | | +-pipe_in_port : [bound to] {producer_out_port (top.producer0.ports.producer_out_port)} (privacy: 0)
+  | | | +-events : &lt;top.pipe.ports.pipe_in_port.events 1 events&gt; {builtin} (privacy: 0)
+  | | | | +-pipe_in_port_forward_event : &lt;top.pipe.ports.pipe_in_port.events.pipe_in_port_forward_event&gt; (privacy: 0)
+  | | +-pipe_go_port : [bound to] {producer0_go_port (top.consumer.ports.producer0_go_port)} (privacy: 0)
+  | | | +-events : &lt;top.pipe.ports.pipe_go_port.events 1 events&gt; {builtin} (privacy: 0)
+  | | | | +-pipe_go_port_forward_event : &lt;top.pipe.ports.pipe_go_port.events.pipe_go_port_forward_event&gt; (privacy: 0)
+  | | +-pipe_go_producer_port : [bound to] {producer_go_port (top.producer0.ports.producer_go_port)} (privacy: 0)
+  | +-events : &lt;top.pipe.events 1 events&gt; {builtin} (privacy: 0)
+  | | +-do_work_event : &lt;top.pipe.events.do_work_event&gt; (privacy: 0)
+  | +-stats : &lt;top.pipe.stats 0 stats, 1 counters&gt; {builtin} (privacy: 0)
+  | | +-num_processed_ : &lt;top.pipe.stats.num_processed_ val:101 normal vis:100000000&gt; (privacy: 0)
+  | +-? : &lt;top.pipe:log_msg_src cat:"info" observed:false msgs:0&gt; (_sparta_log_msg_source_[0])  (privacy: 0)
+  | +-? : &lt;top.pipe:log_msg_src cat:"warning" observed:true msgs:0&gt; (_sparta_log_msg_source_[1])  (privacy: 0)
+  | +-? : &lt;top.pipe:log_msg_src cat:"debug" observed:false msgs:0&gt; (_sparta_log_msg_source_[2])  (privacy: 0)
+  | +-? : &lt;top.pipe:log_msg_src cat:"info" observed:false msgs:0&gt; (_sparta_log_msg_source_[3])  (privacy: 0)
+  +-producer0 : &lt;top.producer0 resource: "producer"&gt; (producer[0])  (privacy: 0)
+  | +-params : &lt;top.producer0.params 3 params&gt; {builtin} (privacy: 0)
+  | | +-max_ints_to_send : [&lt;top.producer0.params.max_ints_to_send tags:[SPARTA_Parameter]&gt;]&lt;param uint32_t max_ints_to_send=100, def=100, write=0 read: 1 ignored: 0&gt; (privacy: 0)
+  | | +-test_param : [&lt;top.producer0.params.test_param tags:[SPARTA_Parameter]&gt;]&lt;param uint32_t test_param=1, def=0, write=1 read: 1 ignored: 0 VOLATILE&gt; (privacy: 0)
+  | | +-arch_override_test_param : [&lt;top.producer0.params.arch_override_test_param tags:[SPARTA_Parameter]&gt;]&lt;param std::string arch_override_test_param=reset_in_constructor, def=arch_override_default_value, write=1 read: 0 ignored: 1&gt; (privacy: 0)
+  | +-ports : &lt;top.producer0.ports&gt; (privacy: 0)
+  | | +-producer_out_port : [bound to] {pipe_in_port (top.pipe.ports.pipe_in_port)} (privacy: 0)
+  | | +-producer_go_port : [bound to] {pipe_go_producer_port (top.pipe.ports.pipe_go_producer_port)} (privacy: 0)
+  | | | +-events : &lt;top.producer0.ports.producer_go_port.events 1 events&gt; {builtin} (privacy: 0)
+  | | | | +-producer_go_port_forward_event : &lt;top.producer0.ports.producer_go_port.events.producer_go_port_forward_event&gt; (privacy: 0)
+  | +-events : &lt;top.producer0.events 1 events&gt; {builtin} (privacy: 0)
+  | | +-ev_producing_event : &lt;top.producer0.events.ev_producing_event&gt; (privacy: 0)
+  | +-stats : &lt;top.producer0.stats 0 stats, 1 counters&gt; {builtin} (privacy: 0)
+  | | +-num_produced : &lt;top.producer0.stats.num_produced val:100 normal vis:100000000&gt; (privacy: 0)
+  | +-? : &lt;top.producer0:log_msg_src cat:"info" observed:false msgs:0&gt; (_sparta_log_msg_source_[0])  (privacy: 0)
+  | +-? : &lt;top.producer0:log_msg_src cat:"warning" observed:true msgs:1&gt; (_sparta_log_msg_source_[1])  (privacy: 0)
+  | +-? : &lt;top.producer0:log_msg_src cat:"debug" observed:false msgs:0&gt; (_sparta_log_msg_source_[2])  (privacy: 0)
+  | +-? : &lt;top.producer0:log_msg_src cat:"info" observed:false msgs:0&gt; (_sparta_log_msg_source_[3])  (privacy: 0)
+  +-sparta_expression_trigger_fired : &lt;top.sparta_expression_trigger_fired name:"sparta_expression_trigger_fired" datat:(std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;)  observers:0 posted:0&gt; (privacy: 0)
+</code></pre></div>    </div>
+  </li>
+  <li>To generate an html report, <code class="language-plaintext highlighter-rouge">./sparta_3stage --report-all output.html html</code> . The report format could also be <code class="language-plaintext highlighter-rouge">yaml</code>.</li>
+  <li>
+    <p>Selective logging can be done. For example to view logs related to <code class="language-plaintext highlighter-rouge">pipe</code>,</p>
+
+    <p><code class="language-plaintext highlighter-rouge"> ./sparta_3stage -l top.pipe info pipe_info.txt</code>
+  This would dump the information in a log file, <code class="language-plaintext highlighter-rouge">pipe_info.txt</code>.</p>
+  </li>
+  <li>A list of command line usage scenarios is already documented in the main (documentation](https://sparcians.github.io/map/core_example.html) of Sparta.</li>
+</ul>
+
+<h3 id="references">References</h3>
+<ul>
+  <li><strong>Sparta Docs</strong> : <a href="https://sparcians.github.io/map/index.html">[Link]</a></li>
+  <li><strong>Tutorial Code</strong>: <a href="https://github.com/debjyoti0891/sparta-simplified">[Github  link]</a></li>
+</ul>
+
+
+<a class="github-button" href="https://github.com/debjyoti0891" data-size="large" aria-label="Follow @debjyoti0891 on GitHub">Follow @debjyoti0891</a>
+<script async defer src="https://buttons.github.io/buttons.js"></script>
+   <div id="disqus_thread"></div>
+  <script>
+    var disqus_config = function () {
+      this.page.url = 'https://debjyoti0891.github.io/sparta/modelling/architecture/2021/11/07/sparta.html';
+      this.page.identifier = 'https://debjyoti0891.github.io/sparta/modelling/architecture/2021/11/07/sparta.html';
+    };
+
+    (function() {
+      var d = document, s = d.createElement('script');
+
+      s.src = 'https://bdebjyoti.disqus.com/embed.js';
+
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+ </div>
+
+<div class="related">
+  <h2>Related Posts</h2>
+  <ul class="related-posts">
+    
+      <li>
+        <h3>
+          <a href="//mlir/part4">
+            HW-SW co-design in the RISC-V Ecosystem [Part 4]: Executing Custom Instructions on Spike
+            <small>12 May 2024</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="//mlir/part3">
+            HW-SW co-design in the RISC-V Ecosystem [Part 3]: RISC-V Custom Instructions 
+            <small>22 Apr 2024</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="//mlir/part2">
+            HW-SW co-design in the RISC-V Ecosystem [Part 2]: MLIR to LLVM
+            <small>09 Apr 2024</small>
+          </a>
+        </h3>
+      </li>
+    
+  </ul>
+</div>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <!-- <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p> -->
+        <ul class="contact-list">
+          <li class="p-name">Debjyoti Bhattacharjee</li>
+          <li><a class="u-email" href="mailto:debjyoti [dot] bhattacharjee [at] imec [dot] be">debjyoti [dot] bhattacharjee [at] imec [dot] be</a></li>
+
+        </ul>
+      </div>
+      <div class="footer-col">
+        <p>Snapshots of ideas and things that piqued my interest. The website has information primarily focused on my research in computer architecture and systems, including high performance computing, emerging technologies, alongside design space exploration.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/debjyoti0891" title="debjyoti0891"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li><li><a rel="me" href="https://www.instagram.com/debjyoti0891" title="debjyoti0891"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#instagram"></use></svg></a></li><li><a rel="me" href="https://www.linkedin.com/in/debjyotibhattacharjee" title="debjyotibhattacharjee"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#linkedin"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+
+
+</body>
+
+</html>

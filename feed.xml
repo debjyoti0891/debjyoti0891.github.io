@@ -1,0 +1,1203 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://debjyoti0891.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://debjyoti0891.github.io/" rel="alternate" type="text/html" /><updated>2025-01-07T04:43:14+00:00</updated><id>https://debjyoti0891.github.io/feed.xml</id><title type="html">Debjyoti Bhattacharjee</title><subtitle>Snapshots of ideas and things that piqued my interest. The website has information primarily focused on my research in computer architecture and systems, including high performance computing, emerging technologies, alongside design space exploration.</subtitle><author><name>Debjyoti Bhattacharjee</name><email>debjyoti [dot] bhattacharjee [at] imec [dot] be</email></author><entry><title type="html">HW-SW co-design in the RISC-V Ecosystem [Part 4]: Executing Custom Instructions on Spike</title><link href="https://debjyoti0891.github.io/mlir/part4" rel="alternate" type="text/html" title="HW-SW co-design in the RISC-V Ecosystem [Part 4]: Executing Custom Instructions on Spike" /><published>2024-05-12T08:00:00+00:00</published><updated>2024-05-12T08:00:00+00:00</updated><id>https://debjyoti0891.github.io/mlir/llvm_mlir_04</id><content type="html" xml:base="https://debjyoti0891.github.io/mlir/part4"><![CDATA[<p>This is the final part of the 4 part blog series of Hardware-Software codesign, starting from MLIR to execution of custom instructions on a RISC-V Instruction set simulator (ISS). In this part, we will focus specifically on adding the custom instructions to <a href="https://github.com/riscv-software-src/riscv-isa-sim">Spike</a>, which is the golden reference ISS for RISC-V.</p>
+
+<p>Recall the encoding of the approximate multiplication instructions for floating point numbers from the previous <a href="/mlir/part3">post</a>. These instructions, known as <code class="language-plaintext highlighter-rouge">fmul_exp_m_s</code>, <code class="language-plaintext highlighter-rouge">fmul_exp_s</code>, <code class="language-plaintext highlighter-rouge">fmul_exp_m</code>, and <code class="language-plaintext highlighter-rouge">fmul_exp</code>, serve as proxies for approximate multiplication operations within RISC-V processors.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># instruction encoding
+fmul_exp_m_s rs2 rs1 rd 31..25=0b1111100 14..12=0b111 6..0=0b0001011
+fmul_exp_s rs2 rs1 rd 31..25=0b1011100 14..12=0b111 6..0=0b0001011
+fmul_exp_m rs2 rs1 rd 31..25=0b1101100 14..12=0b111 6..0=0b0001011
+fmul_exp rs2 rs1 rd 31..25=0b1001100 14..12=0b111 6..0=0b0001011
+</code></pre></div></div>
+<p>Based on the <a href="/mlir/part3">patch to LLVM</a> that we defined, we can create an executable that can be directly executed in spike. These commands are already available via a <a href="https://github.com/debjyoti0891/CoVeriS/blob/main/examples/Makefile">Makefile</a> in the accompanying <a href="https://github.com/debjyoti0891/CoVeriS/tree/main">github repository</a>.</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  llc <span class="nt">-march</span><span class="o">=</span>riscv64 <span class="nt">-mattr</span><span class="o">=</span>+f,+xnn <span class="nt">-target-abi</span><span class="o">=</span>lp64 <span class="nt">-O2</span> <span class="nt">-filetype</span><span class="o">=</span>asm benchmark_llvm.ll <span class="o">&gt;</span> benchmark_llvm.s
+  clang <span class="nt">-target</span> riscv64 <span class="nt">-march</span><span class="o">=</span>rv64imaf_xnn <span class="nt">-mabi</span><span class="o">=</span>lp64f <span class="nt">-I</span><span class="nb">.</span> benchmark_llvm.s <span class="o">&gt;</span> benchmark.o
+  clang <span class="nt">-target</span> riscv64-unknown-elf <span class="se">\</span>
+		<span class="nt">-march</span><span class="o">=</span>rv64imaf_xnn <span class="nt">-mabi</span><span class="o">=</span>lp64f <span class="se">\</span>
+		<span class="nt">-static</span> <span class="se">\</span>
+		<span class="nt">-Tcommon</span>/riscv.ld <span class="se">\</span>
+		<span class="nt">-nostdlib</span> <span class="nt">-nostartfiles</span> <span class="se">\</span>
+		<span class="nt">--sysroot</span><span class="o">=</span><span class="s2">"&lt;&gt;/homebrew/opt/riscv-gnu-toolchain/riscv64-unknown-elf/"</span> <span class="nt">--gcc-toolchain</span><span class="o">=</span><span class="s2">"&lt;&gt;/homebrew/opt/riscv-gnu-toolchain/"</span>  <span class="se">\</span>
+		benchmark.o spike_lib.a <span class="nt">-o</span> benchmark.elf
+  llvm-objdump <span class="nt">--mattr</span><span class="o">=</span>+xnn,+f <span class="nt">-S</span> benchmark.elf <span class="o">&gt;</span> benchmark.objdump
+</code></pre></div></div>
+
+<pre><code class="language-NASM">  cat benchmark.objdump
+  ...
+  0000000080002030 &lt;arith_func&gt;:
+  80002030: d3 87 05 f0  	fmv.w.x	fa5, a1
+  80002034: 53 07 05 f0  	fmv.w.x	fa4, a0
+  80002038: 8b 77 f7 98  	fmul_exp	fa5, fa4, fa5 # this is the custom RISC-V instruction
+  8000203c: d3 77 f7 00  	fadd.s	fa5, fa4, fa5
+  80002040: 53 85 07 e0  	fmv.x.w	a0, fa5
+  80002044: 67 80 00 00  	ret
+  ...
+</code></pre>
+
+<h3 id="adding-support-for-new-instructions-in-risc-v-spike-simulator">Adding support for new instructions in RISC-V Spike Simulator</h3>
+
+<p>Now with the instructions generated and available in the executable file (<code class="language-plaintext highlighter-rouge">benchmark.elf</code>). We need to update Spike to support these new instructions. The overall patch of Spike is available <a href="https://github.com/debjyoti0891/CoVeriS/blob/main/patches/patch_riscv_isa_sim">here</a>.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>|-- disasm
+|   |-- disasm.cc
+|   |-- isa_parser.cc
+|
+|-- riscv
+|   |-- insns
+|   |   |-- xnnmul.h
+|   |-- encoding.h
+|   |-- isa_parser.h
+|   |-- riscv.mk.in
+|
+|-- softfloat
+|   |-- f32_mulAdd.c
+|   |-- softfloat.h
+</code></pre></div></div>
+
+<ul>
+  <li>The mask and match for the instructions are defined in the <code class="language-plaintext highlighter-rouge">encoding.h</code> file.</li>
+  <li>The <code class="language-plaintext highlighter-rouge">isa_parser.cc</code> is used to selectively enable the features of the simulator, based on the ISA architecture string.</li>
+  <li>In the <code class="language-plaintext highlighter-rouge">isa_parser.h</code>, we define the extension enum <code class="language-plaintext highlighter-rouge">EXT_XNN</code>, which is used in the extension table. Similarly, <code class="language-plaintext highlighter-rouge">disasm.cc</code> defines the disassembly of the instruction if the extension is enabled.</li>
+  <li>In the <code class="language-plaintext highlighter-rouge">xnnmul.h</code> file, the behaviour of the instruction is defined. The approximate multiplication behaviour (<code class="language-plaintext highlighter-rouge">f32_nn_mul</code>) is itself defined in the <code class="language-plaintext highlighter-rouge">f32_mulAdd.c</code>. Other instruction can be added similarly.</li>
+</ul>
+
+<p>Spike can execute the generated elf in the following manner and the debug output can be seen.  The <code class="language-plaintext highlighter-rouge">xnnmul</code> is the Spike implementation of the <code class="language-plaintext highlighter-rouge">fmul_exp</code> assembly instruction.</p>
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  ../riscv-isa-sim/build/spike <span class="nt">--isa</span><span class="o">=</span>rv64gc_xnn <span class="nt">-d</span>  <span class="se">\</span>
+    benchmark_llvm.elf <span class="nt">-m0x80000000</span>:0x10000 <span class="nt">--pc</span> 0x80000000
+</code></pre></div></div>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="nf">...</span>
+  <span class="p">(</span><span class="nf">spike</span><span class="p">)</span>
+  <span class="nf">core</span>   <span class="mi">0</span><span class="p">:</span> <span class="o">&gt;&gt;&gt;&gt;</span>
+  <span class="nf">core</span>   <span class="mi">0</span><span class="p">:</span> <span class="mh">0x0000000080002030</span> <span class="p">(</span><span class="mh">0xf00587d3</span><span class="p">)</span> <span class="nv">fmv.w.x</span> <span class="nv">fa5</span><span class="p">,</span> <span class="nv">a1</span>
+  <span class="p">(</span><span class="nf">spike</span><span class="p">)</span>
+  <span class="nf">core</span>   <span class="mi">0</span><span class="p">:</span> <span class="mh">0x0000000080002034</span> <span class="p">(</span><span class="mh">0xf0050753</span><span class="p">)</span> <span class="nv">fmv.w.x</span> <span class="nv">fa4</span><span class="p">,</span> <span class="nv">a0</span>
+  <span class="p">(</span><span class="nf">spike</span><span class="p">)</span>
+  <span class="nf">core</span>   <span class="mi">0</span><span class="p">:</span> <span class="mh">0x0000000080002038</span> <span class="p">(</span><span class="mh">0x98f7778b</span><span class="p">)</span> <span class="nv">xnnmul</span>  <span class="nv">a5</span><span class="p">,</span> <span class="nv">a4</span><span class="p">,</span> <span class="nv">a5</span>
+  <span class="p">(</span><span class="nf">spike</span><span class="p">)</span>
+  <span class="nf">core</span>   <span class="mi">0</span><span class="p">:</span> <span class="mh">0x000000008000203c</span> <span class="p">(</span><span class="mh">0x00f777d3</span><span class="p">)</span> <span class="nv">fadd.s</span>  <span class="nv">fa5</span><span class="p">,</span> <span class="nv">fa4</span><span class="p">,</span> <span class="nv">fa5</span>
+  <span class="p">(</span><span class="nf">spike</span><span class="p">)</span>
+  <span class="nf">core</span>   <span class="mi">0</span><span class="p">:</span> <span class="mh">0x0000000080002040</span> <span class="p">(</span><span class="mh">0xe0078553</span><span class="p">)</span> <span class="nv">fmv.x.w</span> <span class="nv">a0</span><span class="p">,</span> <span class="nv">fa5</span>
+  <span class="p">(</span><span class="nf">spike</span><span class="p">)</span>
+  <span class="nf">...</span>
+</code></pre></div></div>
+<p>It was interesting to note that Spike by default executes boot code and then jumps to the supplied Program Counter (PC). So while tracing the instructions, you will observe code being executed at the start that is not part of the elf binary.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+<p>This completes the hardware-software co-design loop, where we started from an MLIR operation with custom attributes and eventually executed on a RISC-V ISS simulator with custom instructions implemented.
+<img src="/assets/overall_flow.png" alt="Overall MLIR to RISC-V binary flow" /></p>
+
+<p>Hardware-software co-design, powered by MLIR, LLVM, and processor simulation tools like Spike, is essential for creating efficient, customized systems. Whether you’re designing a new processor or enhancing an existing one, understanding this co-design process is key to unlocking innovation in the world of computing.</p>
+
+<h3 id="references">References</h3>
+<p>The entire blog was made possible by a variety of open-source code, tutorials and other resources. Some of the interesting ones are listed below.</p>
+<ul>
+  <li><a href="https://mlir.llvm.org/getting_started/">Getting Started - MLIR - LLVM</a></li>
+  <li><a href="https://mlir.llvm.org/docs/Tutorials/">Tutorials - MLIR - LLVM</a></li>
+  <li><a href="https://github.com/j2kun/mlir-tutorial#mlir-tutorial">MLIR onboarding tutorial for the HEIR project</a></li>
+  <li><a href="https://github.com/adam-smnk/Open-CIM-Compiler">The Open CIM Compiler</a></li>
+  <li><a href="https://llvm.org/docs/ExtendingLLVM.html">Extending LLVM:  Adding instructions, intrinsics, types, etc.</a></li>
+  <li><a href="https://github.com/riscv-software-src/riscv-isa-sim">riscv-software-src/riscv-isa-sim: Spike, a RISC-V ISA Simulator - GitHub</a></li>
+  <li><a href="https://github.com/ilya-sotnikov/riscv-asm-spike">Bare metal RISC-V assembly examples for Spike</a></li>
+</ul>]]></content><author><name>Debjyoti Bhattacharjee</name><email>debjyoti [dot] bhattacharjee [at] imec [dot] be</email></author><category term="compilation" /><category term="mlir" /><category term="riscv" /><category term="compilation" /><category term="llvm" /><category term="mlir" /><summary type="html"><![CDATA[This is the final part of the 4 part blog series of Hardware-Software codesign, starting from MLIR to execution of custom instructions on a RISC-V Instruction set simulator (ISS). In this part, we will focus specifically on adding the custom instructions to Spike, which is the golden reference ISS for RISC-V.]]></summary></entry><entry><title type="html">HW-SW co-design in the RISC-V Ecosystem [Part 3]: RISC-V Custom Instructions</title><link href="https://debjyoti0891.github.io/mlir/part3" rel="alternate" type="text/html" title="HW-SW co-design in the RISC-V Ecosystem [Part 3]: RISC-V Custom Instructions" /><published>2024-04-22T08:00:00+00:00</published><updated>2024-04-22T08:00:00+00:00</updated><id>https://debjyoti0891.github.io/mlir/llvm_mlir_03</id><content type="html" xml:base="https://debjyoti0891.github.io/mlir/part3"><![CDATA[<p>In <a href="/mlir/part1">Part 1</a>, we explored the overarching concept of hardware-software co-design. In <a href="/mlir/part2">Part 2</a>, we delved into the specifics of implementing an MLIR pass. In this part, we explore the details of adding new custom instructions to the RISC-V backend and using them via intrinsics.</p>
+
+<h2 id="instruction-encoding">Instruction Encoding</h2>
+
+<p>In this example, the addition of four new approximate multiplication instructions for floating point numbers is considered. These instructions, known as <code class="language-plaintext highlighter-rouge">fmul_exp_m_s</code>, <code class="language-plaintext highlighter-rouge">fmul_exp_s</code>, <code class="language-plaintext highlighter-rouge">fmul_exp_m</code>, and <code class="language-plaintext highlighter-rouge">fmul_exp</code>, serve as proxies for approximate multiplication operations within RISC-V processors. The hardware implementation details are not discussed in this blog. The individual instruction encodings are provided below.</p>
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># instruction encoding</span>
+fmul_exp_m_s rs2 rs1 rd 31..25<span class="o">=</span>0b1111100 14..12<span class="o">=</span>0b111 6..0<span class="o">=</span>0b0001011
+fmul_exp_s rs2 rs1 rd 31..25<span class="o">=</span>0b1011100 14..12<span class="o">=</span>0b111 6..0<span class="o">=</span>0b0001011
+fmul_exp_m rs2 rs1 rd 31..25<span class="o">=</span>0b1101100 14..12<span class="o">=</span>0b111 6..0<span class="o">=</span>0b0001011
+fmul_exp rs2 rs1 rd 31..25<span class="o">=</span>0b1001100 14..12<span class="o">=</span>0b111 6..0<span class="o">=</span>0b0001011
+</code></pre></div></div>
+
+<h2 id="adding-instructions-and-assembler-support-in-llvm">Adding instructions and assembler support in LLVM</h2>
+
+<h3 id="llvmlibtargetriscvriscvinstrinfotd"><a href="">llvm/lib/Target/RISCV/RISCVInstrInfo.td</a></h3>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    include "RISCVInstrInfoCustExtNN.td"
+</code></pre></div></div>
+<p>The new extension is termed as as “CustExtNN” and a new <a href="https://llvm.org/docs/TableGen/">TableGen</a> file is added. This is included in the high level RISCV instruction info file, which has details of the RISC-V target.
+By defining the details of the new extension in a separate file (<code class="language-plaintext highlighter-rouge">RISCVInstrInfoCustExtNN.td</code>), the changes for related to extension can be self-contained.</p>
+
+<h3 id="llvmlibtargetriscvriscvfeaturestd"><a href="">llvm/lib/Target/RISCV/RISCVFeatures.td</a></h3>
+<p>This code excerpt defines a custom feature called “CustomExtNN,” which represents a neural network (NN) compute extension for inference tasks in RISC-V processors. The feature is enabled by setting the “HasCustomExtNN” predicate to true. This extension can be activated in the Clang compiler by specifying the “+xnn” feature string. For a custom instruction set, this is where the description goes in.</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">bool</span> <span class="n">hasCustomExtNN</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="n">HasCustomExtNN</span><span class="p">;</span> <span class="p">}</span>
+<span class="c1">// This is a custom  NN feature</span>
+<span class="n">def</span> <span class="n">FeatureCustomExtNN</span>
+<span class="o">:</span> <span class="n">SubtargetFeature</span><span class="o">&lt;</span><span class="s">"xnn"</span><span class="p">,</span> <span class="s">"HasCustomExtNN"</span><span class="p">,</span> <span class="s">"true"</span><span class="p">,</span>
+                <span class="s">"NN (Compute Extension for Neural Network Inference)"</span><span class="p">,</span>
+                <span class="p">[]</span><span class="o">&gt;</span><span class="p">;</span>
+
+<span class="n">def</span> <span class="n">HasCustomExtNN</span> <span class="o">:</span> <span class="n">Predicate</span><span class="o">&lt;</span><span class="s">"Subtarget-&gt;hasCustomExtNN()"</span><span class="o">&gt;</span><span class="p">,</span>
+                        <span class="n">AssemblerPredicate</span><span class="o">&lt;</span><span class="p">(</span><span class="n">all_of</span> <span class="n">FeatureCustomExtNN</span><span class="p">),</span>
+                        <span class="s">"NN (Compute Extension for Neural Network Inference)"</span><span class="o">&gt;</span><span class="p">;</span>
+</code></pre></div></div>
+
+<h3 id="llvmlibtargetriscvriscvinstrinfocustextnntd"><a href="">llvm/lib/Target/RISCV/RISCVInstrInfoCustExtNN.td</a></h3>
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">INSTR_nn_0xfe00707f_1</span> <span class="o">&lt;</span><span class="n">bits</span><span class="o">&lt;</span><span class="mi">7</span><span class="o">&gt;</span> <span class="n">f0</span><span class="p">,</span> <span class="n">bits</span><span class="o">&lt;</span><span class="mi">3</span><span class="o">&gt;</span> <span class="n">f1</span><span class="p">,</span> <span class="n">RISCVOpcode</span> <span class="n">opcode</span><span class="p">,</span>  <span class="n">string</span> <span class="n">opcodestr</span><span class="o">&gt;</span>
+<span class="o">:</span> <span class="n">RVInstR</span><span class="o">&lt;</span><span class="n">f0</span><span class="p">,</span> <span class="n">f1</span><span class="p">,</span> <span class="n">opcode</span><span class="p">,</span> <span class="p">(</span><span class="n">outs</span> <span class="n">FPR32</span><span class="o">:</span><span class="err">$</span><span class="n">rd</span><span class="p">),(</span><span class="n">ins</span> <span class="n">FPR32</span><span class="o">:</span><span class="err">$</span><span class="n">rs1</span><span class="p">,</span><span class="n">FPR32</span><span class="o">:</span><span class="err">$</span><span class="n">rs2</span><span class="p">),</span><span class="n">opcodestr</span><span class="p">,</span> <span class="s">"$rd, $rs1, $rs2"</span><span class="o">&gt;</span> <span class="p">{</span>
+    <span class="n">bits</span><span class="o">&lt;</span><span class="mi">5</span><span class="o">&gt;</span> <span class="n">rs2</span><span class="p">;</span>
+    <span class="n">bits</span><span class="o">&lt;</span><span class="mi">5</span><span class="o">&gt;</span> <span class="n">rs1</span><span class="p">;</span>
+    <span class="n">bits</span><span class="o">&lt;</span><span class="mi">5</span><span class="o">&gt;</span> <span class="n">rd</span><span class="p">;</span>
+    <span class="n">let</span> <span class="n">Inst</span> <span class="p">{</span><span class="mi">24</span><span class="o">-</span><span class="mi">20</span><span class="p">}</span> <span class="o">=</span> <span class="n">rs2</span><span class="p">;</span>
+    <span class="n">let</span> <span class="n">Inst</span> <span class="p">{</span><span class="mi">19</span><span class="o">-</span><span class="mi">15</span><span class="p">}</span> <span class="o">=</span> <span class="n">rs1</span><span class="p">;</span>
+    <span class="n">let</span> <span class="n">Inst</span> <span class="p">{</span><span class="mi">11</span><span class="o">-</span><span class="mi">7</span><span class="p">}</span> <span class="o">=</span> <span class="n">rd</span><span class="p">;</span>
+    <span class="n">let</span> <span class="n">Inst</span> <span class="p">{</span><span class="mi">31</span><span class="o">-</span><span class="mi">25</span><span class="p">}</span> <span class="o">=</span> <span class="n">f0</span><span class="p">;</span>
+    <span class="n">let</span> <span class="n">Inst</span> <span class="p">{</span><span class="mi">14</span><span class="o">-</span><span class="mi">12</span><span class="p">}</span> <span class="o">=</span> <span class="n">f1</span><span class="p">;</span>
+    <span class="n">let</span> <span class="n">Inst</span> <span class="p">{</span><span class="mi">6</span><span class="o">-</span><span class="mi">0</span><span class="p">}</span> <span class="o">=</span> <span class="n">opcode</span><span class="p">.</span><span class="n">Value</span><span class="p">;</span>
+    <span class="p">}</span> <span class="c1">// end of class INSTR_nn_0xfe00707f_1</span>
+
+
+    <span class="n">def</span> <span class="n">OPC_FMUL_EXP_M_S</span>  <span class="o">:</span> <span class="n">RISCVOpcode</span><span class="o">&lt;</span><span class="s">"FMUL_EXP_M_S"</span><span class="p">,</span>    <span class="mb">0b0001011</span><span class="o">&gt;</span><span class="p">;</span>
+
+        <span class="c1">//===----------------------------------------------------------------------===//</span>
+        <span class="c1">// RISC-V specific DAG Nodes.</span>
+        <span class="c1">//===----------------------------------------------------------------------===//</span>
+
+
+        <span class="cm">/* Use the same variable as defined in the RISCV.td for the extension as the predicate */</span>
+        <span class="n">let</span> <span class="n">Predicates</span> <span class="o">=</span> <span class="p">[</span><span class="n">HasCustomExtNN</span><span class="p">]</span> <span class="n">in</span> <span class="p">{</span>
+        <span class="cm">/* set the values appropriately. use more than one group if there are different kinds of
+            instructions in the extension */</span>
+    <span class="n">let</span> <span class="n">hasSideEffects</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">mayLoad</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">mayStore</span><span class="o">=</span><span class="mi">0</span> <span class="n">in</span> <span class="p">{</span>
+    <span class="n">def</span> <span class="n">FMUL_EXP_M_S</span><span class="o">:</span> <span class="n">INSTR_nn_0xfe00707f_1</span><span class="o">&lt;</span><span class="mb">0b1111100</span><span class="p">,</span> <span class="mb">0b111</span><span class="p">,</span> <span class="n">OPC_FMUL_EXP_M_S</span><span class="p">,</span> <span class="s">"fmul_exp_m_s"</span><span class="o">&gt;</span><span class="p">;</span>
+    <span class="n">def</span> <span class="n">FMUL_EXP_S</span><span class="o">:</span> <span class="n">INSTR_nn_0xfe00707f_1</span><span class="o">&lt;</span><span class="mb">0b1011100</span><span class="p">,</span> <span class="mb">0b111</span><span class="p">,</span> <span class="n">OPC_FMUL_EXP_M_S</span><span class="p">,</span> <span class="s">"fmul_exp_s"</span><span class="o">&gt;</span><span class="p">;</span>
+    <span class="n">def</span> <span class="n">FMUL_EXP_M</span><span class="o">:</span> <span class="n">INSTR_nn_0xfe00707f_1</span><span class="o">&lt;</span><span class="mb">0b1101100</span><span class="p">,</span> <span class="mb">0b111</span><span class="p">,</span> <span class="n">OPC_FMUL_EXP_M_S</span><span class="p">,</span> <span class="s">"fmul_exp_m"</span><span class="o">&gt;</span><span class="p">;</span>
+    <span class="n">def</span> <span class="n">FMUL_EXP</span><span class="o">:</span> <span class="n">INSTR_nn_0xfe00707f_1</span><span class="o">&lt;</span><span class="mb">0b1001100</span><span class="p">,</span> <span class="mb">0b111</span><span class="p">,</span> <span class="n">OPC_FMUL_EXP_M_S</span><span class="p">,</span> <span class="s">"fmul_exp"</span><span class="o">&gt;</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>The provided code defines the set of RISC-V instructions in TableGen format, based on the encoding. Each instruction is represented as a subclass of a base instruction class, incorporating specific bit patterns for opcode and operand fields. For instance, the <code class="language-plaintext highlighter-rouge">INSTR_nn_0xfe00707f_1</code> class is instantiated with different bit patterns to represent distinct instructions within the extension, namely <code class="language-plaintext highlighter-rouge">FMUL_EXP_M_S</code>, <code class="language-plaintext highlighter-rouge">FMUL_EXP_S</code>, <code class="language-plaintext highlighter-rouge">FMUL_EXP_M</code>, and <code class="language-plaintext highlighter-rouge">FMUL_EXP</code>.</p>
+
+<h2 id="adding-built-ins-for-the-custom-instructions">Adding built ins for the custom instructions</h2>
+
+<p>Intrinsics are special functions recognizable by compilers like LLVM, representing specific operations or sequences of instructions that might not have direct representations in the high-level source code but are essential for generating efficient machine code.
+The intrisnics for this custom instruction are defined in the <code class="language-plaintext highlighter-rouge">IntrinsicsRISCVCustExtNN.td</code> file.
+As a starting point, the official <a href="https://llvm.org/docs/ExtendingLLVM.html">LLVM guide</a> helps in understanding the larger context.</p>
+<h3 id="llvmincludellvmirintrinsicsriscvtd"><a href="">llvm/include/llvm/IR/IntrinsicsRISCV.td</a></h3>
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">include</span> <span class="s">"llvm/IR/IntrinsicsRISCVCustExtNN.td"</span>
+</code></pre></div></div>
+
+<h3 id="clangincludeclangbasicbuiltinsriscvdef"><a href="">clang/include/clang/Basic/BuiltinsRISCV.def</a></h3>
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">TARGET_BUILTIN</span><span class="p">(</span><span class="n">__builtin_riscv_fmul_exp</span><span class="p">,</span> <span class="s">"fff"</span><span class="p">,</span> <span class="s">"nc"</span><span class="p">,</span> <span class="s">"xnn"</span><span class="p">)</span>
+<span class="n">TARGET_BUILTIN</span><span class="p">(</span><span class="n">__builtin_riscv_fmul_exp_s</span><span class="p">,</span> <span class="s">"fff"</span><span class="p">,</span> <span class="s">"nc"</span><span class="p">,</span> <span class="s">"xnn"</span><span class="p">)</span>
+<span class="n">TARGET_BUILTIN</span><span class="p">(</span><span class="n">__builtin_riscv_fmul_exp_m</span><span class="p">,</span> <span class="s">"fff"</span><span class="p">,</span> <span class="s">"nc"</span><span class="p">,</span> <span class="s">"xnn"</span><span class="p">)</span>
+<span class="n">TARGET_BUILTIN</span><span class="p">(</span><span class="n">__builtin_riscv_fmul_exp_m_s</span><span class="p">,</span> <span class="s">"fff"</span><span class="p">,</span> <span class="s">"nc"</span><span class="p">,</span> <span class="s">"xnn"</span><span class="p">)</span>
+</code></pre></div></div>
+<p>This patch defines LLVM built-in functions for the custom instructions that were added above. These built-ins are named</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">__builtin_riscv_fmul_exp</code></li>
+  <li><code class="language-plaintext highlighter-rouge">__builtin_riscv_fmul_exp_s</code></li>
+  <li><code class="language-plaintext highlighter-rouge">__builtin_riscv_fmul_exp_m</code></li>
+  <li><code class="language-plaintext highlighter-rouge">__builtin_riscv_fmul_exp_m_s</code>
+They all take two floating-point operands (<code class="language-plaintext highlighter-rouge">ff</code>) as inputs and one floating point output (<code class="language-plaintext highlighter-rouge">f</code>). Each instruction has a corresponding builtin defined. The feature is defined as <code class="language-plaintext highlighter-rouge">xnn</code>.</li>
+</ul>
+
+<h3 id="llvmincludellvmirintrinsicsriscvcustextnntd"><a href="">llvm/include/llvm/IR/IntrinsicsRISCVCustExtNN.td</a></h3>
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Approx Floating Point Multiply Intrinsics</span>
+<span class="n">let</span> <span class="n">TargetPrefix</span> <span class="o">=</span> <span class="s">"riscv"</span> <span class="n">in</span> <span class="p">{</span>
+
+  <span class="k">class</span> <span class="nc">FloatExpGPRGPRIntrinsics</span>
+      <span class="o">:</span> <span class="n">Intrinsic</span><span class="o">&lt;</span><span class="p">[</span><span class="n">llvm_float_ty</span><span class="p">],</span>
+                              <span class="p">[</span><span class="n">llvm_float_ty</span><span class="p">,</span> <span class="n">llvm_float_ty</span><span class="p">],</span>
+                              <span class="p">[</span><span class="n">IntrNoMem</span><span class="p">]</span><span class="o">&gt;</span><span class="p">;</span>
+  <span class="n">def</span> <span class="n">int_riscv_floatexp_mul</span> <span class="o">:</span> <span class="n">FloatExpGPRGPRIntrinsics</span><span class="p">;</span>
+  <span class="n">def</span> <span class="n">int_riscv_floatexp_mul_sign</span> <span class="o">:</span> <span class="n">FloatExpGPRGPRIntrinsics</span><span class="p">;</span>
+  <span class="n">def</span> <span class="n">int_riscv_floatexp_mul_man</span> <span class="o">:</span> <span class="n">FloatExpGPRGPRIntrinsics</span><span class="p">;</span>
+  <span class="n">def</span> <span class="n">int_riscv_floatexp_mul_man_sign</span> <span class="o">:</span> <span class="n">FloatExpGPRGPRIntrinsics</span><span class="p">;</span>
+<span class="p">}</span> <span class="c1">// TargetPrefix = "riscv"</span>
+</code></pre></div></div>
+<p>The provided code segment defines a set of LLVM intrinsics prefixed with “riscv”. The <code class="language-plaintext highlighter-rouge">FloatExpGPRGPRIntrinsics</code> class represents these intrinsics, specifying that they take two floating-point operands and return a single floating-point result. These intrinsics are designed to operate on general-purpose registers (GPRs) and are marked with the attribute “IntrNoMem,” indicating that they do not access memory.</p>
+
+<p>The prefix “int_” shows that these intrinsics are internal to LLVM and targeted specifically for RISC-V architectures. By encapsulating these operations as intrinsics, LLVM provides a standardized interface, which can be targeted easily from higher level of the compilation stack, such as MLIR.</p>
+
+<p>Moreover, the extension’s availability is governed by a predicate called <code class="language-plaintext highlighter-rouge">HasCustomExtNN</code>, which is utilized to conditionally include the instructions based on whether the custom extension is enabled. By incorporating this predicate into the definition of the instructions, it ensures that they are only generated and included during compilation when the custom extension is supported. This approach enables seamless integration of the custom extension into the RISC-V instruction set architecture (ISA), providing flexibility for developers to utilize approximate multiplication operations tailored to their specific needs while maintaining compatibility with the RISC-V ecosystem.</p>
+
+<p>The overall patch and the code can be viewed on <a href="https://github.com/debjyoti0891/CoVeriS/blob/main/patches/patch_llvm">CoVeris repository</a>.</p>
+
+<h3 id="references">References</h3>
+<ul>
+  <li><a href="https://github.com/debjyoti0891/CoVeriS">Github Code Repository</a></li>
+  <li><a href="https://llvm.org/docs/TableGen/">TableGen fundamentals</a></li>
+  <li><a href="https://llvm.org/docs/ExtendingLLVM.html">LLVM Guide for adding new intrinsics</a></li>
+</ul>]]></content><author><name>Debjyoti Bhattacharjee</name><email>debjyoti [dot] bhattacharjee [at] imec [dot] be</email></author><category term="compilation" /><category term="mlir" /><category term="riscv" /><category term="compilation" /><category term="llvm" /><category term="mlir" /><summary type="html"><![CDATA[In Part 1, we explored the overarching concept of hardware-software co-design. In Part 2, we delved into the specifics of implementing an MLIR pass. In this part, we explore the details of adding new custom instructions to the RISC-V backend and using them via intrinsics.]]></summary></entry><entry><title type="html">HW-SW co-design in the RISC-V Ecosystem [Part 2]: MLIR to LLVM</title><link href="https://debjyoti0891.github.io/mlir/part2" rel="alternate" type="text/html" title="HW-SW co-design in the RISC-V Ecosystem [Part 2]: MLIR to LLVM" /><published>2024-04-09T08:00:00+00:00</published><updated>2024-04-09T08:00:00+00:00</updated><id>https://debjyoti0891.github.io/mlir/llvm_mlir_02</id><content type="html" xml:base="https://debjyoti0891.github.io/mlir/part2"><![CDATA[<p>In <a href="/mlir/part1">Part 1</a>, we explored the overarching concept of hardware-software co-design. Now, in Part 2, we delve into the specifics of implementing an MLIR pass. Passes are transformative actions applied to MLIR code during compilation, serving to optimize, analyze, or manipulate the code. They can be utilized for both IR analysis and Dialect-to-Dialect transformations. For further insights, refer to the documentation available <a href="https://mlir.llvm.org/docs/PassManagement/">here</a>.</p>
+
+<p>In this particular pass, our objective is to convert a singular operation (<code class="language-plaintext highlighter-rouge">arith.mulf</code>) to an equivalent LLVM intrinsic, dependent on certain conditions. Essentially, an LLVM intrinsic can be regarded as a specialized function. At a high level, the process entails replacing instances of</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">arith.mulf (approx = "exp")</code> with an LLVM call to</li>
+  <li><code class="language-plaintext highlighter-rouge">llvm.call @llvm.riscv.floatexp.mul(%arg0, %arg1) : (f32, f32) -&gt; f32</code>.</li>
+</ul>
+
+<p>It’s important to note that if the <code class="language-plaintext highlighter-rouge">approx</code> attribute is not set to <code class="language-plaintext highlighter-rouge">exp</code>, or if the inputs of <code class="language-plaintext highlighter-rouge">arith.mulf</code> are not <code class="language-plaintext highlighter-rouge">f32</code>, no action should be taken.</p>
+
+<p>The overall implementation of the pass is in this <a href="https://github.com/debjyoti0891/CoVeriS/blob/main/patches/patch_llvm">patch</a>. We go over
+each part of the pass implementation below.</p>
+
+<h3 id="mlirincludemlirconversionpassesh"><a href="">mlir/include/mlir/Conversion/Passes.h</a></h3>
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="cp">#include</span> <span class="cpf">"mlir/Conversion/ArithToRISCVNN/ArithToRISCVNN.h"</span><span class="cp">
+</span></code></pre></div></div>
+<p>This includes the new pass in the set of all passes that <code class="language-plaintext highlighter-rouge">mlir-opt</code> supports.</p>
+
+<h3 id="mlirincludemlirconversionpassestd"><a href="">mlir/include/mlir/Conversion/Passes.td</a></h3>
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">def</span> <span class="n">ConvertArithToRISCVNNPass</span> <span class="o">:</span> <span class="n">Pass</span><span class="o">&lt;</span><span class="s">"convert-arith-to-riscvnn"</span><span class="o">&gt;</span> <span class="p">{</span>
+  <span class="n">let</span> <span class="n">summary</span> <span class="o">=</span> <span class="s">"Convert arith dialect operations to LLVM RISCV intrinsics for NN"</span><span class="p">;</span>
+  <span class="n">let</span> <span class="n">dependentDialects</span> <span class="o">=</span> <span class="p">[</span><span class="s">"LLVM::LLVMDialect"</span><span class="p">,</span> <span class="s">"arith::ArithDialect"</span><span class="p">];</span>
+  <span class="n">let</span> <span class="n">constructor</span> <span class="o">=</span> <span class="s">"mlir::createConvertArithToRISCVNN()"</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>This markdown snippet defines a TableGen-like record, outlining the high-level details of the pass. In this instance, the pass is named <code class="language-plaintext highlighter-rouge">convert-arith-to-riscvnn</code>. Additionally, it indicates that the pass depends on two other dialects: <code class="language-plaintext highlighter-rouge">LLVM::LLVMDialect</code> and <code class="language-plaintext highlighter-rouge">arith::ArithDialect</code>. Furthermore, it specifies the description of the pass as available in <code class="language-plaintext highlighter-rouge">mlir-opt</code>.</p>
+
+<h3 id="mlirincludemlirconversionarithtoriscvnnarithtoriscvnnh"><a href="">mlir/include/mlir/Conversion/ArithToRISCVNN/ArithToRISCVNN.h</a></h3>
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">//===- ArithToRISCVNN.h - Arith to LLVM dialect conversion -----------*- C++ -*-===//</span>
+
+<span class="cp">#ifndef MLIR_CONVERSION_ARITHTORISCVNN_ARITHTORISCVNN_H
+#define MLIR_CONVERSION_ARITHTORISCVNN_ARITHTORISCVNN_H
+</span>
+<span class="cp">#include</span> <span class="cpf">"mlir/Pass/Pass.h"</span><span class="c1">  // from @llvm-project</span><span class="cp">
+</span>
+<span class="c1">// Extra includes needed for dependent dialects</span>
+<span class="cp">#include</span> <span class="cpf">"mlir/Dialect/Arith/IR/Arith.h"</span><span class="c1">   // from @llvm-project</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Dialect/Tensor/IR/Tensor.h"</span><span class="c1">  // from @llvm-project</span><span class="cp">
+</span><span class="k">namespace</span> <span class="n">mlir</span> <span class="p">{</span>
+<span class="k">class</span> <span class="nc">ModuleOp</span><span class="p">;</span>
+
+<span class="cp">#define GEN_PASS_DECL_CONVERTARITHTORISCVNNPASS
+#include</span> <span class="cpf">"mlir/Conversion/Passes.h.inc"</span><span class="cp">
+</span>
+<span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">OperationPass</span><span class="o">&lt;&gt;&gt;</span> <span class="n">createConvertArithToRISCVNN</span><span class="p">();</span>
+
+<span class="p">}</span>
+<span class="cp">#endif // MLIR_CONVERSION_ARITHTORISCVNN_ARITHTORISCVNN_H
+</span></code></pre></div></div>
+<p>In this context, the goal is to define a new pass that converts certain operations (e.g. <code class="language-plaintext highlighter-rouge">arith.mulf {approx="exp"}</code>) into the new intrinsics that were defined above.</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">//===- ArithToRISCVNNPass.cpp - Arith to LLVM Pass ------------------------===//</span>
+
+<span class="cp">#include</span> <span class="cpf">"mlir/Conversion/ArithToRISCVNN/ArithToRISCVNN.h"</span><span class="cp">
+</span><span class="c1">// #include &lt;iostream&gt;</span>
+<span class="cp">#include</span> <span class="cpf">"mlir/Dialect/LLVMIR/LLVMAttrs.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Dialect/LLVMIR/LLVMTypes.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/IR/BuiltinAttributes.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/IR/BuiltinOps.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/IR/BuiltinTypes.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Support/LLVM.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Support/LogicalResult.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Support/TypeID.h"</span><span class="cp">
+</span>
+<span class="cp">#include</span> <span class="cpf">"mlir/Target/LLVMIR/ModuleTranslation.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Conversion/AffineToStandard/AffineToStandard.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Conversion/ArithToLLVM/ArithToLLVM.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Conversion/ControlFlowToLLVM/ControlFlowToLLVM.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Conversion/FuncToLLVM/ConvertFuncToLLVM.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Conversion/FuncToLLVM/ConvertFuncToLLVMPass.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Conversion/LLVMCommon/ConversionTarget.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Conversion/LLVMCommon/TypeConverter.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Conversion/MemRefToLLVM/MemRefToLLVM.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Conversion/SCFToControlFlow/SCFToControlFlow.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Dialect/Arith/IR/Arith.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Dialect/Func/IR/FuncOps.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Dialect/LLVMIR/LLVMDialect.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Dialect/MemRef/IR/MemRef.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Dialect/SCF/IR/SCF.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Pass/Pass.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Transforms/DialectConversion.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Interfaces/InferTypeOpInterface.h"</span><span class="cp">
+</span>
+<span class="cp">#include</span> <span class="cpf">"llvm/Support/Casting.h"</span><span class="cp">
+</span>
+<span class="cp">#include</span> <span class="cpf">"llvm/ADT/STLExtras.h"</span><span class="cp">
+#include</span> <span class="cpf">"llvm/Support/Debug.h"</span><span class="cp">
+#include</span> <span class="cpf">"llvm/Support/FormatVariadic.h"</span><span class="cp">
+#include</span> <span class="cpf">"llvm/ADT/DenseMap.h"</span><span class="cp">
+#include</span> <span class="cpf">"llvm/ADT/SmallSet.h"</span><span class="cp">
+#include</span> <span class="cpf">"llvm/ADT/StringSet.h"</span><span class="cp">
+#include</span> <span class="cpf">"llvm/ADT/TypeSwitch.h"</span><span class="cp">
+#include</span> <span class="cpf">"llvm/Support/FormatVariadic.h"</span><span class="cp">
+#include</span> <span class="cpf">"llvm/Support/MathExtras.h"</span><span class="cp">
+#include</span> <span class="cpf">"llvm/Support/raw_ostream.h"</span><span class="cp">
+</span>
+<span class="cp">#include</span> <span class="cpf">&lt;memory&gt;</span><span class="cp">
+#include</span> <span class="cpf">&lt;utility&gt;</span><span class="cp">
+</span>
+
+<span class="k">namespace</span> <span class="n">mlir</span> <span class="p">{</span>
+<span class="cp">#define GEN_PASS_DEF_CONVERTARITHTORISCVNNPASS
+#include</span> <span class="cpf">"mlir/Conversion/Passes.h.inc"</span><span class="cp">
+</span><span class="p">}</span> <span class="c1">// namespace mlir</span>
+
+<span class="k">using</span> <span class="k">namespace</span> <span class="n">mlir</span><span class="p">;</span>
+
+<span class="c1">// ************** Patterns **********</span>
+<span class="k">static</span> <span class="kt">bool</span> <span class="nf">isSupportedSourceType</span><span class="p">(</span><span class="n">Type</span> <span class="n">originalType</span><span class="p">)</span> <span class="p">{</span>
+  <span class="c1">// https://github.com/llvm/llvm-project/blob/c5f839bd58e7f888acc4cb39a18e9e5bbaa9fb0a/mlir/lib/IR/Types.cpp#L123</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">originalType</span><span class="p">.</span><span class="n">isF32</span><span class="p">())</span>
+    <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+  <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="n">LogicalResult</span> <span class="nf">checkSourceOpTypes</span><span class="p">(</span><span class="n">PatternRewriter</span> <span class="o">&amp;</span><span class="n">rewriter</span><span class="p">,</span>
+                                        <span class="n">Operation</span> <span class="o">*</span><span class="n">sourceOp</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">auto</span> <span class="n">allTypes</span> <span class="o">=</span> <span class="n">llvm</span><span class="o">::</span><span class="n">to_vector</span><span class="p">(</span><span class="n">sourceOp</span><span class="o">-&gt;</span><span class="n">getOperandTypes</span><span class="p">());</span>
+  <span class="n">llvm</span><span class="o">::</span><span class="n">append_range</span><span class="p">(</span><span class="n">allTypes</span><span class="p">,</span> <span class="n">sourceOp</span><span class="o">-&gt;</span><span class="n">getResultTypes</span><span class="p">());</span>
+
+  <span class="k">for</span> <span class="p">(</span><span class="n">Type</span> <span class="n">ty</span> <span class="o">:</span> <span class="n">allTypes</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">isSupportedSourceType</span><span class="p">(</span><span class="n">ty</span><span class="p">))</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="n">rewriter</span><span class="p">.</span><span class="n">notifyMatchFailure</span><span class="p">(</span>
+          <span class="n">sourceOp</span><span class="p">,</span>
+          <span class="n">llvm</span><span class="o">::</span><span class="n">formatv</span><span class="p">(</span>
+              <span class="s">"unsupported source type for Arith to LLVM conversion: {0}"</span><span class="p">,</span>
+              <span class="n">ty</span><span class="p">));</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="nf">success</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="k">namespace</span> <span class="p">{</span>
+<span class="c1">// lower arith.mulf{approx='exp'}</span>
+<span class="c1">// to llvm intrinsic</span>
+
+<span class="k">struct</span> <span class="nc">ApproxPattern</span> <span class="o">:</span> <span class="k">public</span> <span class="n">OpRewritePattern</span><span class="o">&lt;</span><span class="n">arith</span><span class="o">::</span><span class="n">MulFOp</span><span class="o">&gt;</span> <span class="p">{</span>
+  <span class="n">ApproxPattern</span><span class="p">(</span><span class="n">MLIRContext</span> <span class="o">*</span><span class="n">context</span><span class="p">)</span> <span class="o">:</span> <span class="n">OpRewritePattern</span><span class="o">&lt;</span><span class="n">arith</span><span class="o">::</span><span class="n">MulFOp</span><span class="o">&gt;</span><span class="p">(</span><span class="n">context</span><span class="p">)</span> <span class="p">{}</span>
+
+  <span class="c1">// Define the match function to check if the operation has the "approx" attribute.</span>
+  <span class="n">LogicalResult</span> <span class="nf">matchAndRewrite</span><span class="p">(</span><span class="n">arith</span><span class="o">::</span><span class="n">MulFOp</span> <span class="n">op</span><span class="p">,</span> <span class="n">PatternRewriter</span> <span class="o">&amp;</span><span class="n">rewriter</span><span class="p">)</span> <span class="k">const</span> <span class="k">override</span> <span class="p">{</span>
+    <span class="c1">// Check if the operation has the "approx" attribute.</span>
+    <span class="n">StringAttr</span> <span class="n">approxAttr</span> <span class="o">=</span> <span class="n">op</span><span class="o">-&gt;</span><span class="n">getAttrOfType</span><span class="o">&lt;</span><span class="n">StringAttr</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"approx"</span><span class="p">);</span>
+    <span class="c1">// TODO: Add other patterns here for other attribute values!</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">approxAttr</span> <span class="o">||</span> <span class="n">approxAttr</span><span class="p">.</span><span class="n">getValue</span><span class="p">()</span> <span class="o">!=</span> <span class="s">"exp"</span><span class="p">)</span>
+      <span class="k">return</span> <span class="nf">failure</span><span class="p">();</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">LogicalResult</span> <span class="n">res</span> <span class="o">=</span> <span class="n">checkSourceOpTypes</span><span class="p">(</span><span class="n">rewriter</span><span class="p">,</span> <span class="n">op</span><span class="p">);</span> <span class="n">failed</span><span class="p">(</span><span class="n">res</span><span class="p">))</span>
+      <span class="k">return</span> <span class="n">res</span><span class="p">;</span>
+
+
+    <span class="c1">// // Replace the arith.mulf operation with the llvm.fmul intrinsic call</span>
+    <span class="n">ModuleOp</span> <span class="n">parentModule</span> <span class="o">=</span> <span class="n">op</span><span class="o">-&gt;</span><span class="n">getParentOfType</span><span class="o">&lt;</span><span class="n">ModuleOp</span><span class="o">&gt;</span><span class="p">();</span>
+    <span class="c1">// TODO: Choose the function name based on the attribute value</span>
+    <span class="k">auto</span> <span class="n">fnName</span> <span class="o">=</span> <span class="s">"llvm.riscv.floatexp.mul"</span><span class="p">;</span>
+    <span class="k">auto</span> <span class="n">context</span> <span class="o">=</span> <span class="n">parentModule</span><span class="o">-&gt;</span><span class="n">getContext</span><span class="p">();</span>
+    <span class="k">auto</span> <span class="n">llvmF32Ty</span> <span class="o">=</span> <span class="n">Float32Type</span><span class="o">::</span><span class="n">get</span><span class="p">(</span><span class="n">context</span><span class="p">);</span> <span class="c1">// 'mlir::Float32Type'</span>
+
+    <span class="k">auto</span> <span class="n">llvmFnType</span> <span class="o">=</span>  <span class="n">LLVM</span><span class="o">::</span><span class="n">LLVMFunctionType</span><span class="o">::</span><span class="n">get</span><span class="p">(</span>
+      <span class="n">llvmF32Ty</span><span class="p">,</span> <span class="c1">// return type.</span>
+      <span class="p">{</span><span class="n">llvmF32Ty</span><span class="p">,</span> <span class="n">llvmF32Ty</span><span class="p">},</span> <span class="c1">// parameter type.</span>
+      <span class="nb">false</span><span class="p">);</span>
+
+    <span class="c1">// Get a symbol reference to the printf function, inserting it if necessary.</span>
+    <span class="k">auto</span> <span class="n">printfRef</span> <span class="o">=</span> <span class="n">getLLVMFuncRef</span><span class="p">(</span><span class="n">rewriter</span><span class="p">,</span> <span class="n">parentModule</span><span class="p">,</span> <span class="n">fnName</span><span class="p">);</span>
+
+    <span class="c1">// Assuming op has operands that need to be passed as arguments</span>
+    <span class="k">auto</span> <span class="n">operands</span> <span class="o">=</span> <span class="n">op</span><span class="p">.</span><span class="n">getOperands</span><span class="p">();</span>
+
+    <span class="c1">// Create an array to hold the arguments for the LLVM::CallOp</span>
+    <span class="n">SmallVector</span><span class="o">&lt;</span><span class="n">Value</span><span class="p">,</span> <span class="mi">4</span><span class="o">&gt;</span> <span class="n">args</span><span class="p">;</span>
+    <span class="n">args</span><span class="p">.</span><span class="n">reserve</span><span class="p">(</span><span class="n">operands</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
+
+    <span class="c1">// Add operands as arguments</span>
+    <span class="k">for</span> <span class="p">(</span><span class="k">auto</span> <span class="n">operand</span> <span class="o">:</span> <span class="n">operands</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">args</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">operand</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">auto</span> <span class="n">newOp</span> <span class="o">=</span> <span class="n">rewriter</span><span class="p">.</span><span class="n">create</span><span class="o">&lt;</span><span class="n">LLVM</span><span class="o">::</span><span class="n">CallOp</span><span class="o">&gt;</span><span class="p">(</span>
+        <span class="n">op</span><span class="p">.</span><span class="n">getLoc</span><span class="p">(),</span> <span class="n">llvmFnType</span><span class="p">,</span> <span class="n">printfRef</span><span class="p">,</span> <span class="n">args</span><span class="p">);</span>
+
+    <span class="c1">// Replace the original operation with the newly created LLVM intrinsic call.</span>
+    <span class="n">rewriter</span><span class="p">.</span><span class="n">replaceOp</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">newOp</span><span class="o">-&gt;</span><span class="n">getResult</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span>
+    <span class="k">return</span> <span class="nf">success</span><span class="p">();</span>
+  <span class="p">}</span>
+
+  <span class="k">static</span> <span class="n">LLVM</span><span class="o">::</span><span class="n">LLVMFunctionType</span> <span class="nf">getFnType</span><span class="p">(</span><span class="n">MLIRContext</span> <span class="o">*</span><span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">auto</span> <span class="n">llvmF32Ty</span> <span class="o">=</span> <span class="n">Float32Type</span><span class="o">::</span><span class="n">get</span><span class="p">(</span><span class="n">context</span><span class="p">);</span> <span class="c1">// 'mlir::Float32Type'</span>
+
+    <span class="k">auto</span> <span class="n">llvmFnType</span> <span class="o">=</span>  <span class="n">LLVM</span><span class="o">::</span><span class="n">LLVMFunctionType</span><span class="o">::</span><span class="n">get</span><span class="p">(</span>
+      <span class="n">llvmF32Ty</span><span class="p">,</span> <span class="c1">// return type.</span>
+      <span class="p">{</span><span class="n">llvmF32Ty</span><span class="p">,</span> <span class="n">llvmF32Ty</span><span class="p">},</span> <span class="c1">// parameter type.</span>
+      <span class="nb">false</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">llvmFnType</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="c1">// / Return a symbol reference to the printf function, inserting it into the</span>
+  <span class="c1">// / module if necessary.</span>
+  <span class="k">static</span> <span class="n">FlatSymbolRefAttr</span> <span class="nf">getLLVMFuncRef</span><span class="p">(</span><span class="n">PatternRewriter</span> <span class="o">&amp;</span><span class="n">rewriter</span><span class="p">,</span>
+                                             <span class="n">ModuleOp</span> <span class="k">module</span><span class="p">,</span>
+                                             <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">funcName</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">auto</span> <span class="o">*</span><span class="n">context</span> <span class="o">=</span> <span class="k">module</span><span class="p">.</span><span class="n">getContext</span><span class="p">();</span>
+    <span class="k">if</span> <span class="p">(</span><span class="k">module</span><span class="p">.</span><span class="n">lookupSymbol</span><span class="o">&lt;</span><span class="n">LLVM</span><span class="o">::</span><span class="n">LLVMFuncOp</span><span class="o">&gt;</span><span class="p">(</span><span class="n">funcName</span><span class="p">))</span>
+      <span class="k">return</span> <span class="n">SymbolRefAttr</span><span class="o">::</span><span class="n">get</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">funcName</span><span class="p">);</span>
+
+    <span class="c1">// Insert the printf function into the body of the parent module.</span>
+    <span class="n">PatternRewriter</span><span class="o">::</span><span class="n">InsertionGuard</span> <span class="n">insertGuard</span><span class="p">(</span><span class="n">rewriter</span><span class="p">);</span>
+    <span class="n">rewriter</span><span class="p">.</span><span class="n">setInsertionPointToStart</span><span class="p">(</span><span class="k">module</span><span class="p">.</span><span class="n">getBody</span><span class="p">());</span>
+    <span class="n">rewriter</span><span class="p">.</span><span class="n">create</span><span class="o">&lt;</span><span class="n">LLVM</span><span class="o">::</span><span class="n">LLVMFuncOp</span><span class="o">&gt;</span><span class="p">(</span><span class="k">module</span><span class="p">.</span><span class="n">getLoc</span><span class="p">(),</span> <span class="n">funcName</span><span class="p">,</span>
+                                      <span class="n">getFnType</span><span class="p">(</span><span class="n">context</span><span class="p">));</span>
+    <span class="k">return</span> <span class="n">SymbolRefAttr</span><span class="o">::</span><span class="n">get</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">funcName</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">};</span>
+<span class="p">}</span>
+
+<span class="c1">// ************** Patterns **********</span>
+
+<span class="k">namespace</span> <span class="p">{</span>
+<span class="c1">/// A pass converting MLIR Math operations into the SPIR-V dialect.</span>
+<span class="k">class</span> <span class="nc">ConvertArithToRISCVNNPass</span>
+    <span class="o">:</span> <span class="k">public</span> <span class="n">impl</span><span class="o">::</span><span class="n">ConvertArithToRISCVNNPassBase</span><span class="o">&lt;</span><span class="n">ConvertArithToRISCVNNPass</span><span class="o">&gt;</span>  <span class="p">{</span>
+
+  <span class="kt">void</span> <span class="n">runOnOperation</span><span class="p">()</span> <span class="k">override</span><span class="p">;</span>
+<span class="p">};</span>
+<span class="p">}</span> <span class="c1">// namespace</span>
+
+<span class="kt">void</span> <span class="n">ConvertArithToRISCVNNPass</span><span class="o">::</span><span class="n">runOnOperation</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">MLIRContext</span> <span class="o">*</span><span class="n">context</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">getContext</span><span class="p">();</span>
+  <span class="n">LLVMConversionTarget</span> <span class="n">target</span><span class="p">(</span><span class="o">*</span><span class="n">context</span><span class="p">);</span>
+
+  <span class="n">RewritePatternSet</span> <span class="n">patterns</span><span class="p">(</span><span class="n">context</span><span class="p">);</span>
+  <span class="n">patterns</span><span class="p">.</span><span class="n">insert</span><span class="o">&lt;</span><span class="n">ApproxPattern</span><span class="o">&gt;</span><span class="p">(</span><span class="n">context</span><span class="p">);</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="n">failed</span><span class="p">(</span><span class="n">applyPartialConversion</span><span class="p">(</span><span class="n">getOperation</span><span class="p">(),</span> <span class="n">target</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">patterns</span><span class="p">))))</span>
+    <span class="k">return</span> <span class="n">signalPassFailure</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">OperationPass</span><span class="o">&lt;&gt;&gt;</span> <span class="n">mlir</span><span class="o">::</span><span class="n">createConvertArithToRISCVNN</span><span class="p">()</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">ConvertArithToRISCVNNPass</span><span class="o">&gt;</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div></div>
+<p>This patch demonstrates the overall pattern matching and corresponding lowering process. Specifically, it showcases the lowering of a particular case (<code class="language-plaintext highlighter-rouge">arith.mulf {approx="exp"}</code>) into an LLVM intrinsic call (<code class="language-plaintext highlighter-rouge">llvm.riscv.floatexp.mul</code>). Certain sections of the code have been marked with <code class="language-plaintext highlighter-rouge">TODO</code> comments. Lowering to other LLVM intrinsics could be additionally implemented depending on different values of the <code class="language-plaintext highlighter-rouge">approx</code> attribute.
+One of the key challenges to writing passes effectively is to understand the
+different template structures used to select patterns and how new operations
+are sepcified.  Fortunately, there are existing passes, such as <a href="https://github.com/llvm/llvm-project/blob/main/mlir/lib/Conversion/ArithToLLVM/ArithToLLVM.cpp">ArithToLLVM</a> and <a href="https://github.com/llvm/llvm-project/blob/main/mlir/lib/Conversion/SPIRVToLLVM/SPIRVToLLVM.cpp">SPIRVToLLVM</a>, which can serve as valuable examples for study.</p>
+
+<h3 id="mlirlibconversionarithtoriscvnncmakeliststxt"><a href="">mlir/lib/Conversion/ArithToRISCVNN/CMakeLists.txt</a></h3>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>add_mlir_conversion_library(MLIRArithToRISCVNN
+  ArithToRISCVNNPass.cpp
+
+  ADDITIONAL_HEADER_DIRS
+  ${MLIR_MAIN_INCLUDE_DIR}/mlir/Dialect/Arith
+  ${MLIR_MAIN_INCLUDE_DIR}/mlir/Dialect/LLVM
+  ${MLIR_MAIN_INCLUDE_DIR}/mlir/IR
+
+  DEPENDS
+  MLIRConversionPassIncGen
+
+  LINK_LIBS PUBLIC
+  MLIRIR
+  MLIRArithDialect
+  MLIRMathDialect
+  MLIRLLVMDialect
+  MLIRPass
+  MLIRSupport
+  MLIRTransformUtils
+  )
+</code></pre></div></div>
+<p>The <code class="language-plaintext highlighter-rouge">CMakeLists.txt</code> file included in this repository provides support for compiling the new pass, along with the necessary dependencies.</p>
+
+<p>To test out this pass, follow the instructions provided in the <a href="https://github.com/debjyoti0891/CoVeriS/README.md">README</a> of the <a href="https://github.com/debjyoti0891/CoVeriS">code repository</a> after building LLVM. It’s important to note that a total of three passes are utilized to lower all operations into the LLVM Dialect. Additionally, the <code class="language-plaintext highlighter-rouge">convert-func-to-llvm</code> pass is employed to convert MLIR functions (<code class="language-plaintext highlighter-rouge">func.func</code>) into LLVM Dialect functions (<code class="language-plaintext highlighter-rouge">llvm.func</code>).</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mlir-opt <span class="nt">--help</span> | <span class="nb">grep </span>riscvnn
+249:      <span class="nt">--convert-arith-to-riscvnn</span>   -   Convert math dialect operations
+  to LLVM RISCV intrinsics <span class="k">for </span>NN
+
+mlir-opt <span class="se">\</span>
+  <span class="nt">-pass-pipeline</span><span class="o">=</span><span class="s2">"builtin.module(func.func(convert-arith-to-riscvnn,convert-arith-to-llvm,convert-math-to-llvm),convert-func-to-llvm,convert-vector-to-llvm)"</span> <span class="se">\</span>
+  benchmark.mlir <span class="o">&gt;</span> benchmark_llvm.mlir
+</code></pre></div></div>
+
+<h2 id="lowering-from-mlirllvm-to-llvm-ir">Lowering from MLIR.LLVM to LLVM IR</h2>
+<p>The code in LLVM Dialect of MLIR can be translated directly into LLVM IR using the
+<code class="language-plaintext highlighter-rouge">mlir-translate</code> tool. For our considered example, no specific changes are necessary to the tool.</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mlir-translate <span class="nt">-mlir-to-llvmir</span> <span class="nt">-split-input-file</span> <span class="se">\</span>
+  <span class="nt">-verify-diagnostics</span> benchmark_llvm.mlir <span class="o">&gt;</span> benchmark_llvm.ll
+</code></pre></div></div>
+<h1 id="conclusion">Conclusion</h1>
+<p>In this post, we have explored the intricacies of hardware-software co-design, focusing on the implementation of an MLIR pass to optimize and transform code within the MLIR framework. The journey began with an overview of the pass’s purpose and dependencies, followed by a detailed examination of the pattern matching and lowering process involved.</p>
+
+<p>Moving forward, readers are encouraged to build LLVM and test the pass using the instructions provided in the <a href="https://github.com/debjyoti0891/CoVeriS">code repository</a>.</p>
+
+<p>In the upcoming blog post, we will delve into the process of adding support for new intrinsics and custom instructions in LLVM, specifically targeting the RISC-V architecture. Stay tuned for a deeper dive into the intricacies of integrating new instructions for the RISC-V target.</p>
+
+<h3 id="references">References</h3>
+<ul>
+  <li><a href="https://github.com/debjyoti0891/CoVeriS">Github Code Repository</a></li>
+  <li><a href="https://mlir.llvm.org/docs/PassManagement/">MLIR Pass Manager</a></li>
+  <li><a href="https://mlir.llvm.org/docs/PatternRewriter/">Pattern Rewriting in MLIR</a></li>
+  <li><a href="https://www.jeremykun.com/2023/08/10/mlir-writing-our-first-pass/">An example of MLIR Pass implementation</a></li>
+</ul>]]></content><author><name>Debjyoti Bhattacharjee</name><email>debjyoti [dot] bhattacharjee [at] imec [dot] be</email></author><category term="compilation" /><category term="mlir" /><category term="llvm" /><category term="riscv" /><category term="compilation" /><category term="llvm" /><category term="llvm" /><category term="mlir" /><summary type="html"><![CDATA[In Part 1, we explored the overarching concept of hardware-software co-design. Now, in Part 2, we delve into the specifics of implementing an MLIR pass. Passes are transformative actions applied to MLIR code during compilation, serving to optimize, analyze, or manipulate the code. They can be utilized for both IR analysis and Dialect-to-Dialect transformations. For further insights, refer to the documentation available here.]]></summary></entry><entry><title type="html">HW-SW co-design in the RISC-V Ecosystem [Part 1]</title><link href="https://debjyoti0891.github.io/mlir/part1" rel="alternate" type="text/html" title="HW-SW co-design in the RISC-V Ecosystem [Part 1]" /><published>2024-03-23T08:00:00+00:00</published><updated>2024-03-23T08:00:00+00:00</updated><id>https://debjyoti0891.github.io/mlir/llvm_mlir_1</id><content type="html" xml:base="https://debjyoti0891.github.io/mlir/part1"><![CDATA[<p>In the ever-evolving landscape of computing, the synergy between hardware and software has become increasingly crucial for enabling efficient computation. Hardware-software co-design
+ is the bridge that connects these two realms, allowing us to create efficient, optimized systems. In this blog post, we delve into an end-to-end example of enabling
+approximate computation instructions, starting from MLIR (Multi-Level Intermediate Representation) representation, lowering via LLVM (Low-Level Virtual Machine) and eventually runs on a RISC-V based processing system using Spike, a RISC-V ISA simulator.</p>
+
+<h2 id="the-problem-statement">The problem statement</h2>
+
+<p>For most of the neural networks, floating point multiply-accumulate (MAC) operations
+dominate majority of the computation. One of the approaches to reduce the compute overhead
+could be to use approximate operations. For example, the floating point multiply could be approximated . For the sake
+of simplicity, we can consider 4 variants of this.</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">fmul_exp</code>: multiply  considering the exponent bits only of floating point 32b (fp32) numbers</li>
+  <li><code class="language-plaintext highlighter-rouge">fmul_exp_s</code>: multiply  considering the exponent and sign bits of two fp32 numbers</li>
+  <li><code class="language-plaintext highlighter-rouge">fmul_exp_m</code>: multiply  considering the exponent and mantissa bits of two fp32 numbers</li>
+  <li><code class="language-plaintext highlighter-rouge">fmul_exp_s_m</code>multiply  considering all the sign, mantissa and exponent bits  two fp32 numbers</li>
+</ul>
+
+<p>For sake of simplicity, we ignore the underlying mathematical and hardware implementation details of each of these instructions.
+The goal is to have a flow starting from a high level description of the algorithm in one of the MLIR Dialects that can eventually run on a RISC-V processor with custom hardware support.</p>
+
+<h2 id="solution-approach">Solution Approach</h2>
+
+<p>We break this problem into multiple parts and explain the solution for each part.</p>
+
+<ul>
+  <li>
+    <p><em>High level input</em>: We start by introducing a new attribute to the “arith.mulf” operation, namely <code class="language-plaintext highlighter-rouge">approx</code> which is set to value
+<code class="language-plaintext highlighter-rouge">exp</code>. This is shown in the code snippet below</p>
+
+    <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="n">func</span><span class="p">.</span><span class="n">func</span> <span class="err">@</span><span class="n">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="p">()</span> <span class="p">{</span>
+      <span class="o">%</span><span class="mi">1</span> <span class="o">=</span> <span class="n">arith</span><span class="p">.</span><span class="n">constant</span> <span class="mf">1.0e1</span> <span class="o">:</span> <span class="n">f32</span>
+      <span class="o">%</span><span class="mi">2</span> <span class="o">=</span> <span class="n">arith</span><span class="p">.</span><span class="n">constant</span> <span class="mf">2.0e2</span> <span class="o">:</span> <span class="n">f32</span>
+      <span class="o">%</span><span class="mi">3</span> <span class="o">=</span> <span class="n">call</span> <span class="err">@</span><span class="n">arith_func</span><span class="p">(</span><span class="o">%</span><span class="mi">1</span><span class="p">,</span> <span class="o">%</span><span class="mi">2</span><span class="p">)</span> <span class="o">:</span> <span class="p">(</span><span class="n">f32</span><span class="p">,</span> <span class="n">f32</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="p">(</span><span class="n">f32</span><span class="p">)</span>
+      <span class="k">return</span>
+  <span class="p">}</span>
+
+  <span class="n">func</span><span class="p">.</span><span class="n">func</span> <span class="err">@</span><span class="n">arith_func</span><span class="p">(</span><span class="o">%</span><span class="n">arg0</span><span class="o">:</span> <span class="n">f32</span><span class="p">,</span> <span class="o">%</span><span class="n">arg1</span><span class="o">:</span> <span class="n">f32</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="p">(</span><span class="n">f32</span><span class="p">)</span> <span class="p">{</span>
+      <span class="c1">// this is our approximate multiplication</span>
+      <span class="o">%</span><span class="mi">1</span> <span class="o">=</span> <span class="n">arith</span><span class="p">.</span><span class="n">mulf</span> <span class="o">%</span><span class="n">arg0</span><span class="p">,</span> <span class="o">%</span><span class="n">arg1</span> <span class="p">{</span><span class="n">approx</span> <span class="o">=</span> <span class="s">"exp"</span><span class="p">}</span><span class="o">:</span> <span class="n">f32</span>
+      <span class="o">%</span><span class="mi">2</span> <span class="o">=</span> <span class="n">arith</span><span class="p">.</span><span class="n">addf</span> <span class="o">%</span><span class="n">arg0</span><span class="p">,</span> <span class="o">%</span><span class="mi">1</span> <span class="o">:</span> <span class="n">f32</span>
+      <span class="k">return</span> <span class="o">%</span><span class="mi">2</span><span class="o">:</span> <span class="n">f32</span>
+  <span class="p">}</span>
+
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p><em>Lowering MLIR with custom attributes to LLVM</em>: In this step, we define a custom pass (<code class="language-plaintext highlighter-rouge">convert-arith-to-riscvnn</code>) to lower the <code class="language-plaintext highlighter-rouge">arith.mulf {approx=true}</code> to a llvm intrinsic call (<code class="language-plaintext highlighter-rouge">llvm.riscv.floatexp.mul</code>). Also, we leverage the standard MLIR infrastructure to lower the rest of the operations into the LLVM dialect of MLIR. <a href="">Additional details coming soon</a></p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mlir-opt \
+  -pass-pipeline="builtin.module(func.func(convert-arith-to-riscvnn,convert-arith-to-llvm,convert-math-to-llvm),convert-func-to-llvm,convert-vector-to-llvm)" \
+  benchmark.mlir &gt; benchmark_llvm.mlir
+</code></pre></div>    </div>
+
+    <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">module</span> <span class="p">{</span>
+<span class="n">llvm</span><span class="p">.</span><span class="n">func</span> <span class="err">@</span><span class="n">llvm</span><span class="p">.</span><span class="n">riscv</span><span class="p">.</span><span class="n">floatexp</span><span class="p">.</span><span class="n">mul</span><span class="p">(</span><span class="n">f32</span><span class="p">,</span> <span class="n">f32</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">f32</span>
+<span class="n">llvm</span><span class="p">.</span><span class="n">func</span> <span class="err">@</span><span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="o">%</span><span class="mi">0</span> <span class="o">=</span> <span class="n">llvm</span><span class="p">.</span><span class="n">mlir</span><span class="p">.</span><span class="n">constant</span><span class="p">(</span><span class="mf">1.000000e+01</span> <span class="o">:</span> <span class="n">f32</span><span class="p">)</span> <span class="o">:</span> <span class="n">f32</span>
+  <span class="o">%</span><span class="mi">1</span> <span class="o">=</span> <span class="n">llvm</span><span class="p">.</span><span class="n">mlir</span><span class="p">.</span><span class="n">constant</span><span class="p">(</span><span class="mf">2.000000e+02</span> <span class="o">:</span> <span class="n">f32</span><span class="p">)</span> <span class="o">:</span> <span class="n">f32</span>
+  <span class="o">%</span><span class="mi">2</span> <span class="o">=</span> <span class="n">llvm</span><span class="p">.</span><span class="n">call</span> <span class="err">@</span><span class="n">arith_func</span><span class="p">(</span><span class="o">%</span><span class="mi">0</span><span class="p">,</span> <span class="o">%</span><span class="mi">1</span><span class="p">)</span> <span class="o">:</span> <span class="p">(</span><span class="n">f32</span><span class="p">,</span> <span class="n">f32</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">f32</span>
+  <span class="n">llvm</span><span class="p">.</span><span class="k">return</span>
+<span class="p">}</span>
+<span class="n">llvm</span><span class="p">.</span><span class="n">func</span> <span class="err">@</span><span class="n">arith_func</span><span class="p">(</span><span class="o">%</span><span class="n">arg0</span><span class="o">:</span> <span class="n">f32</span><span class="p">,</span> <span class="o">%</span><span class="n">arg1</span><span class="o">:</span> <span class="n">f32</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">f32</span> <span class="p">{</span>
+  <span class="o">%</span><span class="mi">0</span> <span class="o">=</span> <span class="n">llvm</span><span class="p">.</span><span class="n">call</span> <span class="err">@</span><span class="n">llvm</span><span class="p">.</span><span class="n">riscv</span><span class="p">.</span><span class="n">floatexp</span><span class="p">.</span><span class="n">mul</span><span class="p">(</span><span class="o">%</span><span class="n">arg0</span><span class="p">,</span> <span class="o">%</span><span class="n">arg1</span><span class="p">)</span> <span class="o">:</span> <span class="p">(</span><span class="n">f32</span><span class="p">,</span> <span class="n">f32</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">f32</span>
+  <span class="o">%</span><span class="mi">1</span> <span class="o">=</span> <span class="n">llvm</span><span class="p">.</span><span class="n">fadd</span> <span class="o">%</span><span class="n">arg0</span><span class="p">,</span> <span class="o">%</span><span class="mi">0</span>  <span class="o">:</span> <span class="n">f32</span>
+  <span class="n">llvm</span><span class="p">.</span><span class="k">return</span> <span class="o">%</span><span class="mi">1</span> <span class="o">:</span> <span class="n">f32</span>
+<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p><em>Adding intrinsics for new instructions in LLVM RISC-V Target</em>: In order to lower the call that was introduced in MLIR’s LLVM dialect, we should define an equivalent intrinsic in LLVM, that can be lowered into the corresponding custom instruction. To translate the mlir file, we leverage the <code class="language-plaintext highlighter-rouge">mlir-translate</code> tool. <a href="">Additional details coming soon</a></p>
+
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mlir-translate <span class="nt">-mlir-to-llvmir</span> <span class="nt">-split-input-file</span> <span class="se">\</span>
+  <span class="nt">-verify-diagnostics</span> benchmark_llvm.mlir <span class="o">&gt;</span> benchmark_llvm.ll
+</code></pre></div>    </div>
+
+    <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">;</span> <span class="n">ModuleID</span> <span class="o">=</span> <span class="err">'</span><span class="n">LLVMDialectModule</span><span class="err">'</span>
+<span class="n">source_filename</span> <span class="o">=</span> <span class="s">"LLVMDialectModule"</span>
+
+<span class="p">;</span> <span class="n">Function</span> <span class="n">Attrs</span><span class="o">:</span> <span class="n">nounwind</span> <span class="nf">memory</span><span class="p">(</span><span class="n">none</span><span class="p">)</span>
+<span class="n">declare</span> <span class="kt">float</span> <span class="err">@</span><span class="n">llvm</span><span class="p">.</span><span class="n">riscv</span><span class="p">.</span><span class="n">floatexp</span><span class="p">.</span><span class="n">mul</span><span class="p">(</span><span class="kt">float</span><span class="p">,</span> <span class="kt">float</span><span class="p">)</span> <span class="err">#</span><span class="mi">0</span>
+
+<span class="n">define</span> <span class="kt">void</span> <span class="err">@</span><span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="o">%</span><span class="mi">1</span> <span class="o">=</span> <span class="n">call</span> <span class="kt">float</span> <span class="err">@</span><span class="n">arith_func</span><span class="p">(</span><span class="kt">float</span> <span class="mf">1.000000e+01</span><span class="p">,</span> <span class="kt">float</span> <span class="mf">2.000000e+02</span><span class="p">)</span>
+  <span class="n">ret</span> <span class="kt">void</span>
+<span class="p">}</span>
+
+<span class="n">define</span> <span class="kt">float</span> <span class="err">@</span><span class="n">arith_func</span><span class="p">(</span><span class="kt">float</span> <span class="o">%</span><span class="mi">0</span><span class="p">,</span> <span class="kt">float</span> <span class="o">%</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+  <span class="o">%</span><span class="mi">3</span> <span class="o">=</span> <span class="n">call</span> <span class="kt">float</span> <span class="err">@</span><span class="n">llvm</span><span class="p">.</span><span class="n">riscv</span><span class="p">.</span><span class="n">floatexp</span><span class="p">.</span><span class="n">mul</span><span class="p">(</span><span class="kt">float</span> <span class="o">%</span><span class="mi">0</span><span class="p">,</span> <span class="kt">float</span> <span class="o">%</span><span class="mi">1</span><span class="p">)</span>
+  <span class="o">%</span><span class="mi">4</span> <span class="o">=</span> <span class="n">fadd</span> <span class="kt">float</span> <span class="o">%</span><span class="mi">0</span><span class="p">,</span> <span class="o">%</span><span class="mi">3</span>
+  <span class="n">ret</span> <span class="kt">float</span> <span class="o">%</span><span class="mi">4</span>
+<span class="p">}</span>
+
+<span class="n">attributes</span> <span class="err">#</span><span class="mi">0</span> <span class="o">=</span> <span class="p">{</span> <span class="n">nounwind</span> <span class="n">memory</span><span class="p">(</span><span class="n">none</span><span class="p">)</span> <span class="p">}</span>
+
+<span class="o">!</span><span class="n">llvm</span><span class="p">.</span><span class="k">module</span><span class="p">.</span><span class="n">flags</span> <span class="o">=</span> <span class="o">!</span><span class="p">{</span><span class="o">!</span><span class="mi">0</span><span class="p">}</span>
+
+<span class="o">!</span><span class="mi">0</span> <span class="o">=</span> <span class="o">!</span><span class="p">{</span><span class="n">i32</span> <span class="mi">2</span><span class="p">,</span> <span class="o">!</span><span class="s">"Debug Info Version"</span><span class="p">,</span> <span class="n">i32</span> <span class="mi">3</span><span class="p">}</span>
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p><em>Adding support for new instructions in LLVM RISC-V Target</em>: This involves defining the instruction encoding based
+ on the RISC-V opcode space and writing the code in RISC-V target of the LLVM backend to lower the intrinsics appropriately into the corresponding custom instruction (<code class="language-plaintext highlighter-rouge">fmul_exp</code>). <a href="">Additional details coming soon</a></p>
+
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>llc <span class="nt">-march</span><span class="o">=</span>riscv64 <span class="nt">-mattr</span><span class="o">=</span>+f,+xnn <span class="nt">-target-abi</span><span class="o">=</span>lp64 <span class="nt">-O2</span> <span class="nt">-filetype</span><span class="o">=</span>asm benchmark_llvm.ll <span class="o">&gt;</span> benchmark_llvm.s
+clang <span class="nt">-target</span> riscv64 <span class="nt">-march</span><span class="o">=</span>rv64imaf_xnn <span class="nt">-mabi</span><span class="o">=</span>lp64f <span class="nt">-I</span><span class="nb">.</span> benchmark_llvm.s <span class="o">&gt;</span> benchmark.o
+clang <span class="nt">-target</span> riscv64-unknown-elf <span class="se">\</span>
+      <span class="nt">-march</span><span class="o">=</span>rv64imaf_xnn <span class="nt">-mabi</span><span class="o">=</span>lp64f <span class="se">\</span>
+      <span class="nt">-static</span> <span class="se">\</span>
+      <span class="nt">-Tcommon</span>/riscv.ld <span class="se">\</span>
+      <span class="nt">-nostdlib</span> <span class="nt">-nostartfiles</span> <span class="se">\</span>
+      <span class="nt">--sysroot</span><span class="o">=</span><span class="s2">"&lt;&gt;/homebrew/opt/riscv-gnu-toolchain/riscv64-unknown-elf/"</span> <span class="nt">--gcc-toolchain</span><span class="o">=</span><span class="s2">"&lt;&gt;/homebrew/opt/riscv-gnu-toolchain/"</span>  <span class="se">\</span>
+      benchmark.o spike_lib.a <span class="nt">-o</span> benchmark.elf
+llvm-objdump <span class="nt">--mattr</span><span class="o">=</span>+xnn,+f <span class="nt">-S</span> benchmark.elf <span class="o">&gt;</span> benchmark.objdump
+</code></pre></div>    </div>
+
+    <pre><code class="language-NASM">cat benchmark.objdump
+...
+0000000080002030 &lt;arith_func&gt;:
+80002030: d3 87 05 f0  	fmv.w.x	fa5, a1
+80002034: 53 07 05 f0  	fmv.w.x	fa4, a0
+80002038: 8b 77 f7 98  	fmul_exp	fa5, fa4, fa5 # this is the custom RISC-V instruction
+8000203c: d3 77 f7 00  	fadd.s	fa5, fa4, fa5
+80002040: 53 85 07 e0  	fmv.x.w	a0, fa5
+80002044: 67 80 00 00  	ret
+...
+</code></pre>
+  </li>
+  <li>
+    <p><em>Adding support for new instructions in RISC-V Spike Simulator</em>: Now with the instructions generated and available in the executable file (<code class="language-plaintext highlighter-rouge">benchmark.elf</code>). We need to update Spike to support these new instructions. <a href="">Additional details coming soon</a></p>
+
+    <p>Spike can execute the generated elf in the following manner and the debug output can be seen.  The <code class="language-plaintext highlighter-rouge">xnnmul</code> is the Spike implementation of the <code class="language-plaintext highlighter-rouge">fmul_exp</code> assembly instruction.</p>
+    <div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>../riscv-isa-sim/build/spike <span class="nt">--isa</span><span class="o">=</span>rv64gc_xnn <span class="nt">-d</span>  <span class="se">\</span>
+  benchmark_llvm.elf <span class="nt">-m0x80000000</span>:0x10000 <span class="nt">--pc</span> 0x80000000
+</code></pre></div>    </div>
+
+    <div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">...</span>
+<span class="p">(</span><span class="nf">spike</span><span class="p">)</span>
+<span class="nf">core</span>   <span class="mi">0</span><span class="p">:</span> <span class="o">&gt;&gt;&gt;&gt;</span>
+<span class="nf">core</span>   <span class="mi">0</span><span class="p">:</span> <span class="mh">0x0000000080002030</span> <span class="p">(</span><span class="mh">0xf00587d3</span><span class="p">)</span> <span class="nv">fmv.w.x</span> <span class="nv">fa5</span><span class="p">,</span> <span class="nv">a1</span>
+<span class="p">(</span><span class="nf">spike</span><span class="p">)</span>
+<span class="nf">core</span>   <span class="mi">0</span><span class="p">:</span> <span class="mh">0x0000000080002034</span> <span class="p">(</span><span class="mh">0xf0050753</span><span class="p">)</span> <span class="nv">fmv.w.x</span> <span class="nv">fa4</span><span class="p">,</span> <span class="nv">a0</span>
+<span class="p">(</span><span class="nf">spike</span><span class="p">)</span>
+<span class="nf">core</span>   <span class="mi">0</span><span class="p">:</span> <span class="mh">0x0000000080002038</span> <span class="p">(</span><span class="mh">0x98f7778b</span><span class="p">)</span> <span class="nv">xnnmul</span>  <span class="nv">a5</span><span class="p">,</span> <span class="nv">a4</span><span class="p">,</span> <span class="nv">a5</span>
+<span class="p">(</span><span class="nf">spike</span><span class="p">)</span>
+<span class="nf">core</span>   <span class="mi">0</span><span class="p">:</span> <span class="mh">0x000000008000203c</span> <span class="p">(</span><span class="mh">0x00f777d3</span><span class="p">)</span> <span class="nv">fadd.s</span>  <span class="nv">fa5</span><span class="p">,</span> <span class="nv">fa4</span><span class="p">,</span> <span class="nv">fa5</span>
+<span class="p">(</span><span class="nf">spike</span><span class="p">)</span>
+<span class="nf">core</span>   <span class="mi">0</span><span class="p">:</span> <span class="mh">0x0000000080002040</span> <span class="p">(</span><span class="mh">0xe0078553</span><span class="p">)</span> <span class="nv">fmv.x.w</span> <span class="nv">a0</span><span class="p">,</span> <span class="nv">fa5</span>
+<span class="p">(</span><span class="nf">spike</span><span class="p">)</span>
+<span class="nf">...</span>
+</code></pre></div>    </div>
+  </li>
+</ul>
+
+<p>This completes the hardware-software co-design loop, where we started from an MLIR operation with custom attributes and eventually executed on a RISC-V ISS simulator with custom instructions implemented. Hardware-software co-design, powered by MLIR, LLVM, and processor simulation tools like Spike, is essential for creating efficient, customized systems. Whether you’re designing a new processor or enhancing an existing one, understanding this co-design process is key to unlocking innovation in the world of computing.</p>
+
+<h3 id="references">References</h3>
+<ul>
+  <li><a href="https://mlir.llvm.org/getting_started/">Getting Started - MLIR - LLVM</a></li>
+  <li><a href="https://mlir.llvm.org/docs/Tutorials/">Tutorials - MLIR - LLVM</a></li>
+  <li><a href="https://llvm.org/docs/ExtendingLLVM.html">Extending LLVM:  Adding instructions, intrinsics, types, etc.</a></li>
+  <li><a href="https://github.com/riscv-software-src/riscv-isa-sim">riscv-software-src/riscv-isa-sim: Spike, a RISC-V ISA Simulator - GitHub</a></li>
+</ul>]]></content><author><name>Debjyoti Bhattacharjee</name><email>debjyoti [dot] bhattacharjee [at] imec [dot] be</email></author><category term="compilation" /><category term="mlir" /><category term="riscv" /><category term="compilation" /><category term="llvm" /><category term="mlir" /><summary type="html"><![CDATA[In the ever-evolving landscape of computing, the synergy between hardware and software has become increasingly crucial for enabling efficient computation. Hardware-software co-design is the bridge that connects these two realms, allowing us to create efficient, optimized systems. In this blog post, we delve into an end-to-end example of enabling approximate computation instructions, starting from MLIR (Multi-Level Intermediate Representation) representation, lowering via LLVM (Low-Level Virtual Machine) and eventually runs on a RISC-V based processing system using Spike, a RISC-V ISA simulator.]]></summary></entry><entry><title type="html">Hacking you bias</title><link href="https://debjyoti0891.github.io/bias/2023/03/19/bias.html" rel="alternate" type="text/html" title="Hacking you bias" /><published>2023-03-19T23:00:00+00:00</published><updated>2023-03-19T23:00:00+00:00</updated><id>https://debjyoti0891.github.io/bias/2023/03/19/bias</id><content type="html" xml:base="https://debjyoti0891.github.io/bias/2023/03/19/bias.html"><![CDATA[<ul>
+  <li>Bias -&gt; It can be implicit or explicit.
+    <ul>
+      <li>Unconscious bias : acknowledge bias and try to challenge it.
+        <ul>
+          <li><strong>micro-behaviors</strong>: These are small, subtle signals that we, often unintentionally, communicate through our body language</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li>Prejudice : more objective perception tied to higher levels of bias</li>
+</ul>
+
+<h2 id="bias-and-brain">Bias and brain</h2>
+<ul>
+  <li>The <strong>“fast brain”</strong>  organizes information based on intuition and emotional impulses.
+ This processing is quick and often effective. Instead of processing all the informational input that is available, our brain takes a shortcut. The “fast brain” uses its memory to make a quick judgement.</li>
+  <li>The second system, called the <strong>“slow brain”</strong> is more rational. This system tries to have a better and deeper understanding of the world around us and allows us to have more complex thoughts.
+    <h3 id="action-items">Action items</h3>
+  </li>
+  <li><strong>Becoming aware</strong>  of how your thoughts, assumptions, beliefs and opinions are formed</li>
+  <li><strong>Challenging</strong>  your assumptions</li>
+  <li><strong>Unlearning</strong>  learned behavior</li>
+  <li><strong>Being open-minded</strong></li>
+  <li><strong>Re-framing</strong> accepted opinions and beliefs</li>
+  <li><strong>Having the courage</strong>  to recognize and change your biases</li>
+</ul>
+
+<h2 id="affinity-bias-in-group-bias">Affinity Bias (in-group bias)</h2>
+<p>Affinity bias describes the unconscious tendency to prefer people who are similar to you in terms of identity traits, interests, experiences and background.</p>
+<ul>
+  <li><em>mini-me</em>: unconsciously choosing to work with people who look, think and act like you.</li>
+  <li>You form an idea of someone based on the group they belong to. This (often oversimplified) image is projected onto any individual.</li>
+  <li>
+    <table>
+      <tbody>
+        <tr>
+          <td><em>positive stereotype</em>: in-group bias</td>
+          <td><em>negative stereotype</em>: out-group bias</td>
+        </tr>
+      </tbody>
+    </table>
+  </li>
+  <li>Within a team : You and your team get into a comfortable routine, you don’t challenge each other, with boredom, demotivation and decreased productivity as a result.</li>
+  <li><strong>Action item</strong> : Look out for micro-affirmations vs micro-aggressions</li>
+  <li><strong>Reflection</strong>: Having less affinity bias would allow teams to explore more ideas and try new aspects, which might be lost when there are in-group biases.</li>
+</ul>
+
+<h2 id="confirmation-bias">Confirmation bias</h2>
+<p><strong>Confirmation bias</strong>: You focus on information that confirms your existing beliefs.</p>
+<ul>
+  <li><strong>Tunnel vision</strong>: only hearing and seeing what you want to.</li>
+  <li>
+    <table>
+      <tbody>
+        <tr>
+          <td>Not actively looking for information that contradicts your opinion or truth</td>
+          <td>Receive inputs from like minded people</td>
+          <td>Avoid discussing the topic with people who have opposing views</td>
+        </tr>
+      </tbody>
+    </table>
+  </li>
+  <li>Confirmation bias affects our search and interpretation of new information:
+    <ul>
+      <li><strong>We only pay attention to what reinforces our assumptions</strong>.</li>
+      <li><strong>We overlook new information that differs from our current beliefs</strong>.</li>
+    </ul>
+  </li>
+  <li><em>Reflection</em> :   When it comes to emotionally charged issues, you are more likely to let confirmation bias influence your opinion about new information.</li>
+  <li><strong>Action Items</strong>:
+    <ul>
+      <li>See yourself as forever learning new things. Step away from your identity as “the expert”.</li>
+      <li>Dont settle for what you already know and welcome unexpected conclusions.</li>
+      <li>Be open to compromises and finding the best solution.</li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="groupthink">Groupthink</h2>
+<p><strong>Groupthink</strong>: Even though you have different ideas, you stop thinking critically and agree with the group to help create a “false” feeling of consensus.</p>
+<ul>
+  <li>Groups that prioritize their group identity and behave coldly toward “outsiders”</li>
+  <li>Groupthink offers groups an illusion of consensus. Differences are pushed into the “undercurrent”.</li>
+  <li>If groupthink happens often, team members with different ideas might start to act out, (un)consciously boycotting teamwork or tasks.
+ ### Red flags to identify</li>
+  <li>The team discussion is dominated by one person who takes over the conversation entirely.</li>
+  <li>The group is reaching a consensus really quickly and apparently easily: “we all agree!”</li>
+</ul>
+
+<h2 id="gender-bias">Gender Bias</h2>
+<ul>
+  <li><strong>Gender identity</strong> is each person’s deeply felt internal and individual experience of gender, which may or may not correspond to the sex assigned at birth.
+    <ul>
+      <li><strong>Gender:</strong> the roles, behaviors, activities, attributes, and opportunities that any society considers appropriate for individuals of a specific sex.</li>
+      <li><strong>Biological sex:</strong> the biological and physiological characteristics that define humans as female, male or intersex.</li>
+      <li>it is important to acknowledge that gender identity is a <strong>complex</strong> and <strong>multi-layered</strong>reality.</li>
+    </ul>
+  </li>
+  <li>Gendered Pronouns
+    <ul>
+      <li><strong>he/him/his</strong>  for people who identify as men</li>
+      <li><strong>she/her/hers</strong>  for people who identify as women</li>
+      <li>A well-known non-binary alternative in English is <strong>they/them/theirs</strong>.</li>
+    </ul>
+  </li>
+  <li>Gender bias is formed both by societal norms and by individual beliefs about gender roles.</li>
+</ul>
+
+<h3 id="job-adverts-might-have-latent-connotations">Job adverts might have latent connotations</h3>
+<p>Depending on your language and cultural context, words will have a masculine or feminine connotation.</p>
+
+<ul>
+  <li><strong>Masculine coded words</strong>: competitive, dominant, challenging, confident, decisive, determined, leader, independent, objective.</li>
+  <li><strong>Feminine coded words</strong>: committed, connected, cooperative, interpersonal, loyal, responsible, supportive, trustworthy.</li>
+  <li><strong>Neutral words</strong>: assertive, authentic, collegial, critical, engaged, enthusiastic, passionate.</li>
+</ul>
+
+<p>As a result, job adverts with many masculine coded words will attract fewer female candidates, company cultures that are described as competitive, result driven or hierarchical will be less appealing to women.</p>
+
+<p><strong>Action items</strong></p>
+<ul>
+  <li>Allow others to label themselves any way they choose (if they even want to label themselves). Consciously ask them about their gender identity.</li>
+  <li>Amplify unheard voices : If women’s contributions are invisible and overlooked, louden their voice by actively endorsing, mentioning, promoting, sponsoring, and advocating for them.</li>
+</ul>
+
+<h1 id="ethnic-identity">Ethnic identity</h1>
+
+<ul>
+  <li><strong>Ethnicity</strong> or  <strong>ethnic identity</strong> groups people who share a distinctive cultural heritage, language, religion, origin, background, history, or a common set of traditions. It is a broad concept that can evolve over time.</li>
+  <li><strong>Race</strong> is defined as a category of people with similar distinctive physical characteristics, such as skin color, facial structure, or hair texture. It needs to be seen in the context of history and economics.
+    <ul>
+      <li>“Ancestry” reflects the fact that human variations are connected to the <strong>geographical origins</strong> of our ancestors. Unlike the term “race,” it focuses on understanding how a person’s history unfolded, not how they fit into a specific category.</li>
+    </ul>
+  </li>
+  <li><strong>Racism</strong> is a belief that race is a fundamental determinant of human traits and capacities and that racial differences produce an inherent superiority of a particular race.
+    <ul>
+      <li><strong>Ethnicity bias</strong> is demonstrating a preference for or against a group of people sharing a common and distinctive racial, national, religious, linguistic, or cultural heritage.
+        <ul>
+          <li>
+            <table>
+              <tbody>
+                <tr>
+                  <td>treated differently because of their ethnicity</td>
+                  <td>assumption about someone based on their ethnicity</td>
+                </tr>
+              </tbody>
+            </table>
+          </li>
+          <li>ethnicity is over-or underrepresented in your company</li>
+          <li>When they raise attention to inequality, they are not taken seriously or considered “difficult”</li>
+          <li><strong>Self-fulfilling prophecy</strong> is when you make assumptions about what is going to happen.</li>
+          <li><strong>Tunnel vision</strong> means you only see what you want to see.
+            <h3 id="red-flags">Red Flags</h3>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li>It can be present in explicit racial insults, “jokes” and microaggressions.</li>
+  <li>
+    <p>There are also more subtle expressions that sneak into workplace decisions regarding hiring, talent development and promotions.</p>
+  </li>
+  <li><strong>Intersectionality</strong> is the complex, <strong>cumulative way</strong> in which the effects of discrimination (such as racism, sexism, and classism) <strong>combine, overlap, or intersect</strong>.
+    <ul>
+      <li>Intersectionality helps us understand how one individual can be discriminated against or disadvantaged because of several different aspects of their identity, resulting in a unique position of accumulated discrimination.</li>
+      <li>Being color blind does not take away your unconscious bias and your prejudices, it can make you blind to the different realities of others.</li>
+    </ul>
+  </li>
+</ul>
+
+<p><strong>Action items</strong>-
+	-  Notice who speaks, and who isn’t present when biased talk occurs. Notice code words for ethnicity. Notice implicit stereotypes.
+	- It takes a lot of courage to talk about personal experiences of ethnicity bias. If someone is willing to share these with you, listen consciously and acknowledge their story.
+	- If you witness ethnicity bias at work, speak up.</p>
+
+<p><em>To bring about change, you must not be afraid to take the first step. We will fail when we
+fail to try.</em>- Rosa Parks</p>]]></content><author><name>Debjyoti Bhattacharjee</name><email>debjyoti [dot] bhattacharjee [at] imec [dot] be</email></author><category term="bias" /><category term="reflection" /><category term="personal" /><summary type="html"><![CDATA[Bias -&gt; It can be implicit or explicit. Unconscious bias : acknowledge bias and try to challenge it. micro-behaviors: These are small, subtle signals that we, often unintentionally, communicate through our body language Prejudice : more objective perception tied to higher levels of bias Bias and brain The “fast brain” organizes information based on intuition and emotional impulses. This processing is quick and often effective. Instead of processing all the informational input that is available, our brain takes a shortcut. The “fast brain” uses its memory to make a quick judgement. The second system, called the “slow brain” is more rational. This system tries to have a better and deeper understanding of the world around us and allows us to have more complex thoughts. Action items Becoming aware of how your thoughts, assumptions, beliefs and opinions are formed Challenging your assumptions Unlearning learned behavior Being open-minded Re-framing accepted opinions and beliefs Having the courage to recognize and change your biases Affinity Bias (in-group bias) Affinity bias describes the unconscious tendency to prefer people who are similar to you in terms of identity traits, interests, experiences and background. mini-me: unconsciously choosing to work with people who look, think and act like you. You form an idea of someone based on the group they belong to. This (often oversimplified) image is projected onto any individual. positive stereotype: in-group bias negative stereotype: out-group bias Within a team : You and your team get into a comfortable routine, you don’t challenge each other, with boredom, demotivation and decreased productivity as a result. Action item : Look out for micro-affirmations vs micro-aggressions Reflection: Having less affinity bias would allow teams to explore more ideas and try new aspects, which might be lost when there are in-group biases. Confirmation bias Confirmation bias: You focus on information that confirms your existing beliefs. Tunnel vision: only hearing and seeing what you want to. Not actively looking for information that contradicts your opinion or truth Receive inputs from like minded people Avoid discussing the topic with people who have opposing views Confirmation bias affects our search and interpretation of new information: We only pay attention to what reinforces our assumptions. We overlook new information that differs from our current beliefs. Reflection : When it comes to emotionally charged issues, you are more likely to let confirmation bias influence your opinion about new information. Action Items: See yourself as forever learning new things. Step away from your identity as “the expert”. Dont settle for what you already know and welcome unexpected conclusions. Be open to compromises and finding the best solution. Groupthink Groupthink: Even though you have different ideas, you stop thinking critically and agree with the group to help create a “false” feeling of consensus. Groups that prioritize their group identity and behave coldly toward “outsiders” Groupthink offers groups an illusion of consensus. Differences are pushed into the “undercurrent”. If groupthink happens often, team members with different ideas might start to act out, (un)consciously boycotting teamwork or tasks. ### Red flags to identify The team discussion is dominated by one person who takes over the conversation entirely. The group is reaching a consensus really quickly and apparently easily: “we all agree!” Gender Bias Gender identity is each person’s deeply felt internal and individual experience of gender, which may or may not correspond to the sex assigned at birth. Gender: the roles, behaviors, activities, attributes, and opportunities that any society considers appropriate for individuals of a specific sex. Biological sex: the biological and physiological characteristics that define humans as female, male or intersex. it is important to acknowledge that gender identity is a complex and multi-layeredreality. Gendered Pronouns he/him/his for people who identify as men she/her/hers for people who identify as women A well-known non-binary alternative in English is they/them/theirs. Gender bias is formed both by societal norms and by individual beliefs about gender roles. Job adverts might have latent connotations Depending on your language and cultural context, words will have a masculine or feminine connotation. Masculine coded words: competitive, dominant, challenging, confident, decisive, determined, leader, independent, objective. Feminine coded words: committed, connected, cooperative, interpersonal, loyal, responsible, supportive, trustworthy. Neutral words: assertive, authentic, collegial, critical, engaged, enthusiastic, passionate. As a result, job adverts with many masculine coded words will attract fewer female candidates, company cultures that are described as competitive, result driven or hierarchical will be less appealing to women. Action items Allow others to label themselves any way they choose (if they even want to label themselves). Consciously ask them about their gender identity. Amplify unheard voices : If women’s contributions are invisible and overlooked, louden their voice by actively endorsing, mentioning, promoting, sponsoring, and advocating for them. Ethnic identity Ethnicity or ethnic identity groups people who share a distinctive cultural heritage, language, religion, origin, background, history, or a common set of traditions. It is a broad concept that can evolve over time. Race is defined as a category of people with similar distinctive physical characteristics, such as skin color, facial structure, or hair texture. It needs to be seen in the context of history and economics. “Ancestry” reflects the fact that human variations are connected to the geographical origins of our ancestors. Unlike the term “race,” it focuses on understanding how a person’s history unfolded, not how they fit into a specific category. Racism is a belief that race is a fundamental determinant of human traits and capacities and that racial differences produce an inherent superiority of a particular race. Ethnicity bias is demonstrating a preference for or against a group of people sharing a common and distinctive racial, national, religious, linguistic, or cultural heritage. treated differently because of their ethnicity assumption about someone based on their ethnicity ethnicity is over-or underrepresented in your company When they raise attention to inequality, they are not taken seriously or considered “difficult” Self-fulfilling prophecy is when you make assumptions about what is going to happen. Tunnel vision means you only see what you want to see. Red Flags It can be present in explicit racial insults, “jokes” and microaggressions. There are also more subtle expressions that sneak into workplace decisions regarding hiring, talent development and promotions. Intersectionality is the complex, cumulative way in which the effects of discrimination (such as racism, sexism, and classism) combine, overlap, or intersect. Intersectionality helps us understand how one individual can be discriminated against or disadvantaged because of several different aspects of their identity, resulting in a unique position of accumulated discrimination. Being color blind does not take away your unconscious bias and your prejudices, it can make you blind to the different realities of others. Action items- - Notice who speaks, and who isn’t present when biased talk occurs. Notice code words for ethnicity. Notice implicit stereotypes. - It takes a lot of courage to talk about personal experiences of ethnicity bias. If someone is willing to share these with you, listen consciously and acknowledge their story. - If you witness ethnicity bias at work, speak up. To bring about change, you must not be afraid to take the first step. We will fail when we fail to try.- Rosa Parks]]></summary></entry><entry><title type="html">Stumbling with Spike</title><link href="https://debjyoti0891.github.io/riscv/modelling/architecture/iss/2022/10/31/spike.html" rel="alternate" type="text/html" title="Stumbling with Spike" /><published>2022-10-31T08:00:00+00:00</published><updated>2022-10-31T08:00:00+00:00</updated><id>https://debjyoti0891.github.io/riscv/modelling/architecture/iss/2022/10/31/spike</id><content type="html" xml:base="https://debjyoti0891.github.io/riscv/modelling/architecture/iss/2022/10/31/spike.html"><![CDATA[<p>This post is intended to act as a quick reference guide to 
+installing dependencies, in case you want to build <code class="language-plaintext highlighter-rouge">Spike</code>
+on a machine where you do not have <code class="language-plaintext highlighter-rouge">sudo</code> priviledges.</p>
+
+<p><strong>Assumptions</strong>:</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">riscv64-unknown-linux-gnu</code> toolchain is already built and availble on the PATH.</li>
+  <li><code class="language-plaintext highlighter-rouge">Boost</code> is already available</li>
+  <li>A decent version of <code class="language-plaintext highlighter-rouge">GCC</code> is available
+In my case, I used <code class="language-plaintext highlighter-rouge">GCC-10.3.0</code>, with <code class="language-plaintext highlighter-rouge">Boost-1.76.0</code>.</li>
+</ul>
+
+<h2 id="install-dtc">Install <a href="https://git.launchpad.net/ubuntu/+source/device-tree-compiler/?h=applied/debian/sid">DTC</a></h2>
+<p>The device tree compiler (dtc) executable is a requirement for Spike. It can be compiled from scratch.
+The binary should be made available in the PATH environment variable.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>export PATH=$PATH:&lt;path to the binary&gt;
+</code></pre></div></div>
+<h2 id="install-proxykernel">Install <a href="https://github.com/riscv-software-src/riscv-pk">ProxyKernel</a></h2>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mkdir build
+cd build 
+../configure --prefix=&lt;install prefix&gt; --host=riscv64-unknown-linux-gnu
+make -j all
+make install
+export PATH=$PATH:&lt;install prefix&gt;/bin
+</code></pre></div></div>
+<h3 id="note">Note</h3>
+<ul>
+  <li>If you try to build in the root of the repository, the output file for <code class="language-plaintext highlighter-rouge">pk</code> does not get generated, as there is a directory with the same name. Hence, using a build folder helps!</li>
+</ul>
+
+<h2 id="install-spike">Install <a href="https://github.com/riscv-software-src/riscv-isa-sim">spike</a>.</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./configure --prefix=&lt;install prefix&gt; --with-boost=&lt;path to boost root&gt; --enable-commitlog --with-isa=RV64IMAFDCP 
+make -j all
+make install
+export PATH=$PATH:&lt;install prefix&gt;/bin
+</code></pre></div></div>
+
+<h3 id="note-1">Note:</h3>
+<ul>
+  <li>In my specific installation, Boost libraries could not be found
+  even after setting appropriate LD_LIBRARY_PATH. Explictly specifiying the path solved the issue.</li>
+  <li>Take a look at the output of <code class="language-plaintext highlighter-rouge">./configure --help</code> to find options of Spike that might be relevant. For example, <code class="language-plaintext highlighter-rouge">--enable-commitlog</code> was something that was relevant for me.</li>
+</ul>
+
+<h2 id="spike-execution">Spike Execution</h2>
+
+<h3 id="creating-the-executable">Creating the executable</h3>
+
+<p><code class="language-plaintext highlighter-rouge">riscv64-unknown-elf-gcc -o hello hello.c</code></p>
+
+<h3 id="actual-execution">Actual execution</h3>
+<p>To run spike with a program and log the commits to a file:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>spike  -m 1G --log-commits --log=spike_log.txt $(\which pk) hello 
+</code></pre></div></div>]]></content><author><name>Debjyoti Bhattacharjee</name><email>debjyoti [dot] bhattacharjee [at] imec [dot] be</email></author><category term="riscv" /><category term="modelling" /><category term="architecture" /><category term="iss" /><category term="modelling" /><category term="architecture" /><category term="micro" /><category term="architecture" /><summary type="html"><![CDATA[This post is intended to act as a quick reference guide to installing dependencies, in case you want to build Spike on a machine where you do not have sudo priviledges. Assumptions: riscv64-unknown-linux-gnu toolchain is already built and availble on the PATH. Boost is already available A decent version of GCC is available In my case, I used GCC-10.3.0, with Boost-1.76.0. Install DTC The device tree compiler (dtc) executable is a requirement for Spike. It can be compiled from scratch. The binary should be made available in the PATH environment variable. export PATH=$PATH:&lt;path to the binary&gt; Install ProxyKernel mkdir build cd build ../configure --prefix=&lt;install prefix&gt; --host=riscv64-unknown-linux-gnu make -j all make install export PATH=$PATH:&lt;install prefix&gt;/bin Note If you try to build in the root of the repository, the output file for pk does not get generated, as there is a directory with the same name. Hence, using a build folder helps! Install spike. ./configure --prefix=&lt;install prefix&gt; --with-boost=&lt;path to boost root&gt; --enable-commitlog --with-isa=RV64IMAFDCP make -j all make install export PATH=$PATH:&lt;install prefix&gt;/bin Note: In my specific installation, Boost libraries could not be found even after setting appropriate LD_LIBRARY_PATH. Explictly specifiying the path solved the issue. Take a look at the output of ./configure --help to find options of Spike that might be relevant. For example, --enable-commitlog was something that was relevant for me. Spike Execution Creating the executable riscv64-unknown-elf-gcc -o hello hello.c Actual execution To run spike with a program and log the commits to a file: spike -m 1G --log-commits --log=spike_log.txt $(\which pk) hello]]></summary></entry><entry><title type="html">A Fast and Furious Introduction to Sparta</title><link href="https://debjyoti0891.github.io/sparta/modelling/architecture/2021/11/07/sparta.html" rel="alternate" type="text/html" title="A Fast and Furious Introduction to Sparta" /><published>2021-11-07T08:00:00+00:00</published><updated>2021-11-07T08:00:00+00:00</updated><id>https://debjyoti0891.github.io/sparta/modelling/architecture/2021/11/07/sparta</id><content type="html" xml:base="https://debjyoti0891.github.io/sparta/modelling/architecture/2021/11/07/sparta.html"><![CDATA[<p><a href="https://sparcians.github.io/map/index.html">Sparta</a> is a modeling framework that can be used for a variety of architecture (or otherwise) modelling work. In this blog post, I present 
+an introduction to the basic bells and whistles of the framework. The entire tutorial is available via <a href="https://github.com/debjyoti0891/sparta-simplified">Github</a>.</p>
+
+<h3 id="usecase">Usecase</h3>
+<p>We extend the basic <a href="https://sparcians.github.io/map/skeleton_example.html">example</a> to introduce a new <code class="language-plaintext highlighter-rouge">sparta::Unit</code> Pipe. 
+Producer sends data to a Pipe. Pipe receives data and forwards this to a consumer. Consumer signals the Pipe that
+data is received. In turn, Pipe signals the producer that data has been received and the cycle continues.</p>
+
+<h3 id="pipe-definition-pipehpp">Pipe definition (Pipe.hpp)</h3>
+
+<p>Each sparta unit should have a ParameterSet (subclass of <code class="language-plaintext highlighter-rouge">sparta::ParameterSet</code> ). With each parameter, there can be a validation method attached,
+to check if valid values were set to the parameter and a name of the unit as well.</p>
+
+<p>For the Pipe, we consider 4 ports — two data ports and two signal ports.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    sparta::DataOutPort&lt;uint32_t&gt; pipe_out_port_{&amp;unit_port_set_, "pipe_out_port"};
+    sparta::DataInPort&lt;uint32_t&gt;  pipe_in_port_ {&amp;unit_port_set_, "pipe_in_port", sparta::SchedulingPhase::PortUpdate, 1};
+    sparta::SignalInPort          pipe_go_port_ {&amp;unit_port_set_, "pipe_go_port"};
+    sparta::SignalOutPort         pipe_go_producer_port_ {&amp;unit_port_set_, "pipe_go_producer_port"};
+</code></pre></div></div>
+
+<p>The DataInPort receives the data from the producer and sends it to the consumer
+using the DataOutPort. Similarly, it receives acknowledgement of the receipt by the consumer using the SignalInPort,
+which it passes along to the producer using the SignalOutPort.</p>
+
+<p>Corresponding to each input port, we can define a handler to perform some action on the received data.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+    // Pipe receive handler
+    // receive the data from the producer 
+    void receiveData_(const uint32_t &amp; dat);
+
+    // receive signal from the consumer and send a singal to the producer
+    void receiveSignal_();
+
+</code></pre></div></div>
+
+<p>We can also define events, that will be triggered after a specified duration on scheduling. For example,
+we define a event to delay signalling the producer,  after a signal is received from the consumer. In this case,
+delay is 5 cycles and <code class="language-plaintext highlighter-rouge">sendData_</code> is called as its handler.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    // An event to be scheduled in the sparta::SchedulingPhase::Tick
+    // phase if data is received
+    sparta::Event&lt;&gt; event_do_some_work_{&amp;unit_event_set_, "do_work_event",
+                                        CREATE_SPARTA_HANDLER(Pipe, sendData_),5};
+</code></pre></div></div>
+
+<p>Statistics can be measured quite easily.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Stats
+    sparta::Counter num_processed_{&amp;unit_stat_set_, "num_processed_",
+                                  "Number of items produced", sparta::Counter::COUNT_NORMAL};
+</code></pre></div></div>
+<p>To use such a counter, a simple <code class="language-plaintext highlighter-rouge">++num_processed_</code> would suffice.</p>
+
+<p>Finally, loggers can be set up per Unit.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sparta::log::MessageSource pipe_info_;
+</code></pre></div></div>
+
+<h3 id="pipe-implementation-pipecpp">Pipe implementation (Pipe.cpp)</h3>
+<ul>
+  <li>Start by defining the name of the Unit</li>
+  <li>The handler methods are tied to the ports in the constructor.
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  // Register a handler when the producer sends a data
+  pipe_in_port_.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(Pipe, receiveData_, uint32_t));
+
+  // Register a go-handler when the consumer sends a go request
+  pipe_go_port_.registerConsumerHandler(CREATE_SPARTA_HANDLER(Pipe, receiveSignal_));
+</code></pre></div>    </div>
+    <p>These methods are called when the data is received at the port.</p>
+  </li>
+  <li>We schedule the event inside <code class="language-plaintext highlighter-rouge">receiveData_</code>.
+  <code class="language-plaintext highlighter-rouge">event_do_some_work_.schedule();</code>
+  This would trigger <code class="language-plaintext highlighter-rouge">sendData_</code> after 5 cycles.</li>
+</ul>
+
+<h3 id="building-the-simulator-tree-stagesimhppcpp">Building the simulator tree (StageSim{.hpp,.cpp})</h3>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">StageSim.hpp</code> is the top level module definition.</li>
+  <li>In <code class="language-plaintext highlighter-rouge">StageSim.cpp</code>, a bunch of setup needs to be done, in order to build the simulator tree.
+    <ul>
+      <li>In the constructor, the units and the corresponding parameter sets are made available.
+  <code class="language-plaintext highlighter-rouge">getResourceSet()-&gt;addResourceFactory&lt;sparta::ResourceFactory&lt;Pipe, Pipe::PipeParameterSet&gt;&gt;();</code></li>
+      <li>The destructor is relatively simple.</li>
+      <li><code class="language-plaintext highlighter-rouge">buildTree_</code> is one of the important things. Basically, each node is created as a <code class="language-plaintext highlighter-rouge">ResourceTreeNode</code>
+  and added to the <code class="language-plaintext highlighter-rouge">to_delete_</code> vector. Reading the parameters is performed and the constructor is called using these parameters.</li>
+      <li><code class="language-plaintext highlighter-rouge">configureTree_</code> is not used in the current context.</li>
+      <li><code class="language-plaintext highlighter-rouge">bindTree_</code> is used to connect the different ports! An example is
+  <code class="language-plaintext highlighter-rouge">// bind pipe to the producer
+  sparta::bind(root_tree_node-&gt;getChildAs&lt;sparta::Port&gt;(nodeName.str() + ".ports.producer_out_port"),
+             root_tree_node-&gt;getChildAs&lt;sparta::Port&gt;("pipe.ports.pipe_in_port"));
+ </code>
+  It can be observed that the port names are hierarchical. <code class="language-plaintext highlighter-rouge">pipe.ports.pipe_in_port</code> : <code class="language-plaintext highlighter-rouge">pipe</code> is the unit, under which
+  <code class="language-plaintext highlighter-rouge">ports</code> is the set of ports and <code class="language-plaintext highlighter-rouge">pipe_in_port</code> is the name of the port.</li>
+    </ul>
+  </li>
+</ul>
+
+<h3 id="command-line-simulator-setup-main_3scpp">Command line simulator setup (main_3s.cpp)</h3>
+<ul>
+  <li>Not much changes were made to the original example, except the following.
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   // Create the simulator object for population -- does not
+      // instantiate nor run it.
+      sparta::Scheduler scheduler;
+      StageSim sim(scheduler, be_noisy);
+</code></pre></div>    </div>
+  </li>
+  <li>Now, we are ready to run the simulation
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  cls.populateSimulation(&amp;sim);
+  cls.runSimulator(&amp;sim);
+  cls.postProcess(&amp;sim);
+</code></pre></div>    </div>
+  </li>
+</ul>
+
+<h3 id="running-the-example">Running the example</h3>
+
+<p>In the current environment, the following modules were available.
+Currently Loaded Modulefiles:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code> 1) GCCcore/10.3.0                   5) numactl/2.0.14-GCCcore-10.3.0      9) hwloc/2.4.1-GCCcore-10.3.0      13) libfabric/1.12.1-GCCcore-10.3.0  17) FlexiBLAS/3.0.4-GCC-10.3.0      21) foss/2021a                      25) Tcl/8.6.11-GCCcore-10.3.0     29) RapidJSON/1.1.0-GCCcore-10.3.0  33) cmake-3.17.5  
+ 2) zlib/1.2.11-GCCcore-10.3.0       6) XZ/5.2.5-GCCcore-10.3.0           10) OpenSSL/1.1                     14) PMIx/3.2.3-GCCcore-10.3.0        18) gompi/2021a                     22) yaml-cpp-0.6.2                  26) SQLite/3.35.4-GCCcore-10.3.0  30) bzip2/1.0.8-GCCcore-10.3.0      
+ 3) binutils/2.36.1-GCCcore-10.3.0   7) libxml2/2.9.10-GCCcore-10.3.0     11) libevent/2.1.12-GCCcore-10.3.0  15) OpenMPI/4.1.1-GCC-10.3.0         19) FFTW/3.3.9-gompi-2021a          23) ncurses/6.2-GCCcore-10.3.0      27) Szip/2.1.1-GCCcore-10.3.0     31) GMP/6.2.1-GCCcore-10.3.0        
+ 4) GCC/10.3.0                       8) libpciaccess/0.16-GCCcore-10.3.0  12) UCX/1.10.0-GCCcore-10.3.0       16) OpenBLAS/0.3.15-GCC-10.3.0       20) ScaLAPACK/2.1.0-gompi-2021a-fb  24) libreadline/8.1-GCCcore-10.3.0  28) HDF5/1.10.7-gompi-2021a       32) boost-1.77.0   ```
+</code></pre></div></div>
+
+<p>To build the simulator,</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code> mkdir build
+ cd build
+ cmake ..
+ make sparta_3stage
+</code></pre></div></div>
+
+<p>Sparta has a ton of options, which can be viewed as follows:
+<code class="language-plaintext highlighter-rouge">sparta_3stage --help</code></p>
+
+<ul>
+  <li>
+    <p>To see the <strong>simulation tree</strong>,<code class="language-plaintext highlighter-rouge">sparta_3stage --show-tree</code></p>
+
+    <p>This is a relatively simple way to see which ports are connected to what.</p>
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  top : &lt;top (root)&gt; (privacy: 0)
+  +-descendant_attached : &lt;top.descendant_attached name:"descendant_attached" datat:(sparta::TreeNode)  observers:1 posted:55&gt; (privacy: 0)
+  +-consumer : &lt;top.consumer resource: "consumer"&gt; (privacy: 0)
+  | +-params : &lt;top.consumer.params 1 params&gt; {builtin} (privacy: 0)
+  | | +-num_producers : [&lt;top.consumer.params.num_producers tags:[SPARTA_Parameter]&gt;]&lt;param uint32_t num_producers=1, def=1, write=0 read: 1 ignored: 0&gt; (privacy: 0)
+  | +-ports : &lt;top.consumer.ports&gt; (privacy: 0)
+  | | +-consumer_in_port : [bound to] {pipe_out_port (top.pipe.ports.pipe_out_port)} (privacy: 0)
+  | | | +-events : &lt;top.consumer.ports.consumer_in_port.events 1 events&gt; {builtin} (privacy: 0)
+  | | | | +-consumer_in_port_forward_event : &lt;top.consumer.ports.consumer_in_port.events.consumer_in_port_forward_event&gt; (privacy: 0)
+  | | +-producer0_go_port : [bound to] {pipe_go_port (top.pipe.ports.pipe_go_port)} (privacy: 0)
+  | +-events : &lt;top.consumer.events 1 events&gt; {builtin} (privacy: 0)
+  | | +-ev_data_arrived : &lt;top.consumer.events.ev_data_arrived&gt; (privacy: 0)
+  | +-stats : &lt;top.consumer.stats 0 stats, 1 counters&gt; {builtin} (privacy: 0)
+  | | +-num_consumed : &lt;top.consumer.stats.num_consumed val:100 normal vis:100000000&gt; (privacy: 0)
+  | +-? : &lt;top.consumer:log_msg_src cat:"info" observed:false msgs:0&gt; (_sparta_log_msg_source_[0])  (privacy: 0)
+  | +-? : &lt;top.consumer:log_msg_src cat:"warning" observed:true msgs:0&gt; (_sparta_log_msg_source_[1])  (privacy: 0)
+  | +-? : &lt;top.consumer:log_msg_src cat:"debug" observed:false msgs:0&gt; (_sparta_log_msg_source_[2])  (privacy: 0)
+  | +-? : &lt;top.consumer:log_msg_src cat:"info" observed:false msgs:0&gt; (_sparta_log_msg_source_[3])  (privacy: 0)
+  +-pipe : &lt;top.pipe resource: "pipe"&gt; (privacy: 0)
+  | +-params : &lt;top.pipe.params 0 params&gt; {builtin} (privacy: 0)
+  | +-ports : &lt;top.pipe.ports&gt; (privacy: 0)
+  | | +-pipe_out_port : [bound to] {consumer_in_port (top.consumer.ports.consumer_in_port)} (privacy: 0)
+  | | +-pipe_in_port : [bound to] {producer_out_port (top.producer0.ports.producer_out_port)} (privacy: 0)
+  | | | +-events : &lt;top.pipe.ports.pipe_in_port.events 1 events&gt; {builtin} (privacy: 0)
+  | | | | +-pipe_in_port_forward_event : &lt;top.pipe.ports.pipe_in_port.events.pipe_in_port_forward_event&gt; (privacy: 0)
+  | | +-pipe_go_port : [bound to] {producer0_go_port (top.consumer.ports.producer0_go_port)} (privacy: 0)
+  | | | +-events : &lt;top.pipe.ports.pipe_go_port.events 1 events&gt; {builtin} (privacy: 0)
+  | | | | +-pipe_go_port_forward_event : &lt;top.pipe.ports.pipe_go_port.events.pipe_go_port_forward_event&gt; (privacy: 0)
+  | | +-pipe_go_producer_port : [bound to] {producer_go_port (top.producer0.ports.producer_go_port)} (privacy: 0)
+  | +-events : &lt;top.pipe.events 1 events&gt; {builtin} (privacy: 0)
+  | | +-do_work_event : &lt;top.pipe.events.do_work_event&gt; (privacy: 0)
+  | +-stats : &lt;top.pipe.stats 0 stats, 1 counters&gt; {builtin} (privacy: 0)
+  | | +-num_processed_ : &lt;top.pipe.stats.num_processed_ val:101 normal vis:100000000&gt; (privacy: 0)
+  | +-? : &lt;top.pipe:log_msg_src cat:"info" observed:false msgs:0&gt; (_sparta_log_msg_source_[0])  (privacy: 0)
+  | +-? : &lt;top.pipe:log_msg_src cat:"warning" observed:true msgs:0&gt; (_sparta_log_msg_source_[1])  (privacy: 0)
+  | +-? : &lt;top.pipe:log_msg_src cat:"debug" observed:false msgs:0&gt; (_sparta_log_msg_source_[2])  (privacy: 0)
+  | +-? : &lt;top.pipe:log_msg_src cat:"info" observed:false msgs:0&gt; (_sparta_log_msg_source_[3])  (privacy: 0)
+  +-producer0 : &lt;top.producer0 resource: "producer"&gt; (producer[0])  (privacy: 0)
+  | +-params : &lt;top.producer0.params 3 params&gt; {builtin} (privacy: 0)
+  | | +-max_ints_to_send : [&lt;top.producer0.params.max_ints_to_send tags:[SPARTA_Parameter]&gt;]&lt;param uint32_t max_ints_to_send=100, def=100, write=0 read: 1 ignored: 0&gt; (privacy: 0)
+  | | +-test_param : [&lt;top.producer0.params.test_param tags:[SPARTA_Parameter]&gt;]&lt;param uint32_t test_param=1, def=0, write=1 read: 1 ignored: 0 VOLATILE&gt; (privacy: 0)
+  | | +-arch_override_test_param : [&lt;top.producer0.params.arch_override_test_param tags:[SPARTA_Parameter]&gt;]&lt;param std::string arch_override_test_param=reset_in_constructor, def=arch_override_default_value, write=1 read: 0 ignored: 1&gt; (privacy: 0)
+  | +-ports : &lt;top.producer0.ports&gt; (privacy: 0)
+  | | +-producer_out_port : [bound to] {pipe_in_port (top.pipe.ports.pipe_in_port)} (privacy: 0)
+  | | +-producer_go_port : [bound to] {pipe_go_producer_port (top.pipe.ports.pipe_go_producer_port)} (privacy: 0)
+  | | | +-events : &lt;top.producer0.ports.producer_go_port.events 1 events&gt; {builtin} (privacy: 0)
+  | | | | +-producer_go_port_forward_event : &lt;top.producer0.ports.producer_go_port.events.producer_go_port_forward_event&gt; (privacy: 0)
+  | +-events : &lt;top.producer0.events 1 events&gt; {builtin} (privacy: 0)
+  | | +-ev_producing_event : &lt;top.producer0.events.ev_producing_event&gt; (privacy: 0)
+  | +-stats : &lt;top.producer0.stats 0 stats, 1 counters&gt; {builtin} (privacy: 0)
+  | | +-num_produced : &lt;top.producer0.stats.num_produced val:100 normal vis:100000000&gt; (privacy: 0)
+  | +-? : &lt;top.producer0:log_msg_src cat:"info" observed:false msgs:0&gt; (_sparta_log_msg_source_[0])  (privacy: 0)
+  | +-? : &lt;top.producer0:log_msg_src cat:"warning" observed:true msgs:1&gt; (_sparta_log_msg_source_[1])  (privacy: 0)
+  | +-? : &lt;top.producer0:log_msg_src cat:"debug" observed:false msgs:0&gt; (_sparta_log_msg_source_[2])  (privacy: 0)
+  | +-? : &lt;top.producer0:log_msg_src cat:"info" observed:false msgs:0&gt; (_sparta_log_msg_source_[3])  (privacy: 0)
+  +-sparta_expression_trigger_fired : &lt;top.sparta_expression_trigger_fired name:"sparta_expression_trigger_fired" datat:(std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;)  observers:0 posted:0&gt; (privacy: 0)
+</code></pre></div>    </div>
+  </li>
+  <li>To generate an html report, <code class="language-plaintext highlighter-rouge">./sparta_3stage --report-all output.html html</code> . The report format could also be <code class="language-plaintext highlighter-rouge">yaml</code>.</li>
+  <li>
+    <p>Selective logging can be done. For example to view logs related to <code class="language-plaintext highlighter-rouge">pipe</code>,</p>
+
+    <p><code class="language-plaintext highlighter-rouge"> ./sparta_3stage -l top.pipe info pipe_info.txt</code>
+  This would dump the information in a log file, <code class="language-plaintext highlighter-rouge">pipe_info.txt</code>.</p>
+  </li>
+  <li>A list of command line usage scenarios is already documented in the main (documentation](https://sparcians.github.io/map/core_example.html) of Sparta.</li>
+</ul>
+
+<h3 id="references">References</h3>
+<ul>
+  <li><strong>Sparta Docs</strong> : <a href="https://sparcians.github.io/map/index.html">[Link]</a></li>
+  <li><strong>Tutorial Code</strong>: <a href="https://github.com/debjyoti0891/sparta-simplified">[Github  link]</a></li>
+</ul>]]></content><author><name>Debjyoti Bhattacharjee</name><email>debjyoti [dot] bhattacharjee [at] imec [dot] be</email></author><category term="sparta" /><category term="modelling" /><category term="architecture" /><category term="modelling" /><category term="architecture" /><category term="micro-architecture" /><summary type="html"><![CDATA[Sparta is a modeling framework that can be used for a variety of architecture (or otherwise) modelling work. In this blog post, I present an introduction to the basic bells and whistles of the framework. The entire tutorial is available via Github.]]></summary></entry><entry><title type="html">Semantically Organizing Images</title><link href="https://debjyoti0891.github.io/graph/learning/rdf/images/2021/07/10/rdf.html" rel="alternate" type="text/html" title="Semantically Organizing Images" /><published>2021-07-10T08:00:00+00:00</published><updated>2021-07-10T08:00:00+00:00</updated><id>https://debjyoti0891.github.io/graph/learning/rdf/images/2021/07/10/rdf</id><content type="html" xml:base="https://debjyoti0891.github.io/graph/learning/rdf/images/2021/07/10/rdf.html"><![CDATA[<figure class="quote">
+  <blockquote>
+    Take care of all your memories. For you cannot relive them. 
+  </blockquote>
+  <figcaption>
+    &mdash; Bob Dylan 
+    <!-- <cite>Mental models</cite>   -->
+  </figcaption>
+</figure>
+<p>My collection of images have grown to monstrous scales (more than 600GB) and continues to grow everyday.
+The primary culprit being my trigger happy nature, whenever I go out my camera (Nikon D7200). Given my
+rather laid back nature to post process the images and categorize them neatly in folders, my collection currently
+stands fragmented amidst a chaotic mix of folders spread across multiple hard-disks, without 
+any labels in a majority of cases. With this problem in mind, I started planning a “programmatic” way to get 
+out of this mess and to take care of the memories!</p>
+
+<p>With Python as my ally, I started to see which libraries could be used to get started. Turns out <a href="https://exiftool.org/">Exiftool</a> 
+is a very handy and mature tool to look at the EXIF data of images and it also has a python interface. Using this 
+as a baseline, I built a relatively straight forward script to bring images from multiple locations into a single folder. 
+Thereafter, using Exiftool to extract all the meta data, the images are organized sorted by year. Under each year, events are separately put in a folder. 
+An event is a day which has &gt;= threshold images. If consecutive days have events, then they are merged into a single event.
+The entire script is available on <a href="https://github.com/debjyoti0891/utilities/tree/master/copy_images">Github</a>.</p>
+
+<p>Organizing images in the chronologically named folders solves only a part of the problem. These are still image dumps, but not memories such as the ones 
+offered by <a href="https://www.facebook.com/help/1056848067697293/">Facebook</a>, <a href="https://support.google.com/photos/answer/9454489?hl=en&amp;co=GENIE.Platform%3DAndroid">Google Photos</a>, etc.
+This is where my interest for <a href="https://en.wikipedia.org/wiki/Semantic_network">semantic networks</a> comes into the picture. Simply put, a semantic network is a knowledge representation structure that represents semantic relations between concepts in a network. 
+Given the fact pictures have multiple entities and a ton of metadata, a semantic network would be useful to navigate images or find images of interest. For example, a query could be to <em>find all pictures with person A and B</em>. 
+Of course, detecting faces present in the images and tagging them with a name would be indeed needed before a semantic network could be built. Tools powered by AI such as <a href="https://pypi.org/project/deepface/">Deepface</a> could be readily used.</p>
+
+<p>Neo4j is a graph data database, which can be used for storing the semantic network. In order to actually build a semantic network, I started digging into Neo4j RDF and Semantics <a href="https://neo4j.com/labs/neosemantics/">toolkit</a>.  In the 
+context of representing the records, <a href="https://www.w3.org/RDF/">Resource Description Framework (RDF)</a> came into the picture. RDF is a standard model for data interchange across the web and used extensively apparently. RDF uses XML representation
+for defining relationships of the form <em>subject-&gt;predicate-&gt;object</em>, which is called a <em>triple</em>. These RDF records can be directly imported into the graph database and then queried for efficiently navigating all
+the images. There is a nicely presented <a href="http://www.linkeddatatools.com/semantic-web-basics">tutorial</a> on the topic. As a next step, I plan to build RDF entires for the entire image dump that I have and hopefully have 
+a better way to navigate the memories.</p>
+
+<h3 id="references">References</h3>
+<ul>
+  <li><strong>Code</strong> : Preliminary code for organizing images. <a href="https://github.com/debjyoti0891/utilities/tree/master/copy_images">[Link]</a></li>
+  <li><strong>Good tutorial</strong>: This tutorial provides a relatively detailed introduction to RDF <a href="http://www.linkeddatatools.com/semantic-web-basics">[Link]</a></li>
+  <li><strong>Exiftool</strong>: <a href="https://exiftool.org/">[Link]</a></li>
+  <li><strong>Deepface</strong>: <a href="ttps://pypi.org/project/deepface/">[Link]</a></li>
+</ul>]]></content><author><name>Debjyoti Bhattacharjee</name><email>debjyoti [dot] bhattacharjee [at] imec [dot] be</email></author><category term="graph" /><category term="learning" /><category term="RDF" /><category term="images" /><category term="graph" /><category term="inference" /><category term="neo4j" /><category term="RDF" /><category term="image-processing" /><summary type="html"><![CDATA[Take care of all your memories. For you cannot relive them. &mdash; Bob Dylan My collection of images have grown to monstrous scales (more than 600GB) and continues to grow everyday. The primary culprit being my trigger happy nature, whenever I go out my camera (Nikon D7200). Given my rather laid back nature to post process the images and categorize them neatly in folders, my collection currently stands fragmented amidst a chaotic mix of folders spread across multiple hard-disks, without any labels in a majority of cases. With this problem in mind, I started planning a “programmatic” way to get out of this mess and to take care of the memories!]]></summary></entry><entry><title type="html">Code Generation with TVM</title><link href="https://debjyoti0891.github.io/machine/learning/tvm/2021/04/30/tvm-getting-started.html" rel="alternate" type="text/html" title="Code Generation with TVM" /><published>2021-04-30T23:32:56+00:00</published><updated>2021-04-30T23:32:56+00:00</updated><id>https://debjyoti0891.github.io/machine/learning/tvm/2021/04/30/tvm-getting%20started</id><content type="html" xml:base="https://debjyoti0891.github.io/machine/learning/tvm/2021/04/30/tvm-getting-started.html"><![CDATA[<p><a href="https://tvm.apache.org/">Apache TVM</a> is yet another compiler framework (<a href="https://github.com/ONNC/onnc">ONNC</a>, <a href="https://mlir.llvm.org/">MLIR</a>, etc.) for machine learning workloads targeted at supporting variety of hardware backends. It supports “Just in Time compilation” for the supported backends. It represents the workloads using “Relay” program, which 
+can be then lowered to “<a href="https://tvm.apache.org/docs/api/python/ir.html#tvm.ir.Attrs.list_field_info">TVM IR</a>” and scheduled for execution.</p>
+
+<p>I started to look at the <a href="https://tvm.apache.org/2020/07/15/how-to-bring-your-own-codegen-to-tvm">tutorial</a> for code generation using <a href="https://github.com/oneapi-src/oneDNN">DNNL</a>. The tutorial provides a relatively comprehensive guide towards 
+TVM with a custom code generator, which emits JSON for certain Relay operators marked for the specific code generation backend (in this case “dnnl”).</p>
+
+<p>By simply enabling the DNNL codegen in the config.cmake and compiling tvm, it is possible to generate the json from a model using the following piece of code.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mod = relay.transform.AnnotateTarget(["dnnl"])(mod)
+mod = relay.transform.MergeCompilerRegions()(mod)
+mod = relay.transform.PartitionGraph()(mod)
+graph_json, lib, params = relay.build(mod, target='llvm')
+print('Graph json:', graph_json)
+</code></pre></div></div>
+<p>In the first step, the operators supported by the backend are annotated, which are then merged. The relay graph is partitioned and using the “build” step, the code is generated. For the operators which are not supported by the code generator, these would be executed in TVM. The generated lib includes the host module and the execution modules for the part that cannot be offloaded to the custom backend accelerator. The host module will invoke the accelerator module in runtime when it executes a graph node that is annotated for the accelerator. Currently, TVM does not support ahead of time compilation, which would allow generation of executable at compile time itself, which made TVM unsuitable for my current work.</p>
+
+<p>In summary, the framework has a lot of features for optimizing machine learning workloads without a lot of effort. However, it might be a bit complex to get started off with the documentation fragmented over a variety of pages. A relatively good order to look at the tutorials in my opinion is listed below.</p>
+
+<h3 id="references">References</h3>
+<ul>
+  <li><strong>Good tutorial</strong>: This tutorial provides the quickest way to understand the primitives of a relay program. <a href="http://tvm.d2l.ai/chapter_getting_started/vector_add.html">[Link]</a></li>
+  <li><strong>TVM + Cuda</strong> : A jupyter notebook that shows how to use CUDA as a backend. <a href="https://github.com/andersy005/tvm-in-action/blob/master/tvm-tutorials/getting-started.ipynb">[Link]</a></li>
+  <li><strong>Beginner guide</strong> : This is a good starting point to understand the TVM code base structure. <a href="https://tvm.apache.org/docs/dev/codebase_walkthrough.html">[Link]</a></li>
+  <li><strong>Good code gen tutorial</strong> : The tutorial provides a relatively comprehensive guide towards 
+TVM with a custom code generator, which emits codes for certain Relay operators marked for the specific code generation backend.  <a href="https://tvm.apache.org/2020/07/15/how-to-bring-your-own-codegen-to-tvm">[Link]</a></li>
+  <li><strong>Available relay passes</strong>: A number of built-in passes are already provided to optimize the relay graph. However, the passes might emit errors if the input relay graph has custom operators. <a href="https://tvm.apache.org/docs/api/python/relay/transform.html">[Link]</a></li>
+</ul>]]></content><author><name>Debjyoti Bhattacharjee</name><email>debjyoti [dot] bhattacharjee [at] imec [dot] be</email></author><category term="machine" /><category term="learning" /><category term="TVM" /><category term="ai" /><category term="ml" /><category term="&quot;neural" /><category term="network&quot;" /><category term="tvm" /><category term="compiler" /><summary type="html"><![CDATA[Apache TVM is yet another compiler framework (ONNC, MLIR, etc.) for machine learning workloads targeted at supporting variety of hardware backends. It supports “Just in Time compilation” for the supported backends. It represents the workloads using “Relay” program, which can be then lowered to “TVM IR” and scheduled for execution.]]></summary></entry><entry><title type="html">Welcome to my blog</title><link href="https://debjyoti0891.github.io/eda/2020/03/04/first-post.html" rel="alternate" type="text/html" title="Welcome to my blog" /><published>2020-03-04T16:32:56+00:00</published><updated>2020-03-04T16:32:56+00:00</updated><id>https://debjyoti0891.github.io/eda/2020/03/04/first-post</id><content type="html" xml:base="https://debjyoti0891.github.io/eda/2020/03/04/first-post.html"><![CDATA[<p>My keen interest in hardware technologies, coupled with my background in computer science, has driven me to pursue research in the direction of design automation algorithms and tools for architectures, for a variety of technologies. Recently, I am learning about the state-of-the-art in Deep Neural Networks~(NN) and understanding the NN strutures (<a href="https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf" target="_blank">Alexnet</a>, <a href="https://arxiv.org/abs/1512.03385" target="_blank">Resnet</a>, etc).</p>
+
+<p>In parallel, I have started using <a href="https://pytorch.org/">PyTorch</a> for implementation of DNNs. For the purpose of designing efficient NN accelerators, the first step is to find a way to extract an exact description of the NN graph. I found out the possiblity of finding the execution traces of the defined NNs using <a href="https://pytorch.org/docs/stable/jit.html#mixing-tracing-and-scripting">Torchscript</a> and then parsing them into a directed graph. However, this is almost an hack! A better alternative was to look at the Open Neural Network Exchange (<a href="https://onnx.ai/">ONNX</a>) format for NNs. Each ONNX model is self contained and can be accessed as a <a href="#proto">ProtoBuf</a> object. PyTorch and most other deep NN frameworks allows models to be directly written to ONNX format, which makes it a common representation to be used for the process of design automation of NN accelerators.</p>
+
+<p>In the upcoming blogs, expect more details of design automation process for NN accelerators to be unveiled.</p>
+
+<h3 id="references">References</h3>
+<ul>
+  <li><a href="https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf" target="_blank">ImageNet Classification with Deep ConvolutionalNeural Networks</a></li>
+  <li><a href="https://arxiv.org/abs/1512.03385" target="_blank">Deep Residual Learning for Image Recognition</a></li>
+  <li><a href="https://developers.google.com/protocol-buffers/docs/overview" target="_blank">Introduction to protocol buffers</a></li>
+</ul>]]></content><author><name>Debjyoti Bhattacharjee</name><email>debjyoti [dot] bhattacharjee [at] imec [dot] be</email></author><category term="eda" /><category term="introduction" /><category term="ai" /><category term="ml" /><category term="eda" /><category term="pytorch" /><summary type="html"><![CDATA[My keen interest in hardware technologies, coupled with my background in computer science, has driven me to pursue research in the direction of design automation algorithms and tools for architectures, for a variety of technologies. Recently, I am learning about the state-of-the-art in Deep Neural Networks~(NN) and understanding the NN strutures (Alexnet, Resnet, etc).]]></summary></entry></feed>

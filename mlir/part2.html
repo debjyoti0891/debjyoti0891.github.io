@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>HW-SW co-design in the RISC-V Ecosystem [Part 2]: MLIR to LLVM | Debjyoti Bhattacharjee</title>
+<meta name="generator" content="Jekyll v4.3.4" />
+<meta property="og:title" content="HW-SW co-design in the RISC-V Ecosystem [Part 2]: MLIR to LLVM" />
+<meta name="author" content="Debjyoti Bhattacharjee" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="In Part 1, we explored the overarching concept of hardware-software co-design. Now, in Part 2, we delve into the specifics of implementing an MLIR pass. Passes are transformative actions applied to MLIR code during compilation, serving to optimize, analyze, or manipulate the code. They can be utilized for both IR analysis and Dialect-to-Dialect transformations. For further insights, refer to the documentation available here." />
+<meta property="og:description" content="In Part 1, we explored the overarching concept of hardware-software co-design. Now, in Part 2, we delve into the specifics of implementing an MLIR pass. Passes are transformative actions applied to MLIR code during compilation, serving to optimize, analyze, or manipulate the code. They can be utilized for both IR analysis and Dialect-to-Dialect transformations. For further insights, refer to the documentation available here." />
+<link rel="canonical" href="https://debjyoti0891.github.io/mlir/part2" />
+<meta property="og:url" content="https://debjyoti0891.github.io/mlir/part2" />
+<meta property="og:site_name" content="Debjyoti Bhattacharjee" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2024-04-09T08:00:00+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="HW-SW co-design in the RISC-V Ecosystem [Part 2]: MLIR to LLVM" />
+<meta name="google-site-verification" content="shmIemKrYpRAIcUmw2hZzRij1uySn9s55BGBbLBsOto" />
+<meta name="msvalidate.01" content="F0966E9DC4FDEE6F087ADCDD6E5F6743" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Debjyoti Bhattacharjee"},"dateModified":"2024-04-09T08:00:00+00:00","datePublished":"2024-04-09T08:00:00+00:00","description":"In Part 1, we explored the overarching concept of hardware-software co-design. Now, in Part 2, we delve into the specifics of implementing an MLIR pass. Passes are transformative actions applied to MLIR code during compilation, serving to optimize, analyze, or manipulate the code. They can be utilized for both IR analysis and Dialect-to-Dialect transformations. For further insights, refer to the documentation available here.","headline":"HW-SW co-design in the RISC-V Ecosystem [Part 2]: MLIR to LLVM","mainEntityOfPage":{"@type":"WebPage","@id":"https://debjyoti0891.github.io/mlir/part2"},"publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"https://debjyoti0891.github.io/assets/D_old.jpg"},"name":"Debjyoti Bhattacharjee"},"url":"https://debjyoti0891.github.io/mlir/part2"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://debjyoti0891.github.io/feed.xml" title="Debjyoti Bhattacharjee" />
+
+<style>
+
+  <!-- pre {
+
+    border: 1px solid #ddd;
+    border-radius: 1px;
+    padding: 1em;
+    overflow-x: auto;
+}
+
+pre code {
+  background-color: #d1daf8; /* Dark gray background color */
+  color: #504a5f; /* Light gray text color */
+    display: block;
+    overflow-x: auto;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 14px;
+}
+
+/* Specific language styles */
+pre code[class*="language-"] {
+    color: #333; /* Default code color */
+} -->
+
+
+
+/* Add more language styles as needed */
+
+
+  /* Apply a different color when links are hovered */
+  <!-- a:hover {
+    color: #3e1209; /* Dark Red */
+    text-decoration: underline;
+  } -->
+
+  .button0 {
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    padding: 6px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    margin: 4px 2px;
+    cursor: pointer;
+  }
+  .button1 {
+    background-color: #4c7aaf;
+    border: none;
+    color: white;
+    padding: 6px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    margin: 4px 2px;
+    cursor: pointer;
+  }
+  .button2 {
+    background-color: #a8af4c;
+    border: none;
+    color: white;
+    padding: 6px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    margin: 4px 2px;
+    cursor: pointer;
+  }
+  .button3 {
+    background-color: #e6518f;
+    border: none;
+    color: white;
+    padding: 6px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    margin: 4px 2px;
+    cursor: pointer;
+  }
+  .button4 {
+    background-color: #5e4caf;
+    border: none;
+    color: white;
+    padding: 6px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    margin: 4px 2px;
+    cursor: pointer;
+  }
+  .button5 {
+    background-color: #7782d3;
+    border: none;
+    color: white;
+    padding: 6px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    margin: 4px 2px;
+    cursor: pointer;
+  }
+
+  .sp{
+  width: 10px;
+  padding-right: 15px;
+  background-color: #bdbbc5;
+  padding: 4px 12px;
+  }
+
+  .highlight{
+  font-family: ABeeZee, sans-serif;
+  background-color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  color: rgba(99, 82, 82, 1);
+  text-transform: none;
+  font-style: normal;
+  text-decoration: none;
+  line-height: 1.6em;
+  letter-spacing: 0.7px;
+  }
+  .headHi{
+    font-family: ABeeZee, sans-serif;
+    font-size: 26px;
+    font-weight: 600;
+    color: rgba(77, 63, 63, 1);
+    text-transform: none;
+    font-style: normal;
+    text-decoration: none;
+    line-height: 1.6em;
+    letter-spacing: 0.7px;
+}
+
+.introtext{
+    font-family: Verdana, sans-serif;
+    font-size: 16px;
+    /* font-weight: 400; */
+    color: rgba(0, 0, 0, 1);
+    text-transform: none;
+    font-style: normal;
+    text-decoration: none;
+    line-height: 1.5em;
+    letter-spacing: -0.1px;
+}
+
+.datetext{
+    font-family: Courier New, sans-serif;
+    font-size: 16px;
+    background-color: #eeeeee;
+    /* font-weight: 400; */
+    color: rgba(0, 0, 0, 1);
+    text-transform: none;
+    font-style: normal;
+    text-decoration: none;
+    line-height: 1.5em;
+    letter-spacing: -0.1px;
+}
+
+<!-- .divtext{
+  background-color: rgb(214, 226, 226);
+} -->
+
+.event-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+.event-list-item {
+  margin-bottom: 20px;
+}
+
+.event-name {
+  color: #6597ce; /* Highlight color for event name */
+}
+
+.event-location-date {
+  font-style: italic;
+  color: #6D1F0F; /* Highlight color for location/date */
+}
+
+
+.divtext {
+  background-color: #f0f0f0;
+  border: 2px solid #e5e5e5;
+  border-radius: 5px;
+  padding: 10px;
+  margin-bottom: 5px;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  color: #444;
+}
+
+.introhightext{
+    font-family: Optima, sans-serif;
+    font-size: 16px;
+    font-weight: 100;
+    color: #rgba(0, 0, 0, 1);
+    text-transform: none;
+    font-style: normal;
+    text-decoration: none;
+    line-height: 0em;
+    letter-spacing: 0px;
+}
+
+.locationtext {
+font-family: Tahoma, Geneva, sans-serif;
+font-size: 14px;
+letter-spacing: 2px;
+word-spacing: 2px;
+color: #6D1F0F;
+font-weight: normal;
+text-decoration: none;
+font-style: normal;
+font-variant: small-caps;
+text-transform: none;
+}
+
+.tag-link {
+    display: inline-block;
+    background: rgba(106,159,181,0.15);
+    padding: 0 .5rem;
+    margin-right: .5rem;
+    border-radius: 4px;
+    color: #34435e;
+    font-family: "PT Sans",Helvetica,Arial,sans-serif;
+    font-size: 90%;
+    -webkit-transition: all 0.1s ease-in-out;
+    -moz-transition: all 0.1s ease-in-out;
+    transition: all 0.1s ease-in-out;
+}
+.a {
+  color: #6369D1;
+}
+.tag-header {
+    display: inline-block;
+    padding: 0 .5rem;
+    margin-right: .5rem;
+    border-radius: 4px;
+    color: #34435e;
+    font-family: "PT Sans",Helvetica,Arial,sans-serif;
+    font-size: 90%;
+    -webkit-transition: all 0.1s ease-in-out;
+    -moz-transition: all 0.1s ease-in-out;
+    transition: all 0.1s ease-in-out;
+}
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  </style>
+
+  <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>HW-SW co-design in the RISC-V Ecosystem [Part 2]: MLIR to LLVM | Debjyoti Bhattacharjee</title>
+<meta name="generator" content="Jekyll v4.3.4" />
+<meta property="og:title" content="HW-SW co-design in the RISC-V Ecosystem [Part 2]: MLIR to LLVM" />
+<meta name="author" content="Debjyoti Bhattacharjee" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="In Part 1, we explored the overarching concept of hardware-software co-design. Now, in Part 2, we delve into the specifics of implementing an MLIR pass. Passes are transformative actions applied to MLIR code during compilation, serving to optimize, analyze, or manipulate the code. They can be utilized for both IR analysis and Dialect-to-Dialect transformations. For further insights, refer to the documentation available here." />
+<meta property="og:description" content="In Part 1, we explored the overarching concept of hardware-software co-design. Now, in Part 2, we delve into the specifics of implementing an MLIR pass. Passes are transformative actions applied to MLIR code during compilation, serving to optimize, analyze, or manipulate the code. They can be utilized for both IR analysis and Dialect-to-Dialect transformations. For further insights, refer to the documentation available here." />
+<link rel="canonical" href="https://debjyoti0891.github.io/mlir/part2" />
+<meta property="og:url" content="https://debjyoti0891.github.io/mlir/part2" />
+<meta property="og:site_name" content="Debjyoti Bhattacharjee" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2024-04-09T08:00:00+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="HW-SW co-design in the RISC-V Ecosystem [Part 2]: MLIR to LLVM" />
+<meta name="google-site-verification" content="shmIemKrYpRAIcUmw2hZzRij1uySn9s55BGBbLBsOto" />
+<meta name="msvalidate.01" content="F0966E9DC4FDEE6F087ADCDD6E5F6743" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Debjyoti Bhattacharjee"},"dateModified":"2024-04-09T08:00:00+00:00","datePublished":"2024-04-09T08:00:00+00:00","description":"In Part 1, we explored the overarching concept of hardware-software co-design. Now, in Part 2, we delve into the specifics of implementing an MLIR pass. Passes are transformative actions applied to MLIR code during compilation, serving to optimize, analyze, or manipulate the code. They can be utilized for both IR analysis and Dialect-to-Dialect transformations. For further insights, refer to the documentation available here.","headline":"HW-SW co-design in the RISC-V Ecosystem [Part 2]: MLIR to LLVM","mainEntityOfPage":{"@type":"WebPage","@id":"https://debjyoti0891.github.io/mlir/part2"},"publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"https://debjyoti0891.github.io/assets/D_old.jpg"},"name":"Debjyoti Bhattacharjee"},"url":"https://debjyoti0891.github.io/mlir/part2"}</script>
+<!-- End Jekyll SEO tag -->
+</head>
+<body><header class="site-header" style="background-color: #e6e8e6;">
+
+  <div class="wrapper"><span><a class="site-title" rel="author" href="/">
+      <img src="/assets/D_old.jpg" alt="Smiley face" height="40" >
+      Debjyoti Bhattacharjee
+    </a></span><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/personal/">
+               Personal
+            </a><a class="page-link" href="/research/">
+               Research
+            </a><a class="page-link" href="/publications/">
+               Publications
+            </a><a class="page-link" href="/blog/">
+               Blog
+            </a><a class="page-link" href="/tools/">
+               Resources
+            </a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="post">
+  <h1 class="post-title">HW-SW co-design in the RISC-V Ecosystem [Part 2]: MLIR to LLVM</h1>
+  <span class="post-date">09 Apr 2024</span>
+  
+  
+    <a class="tag-link"
+      href= https://debjyoti0891.github.io/tags/#compilation
+      rel="category tag">
+      #compilation
+    </a>
+  
+  
+    <a class="tag-link"
+      href= https://debjyoti0891.github.io/tags/#llvm
+      rel="category tag">
+      #llvm
+    </a>
+  
+  
+    <a class="tag-link"
+      href= https://debjyoti0891.github.io/tags/#llvm
+      rel="category tag">
+      #llvm
+    </a>
+  
+  
+    <a class="tag-link"
+      href= https://debjyoti0891.github.io/tags/#mlir
+      rel="category tag">
+      #mlir
+    </a>
+  
+   <p>In <a href="/mlir/part1">Part 1</a>, we explored the overarching concept of hardware-software co-design. Now, in Part 2, we delve into the specifics of implementing an MLIR pass. Passes are transformative actions applied to MLIR code during compilation, serving to optimize, analyze, or manipulate the code. They can be utilized for both IR analysis and Dialect-to-Dialect transformations. For further insights, refer to the documentation available <a href="https://mlir.llvm.org/docs/PassManagement/">here</a>.</p>
+
+<p>In this particular pass, our objective is to convert a singular operation (<code class="language-plaintext highlighter-rouge">arith.mulf</code>) to an equivalent LLVM intrinsic, dependent on certain conditions. Essentially, an LLVM intrinsic can be regarded as a specialized function. At a high level, the process entails replacing instances of</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">arith.mulf (approx = "exp")</code> with an LLVM call to</li>
+  <li><code class="language-plaintext highlighter-rouge">llvm.call @llvm.riscv.floatexp.mul(%arg0, %arg1) : (f32, f32) -&gt; f32</code>.</li>
+</ul>
+
+<p>It’s important to note that if the <code class="language-plaintext highlighter-rouge">approx</code> attribute is not set to <code class="language-plaintext highlighter-rouge">exp</code>, or if the inputs of <code class="language-plaintext highlighter-rouge">arith.mulf</code> are not <code class="language-plaintext highlighter-rouge">f32</code>, no action should be taken.</p>
+
+<p>The overall implementation of the pass is in this <a href="https://github.com/debjyoti0891/CoVeriS/blob/main/patches/patch_llvm">patch</a>. We go over
+each part of the pass implementation below.</p>
+
+<h3 id="mlirincludemlirconversionpassesh"><a href="">mlir/include/mlir/Conversion/Passes.h</a></h3>
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="cp">#include</span> <span class="cpf">"mlir/Conversion/ArithToRISCVNN/ArithToRISCVNN.h"</span><span class="cp">
+</span></code></pre></div></div>
+<p>This includes the new pass in the set of all passes that <code class="language-plaintext highlighter-rouge">mlir-opt</code> supports.</p>
+
+<h3 id="mlirincludemlirconversionpassestd"><a href="">mlir/include/mlir/Conversion/Passes.td</a></h3>
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">def</span> <span class="n">ConvertArithToRISCVNNPass</span> <span class="o">:</span> <span class="n">Pass</span><span class="o">&lt;</span><span class="s">"convert-arith-to-riscvnn"</span><span class="o">&gt;</span> <span class="p">{</span>
+  <span class="n">let</span> <span class="n">summary</span> <span class="o">=</span> <span class="s">"Convert arith dialect operations to LLVM RISCV intrinsics for NN"</span><span class="p">;</span>
+  <span class="n">let</span> <span class="n">dependentDialects</span> <span class="o">=</span> <span class="p">[</span><span class="s">"LLVM::LLVMDialect"</span><span class="p">,</span> <span class="s">"arith::ArithDialect"</span><span class="p">];</span>
+  <span class="n">let</span> <span class="n">constructor</span> <span class="o">=</span> <span class="s">"mlir::createConvertArithToRISCVNN()"</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>This markdown snippet defines a TableGen-like record, outlining the high-level details of the pass. In this instance, the pass is named <code class="language-plaintext highlighter-rouge">convert-arith-to-riscvnn</code>. Additionally, it indicates that the pass depends on two other dialects: <code class="language-plaintext highlighter-rouge">LLVM::LLVMDialect</code> and <code class="language-plaintext highlighter-rouge">arith::ArithDialect</code>. Furthermore, it specifies the description of the pass as available in <code class="language-plaintext highlighter-rouge">mlir-opt</code>.</p>
+
+<h3 id="mlirincludemlirconversionarithtoriscvnnarithtoriscvnnh"><a href="">mlir/include/mlir/Conversion/ArithToRISCVNN/ArithToRISCVNN.h</a></h3>
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">//===- ArithToRISCVNN.h - Arith to LLVM dialect conversion -----------*- C++ -*-===//</span>
+
+<span class="cp">#ifndef MLIR_CONVERSION_ARITHTORISCVNN_ARITHTORISCVNN_H
+#define MLIR_CONVERSION_ARITHTORISCVNN_ARITHTORISCVNN_H
+</span>
+<span class="cp">#include</span> <span class="cpf">"mlir/Pass/Pass.h"</span><span class="c1">  // from @llvm-project</span><span class="cp">
+</span>
+<span class="c1">// Extra includes needed for dependent dialects</span>
+<span class="cp">#include</span> <span class="cpf">"mlir/Dialect/Arith/IR/Arith.h"</span><span class="c1">   // from @llvm-project</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Dialect/Tensor/IR/Tensor.h"</span><span class="c1">  // from @llvm-project</span><span class="cp">
+</span><span class="k">namespace</span> <span class="n">mlir</span> <span class="p">{</span>
+<span class="k">class</span> <span class="nc">ModuleOp</span><span class="p">;</span>
+
+<span class="cp">#define GEN_PASS_DECL_CONVERTARITHTORISCVNNPASS
+#include</span> <span class="cpf">"mlir/Conversion/Passes.h.inc"</span><span class="cp">
+</span>
+<span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">OperationPass</span><span class="o">&lt;&gt;&gt;</span> <span class="n">createConvertArithToRISCVNN</span><span class="p">();</span>
+
+<span class="p">}</span>
+<span class="cp">#endif // MLIR_CONVERSION_ARITHTORISCVNN_ARITHTORISCVNN_H
+</span></code></pre></div></div>
+<p>In this context, the goal is to define a new pass that converts certain operations (e.g. <code class="language-plaintext highlighter-rouge">arith.mulf {approx="exp"}</code>) into the new intrinsics that were defined above.</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">//===- ArithToRISCVNNPass.cpp - Arith to LLVM Pass ------------------------===//</span>
+
+<span class="cp">#include</span> <span class="cpf">"mlir/Conversion/ArithToRISCVNN/ArithToRISCVNN.h"</span><span class="cp">
+</span><span class="c1">// #include &lt;iostream&gt;</span>
+<span class="cp">#include</span> <span class="cpf">"mlir/Dialect/LLVMIR/LLVMAttrs.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Dialect/LLVMIR/LLVMTypes.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/IR/BuiltinAttributes.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/IR/BuiltinOps.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/IR/BuiltinTypes.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Support/LLVM.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Support/LogicalResult.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Support/TypeID.h"</span><span class="cp">
+</span>
+<span class="cp">#include</span> <span class="cpf">"mlir/Target/LLVMIR/ModuleTranslation.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Conversion/AffineToStandard/AffineToStandard.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Conversion/ArithToLLVM/ArithToLLVM.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Conversion/ControlFlowToLLVM/ControlFlowToLLVM.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Conversion/FuncToLLVM/ConvertFuncToLLVM.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Conversion/FuncToLLVM/ConvertFuncToLLVMPass.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Conversion/LLVMCommon/ConversionTarget.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Conversion/LLVMCommon/TypeConverter.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Conversion/MemRefToLLVM/MemRefToLLVM.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Conversion/SCFToControlFlow/SCFToControlFlow.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Dialect/Arith/IR/Arith.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Dialect/Func/IR/FuncOps.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Dialect/LLVMIR/LLVMDialect.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Dialect/MemRef/IR/MemRef.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Dialect/SCF/IR/SCF.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Pass/Pass.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Transforms/DialectConversion.h"</span><span class="cp">
+#include</span> <span class="cpf">"mlir/Interfaces/InferTypeOpInterface.h"</span><span class="cp">
+</span>
+<span class="cp">#include</span> <span class="cpf">"llvm/Support/Casting.h"</span><span class="cp">
+</span>
+<span class="cp">#include</span> <span class="cpf">"llvm/ADT/STLExtras.h"</span><span class="cp">
+#include</span> <span class="cpf">"llvm/Support/Debug.h"</span><span class="cp">
+#include</span> <span class="cpf">"llvm/Support/FormatVariadic.h"</span><span class="cp">
+#include</span> <span class="cpf">"llvm/ADT/DenseMap.h"</span><span class="cp">
+#include</span> <span class="cpf">"llvm/ADT/SmallSet.h"</span><span class="cp">
+#include</span> <span class="cpf">"llvm/ADT/StringSet.h"</span><span class="cp">
+#include</span> <span class="cpf">"llvm/ADT/TypeSwitch.h"</span><span class="cp">
+#include</span> <span class="cpf">"llvm/Support/FormatVariadic.h"</span><span class="cp">
+#include</span> <span class="cpf">"llvm/Support/MathExtras.h"</span><span class="cp">
+#include</span> <span class="cpf">"llvm/Support/raw_ostream.h"</span><span class="cp">
+</span>
+<span class="cp">#include</span> <span class="cpf">&lt;memory&gt;</span><span class="cp">
+#include</span> <span class="cpf">&lt;utility&gt;</span><span class="cp">
+</span>
+
+<span class="k">namespace</span> <span class="n">mlir</span> <span class="p">{</span>
+<span class="cp">#define GEN_PASS_DEF_CONVERTARITHTORISCVNNPASS
+#include</span> <span class="cpf">"mlir/Conversion/Passes.h.inc"</span><span class="cp">
+</span><span class="p">}</span> <span class="c1">// namespace mlir</span>
+
+<span class="k">using</span> <span class="k">namespace</span> <span class="n">mlir</span><span class="p">;</span>
+
+<span class="c1">// ************** Patterns **********</span>
+<span class="k">static</span> <span class="kt">bool</span> <span class="nf">isSupportedSourceType</span><span class="p">(</span><span class="n">Type</span> <span class="n">originalType</span><span class="p">)</span> <span class="p">{</span>
+  <span class="c1">// https://github.com/llvm/llvm-project/blob/c5f839bd58e7f888acc4cb39a18e9e5bbaa9fb0a/mlir/lib/IR/Types.cpp#L123</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">originalType</span><span class="p">.</span><span class="n">isF32</span><span class="p">())</span>
+    <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+  <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="n">LogicalResult</span> <span class="nf">checkSourceOpTypes</span><span class="p">(</span><span class="n">PatternRewriter</span> <span class="o">&amp;</span><span class="n">rewriter</span><span class="p">,</span>
+                                        <span class="n">Operation</span> <span class="o">*</span><span class="n">sourceOp</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">auto</span> <span class="n">allTypes</span> <span class="o">=</span> <span class="n">llvm</span><span class="o">::</span><span class="n">to_vector</span><span class="p">(</span><span class="n">sourceOp</span><span class="o">-&gt;</span><span class="n">getOperandTypes</span><span class="p">());</span>
+  <span class="n">llvm</span><span class="o">::</span><span class="n">append_range</span><span class="p">(</span><span class="n">allTypes</span><span class="p">,</span> <span class="n">sourceOp</span><span class="o">-&gt;</span><span class="n">getResultTypes</span><span class="p">());</span>
+
+  <span class="k">for</span> <span class="p">(</span><span class="n">Type</span> <span class="n">ty</span> <span class="o">:</span> <span class="n">allTypes</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">isSupportedSourceType</span><span class="p">(</span><span class="n">ty</span><span class="p">))</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="n">rewriter</span><span class="p">.</span><span class="n">notifyMatchFailure</span><span class="p">(</span>
+          <span class="n">sourceOp</span><span class="p">,</span>
+          <span class="n">llvm</span><span class="o">::</span><span class="n">formatv</span><span class="p">(</span>
+              <span class="s">"unsupported source type for Arith to LLVM conversion: {0}"</span><span class="p">,</span>
+              <span class="n">ty</span><span class="p">));</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="nf">success</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="k">namespace</span> <span class="p">{</span>
+<span class="c1">// lower arith.mulf{approx='exp'}</span>
+<span class="c1">// to llvm intrinsic</span>
+
+<span class="k">struct</span> <span class="nc">ApproxPattern</span> <span class="o">:</span> <span class="k">public</span> <span class="n">OpRewritePattern</span><span class="o">&lt;</span><span class="n">arith</span><span class="o">::</span><span class="n">MulFOp</span><span class="o">&gt;</span> <span class="p">{</span>
+  <span class="n">ApproxPattern</span><span class="p">(</span><span class="n">MLIRContext</span> <span class="o">*</span><span class="n">context</span><span class="p">)</span> <span class="o">:</span> <span class="n">OpRewritePattern</span><span class="o">&lt;</span><span class="n">arith</span><span class="o">::</span><span class="n">MulFOp</span><span class="o">&gt;</span><span class="p">(</span><span class="n">context</span><span class="p">)</span> <span class="p">{}</span>
+
+  <span class="c1">// Define the match function to check if the operation has the "approx" attribute.</span>
+  <span class="n">LogicalResult</span> <span class="nf">matchAndRewrite</span><span class="p">(</span><span class="n">arith</span><span class="o">::</span><span class="n">MulFOp</span> <span class="n">op</span><span class="p">,</span> <span class="n">PatternRewriter</span> <span class="o">&amp;</span><span class="n">rewriter</span><span class="p">)</span> <span class="k">const</span> <span class="k">override</span> <span class="p">{</span>
+    <span class="c1">// Check if the operation has the "approx" attribute.</span>
+    <span class="n">StringAttr</span> <span class="n">approxAttr</span> <span class="o">=</span> <span class="n">op</span><span class="o">-&gt;</span><span class="n">getAttrOfType</span><span class="o">&lt;</span><span class="n">StringAttr</span><span class="o">&gt;</span><span class="p">(</span><span class="s">"approx"</span><span class="p">);</span>
+    <span class="c1">// TODO: Add other patterns here for other attribute values!</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">approxAttr</span> <span class="o">||</span> <span class="n">approxAttr</span><span class="p">.</span><span class="n">getValue</span><span class="p">()</span> <span class="o">!=</span> <span class="s">"exp"</span><span class="p">)</span>
+      <span class="k">return</span> <span class="nf">failure</span><span class="p">();</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">LogicalResult</span> <span class="n">res</span> <span class="o">=</span> <span class="n">checkSourceOpTypes</span><span class="p">(</span><span class="n">rewriter</span><span class="p">,</span> <span class="n">op</span><span class="p">);</span> <span class="n">failed</span><span class="p">(</span><span class="n">res</span><span class="p">))</span>
+      <span class="k">return</span> <span class="n">res</span><span class="p">;</span>
+
+
+    <span class="c1">// // Replace the arith.mulf operation with the llvm.fmul intrinsic call</span>
+    <span class="n">ModuleOp</span> <span class="n">parentModule</span> <span class="o">=</span> <span class="n">op</span><span class="o">-&gt;</span><span class="n">getParentOfType</span><span class="o">&lt;</span><span class="n">ModuleOp</span><span class="o">&gt;</span><span class="p">();</span>
+    <span class="c1">// TODO: Choose the function name based on the attribute value</span>
+    <span class="k">auto</span> <span class="n">fnName</span> <span class="o">=</span> <span class="s">"llvm.riscv.floatexp.mul"</span><span class="p">;</span>
+    <span class="k">auto</span> <span class="n">context</span> <span class="o">=</span> <span class="n">parentModule</span><span class="o">-&gt;</span><span class="n">getContext</span><span class="p">();</span>
+    <span class="k">auto</span> <span class="n">llvmF32Ty</span> <span class="o">=</span> <span class="n">Float32Type</span><span class="o">::</span><span class="n">get</span><span class="p">(</span><span class="n">context</span><span class="p">);</span> <span class="c1">// 'mlir::Float32Type'</span>
+
+    <span class="k">auto</span> <span class="n">llvmFnType</span> <span class="o">=</span>  <span class="n">LLVM</span><span class="o">::</span><span class="n">LLVMFunctionType</span><span class="o">::</span><span class="n">get</span><span class="p">(</span>
+      <span class="n">llvmF32Ty</span><span class="p">,</span> <span class="c1">// return type.</span>
+      <span class="p">{</span><span class="n">llvmF32Ty</span><span class="p">,</span> <span class="n">llvmF32Ty</span><span class="p">},</span> <span class="c1">// parameter type.</span>
+      <span class="nb">false</span><span class="p">);</span>
+
+    <span class="c1">// Get a symbol reference to the printf function, inserting it if necessary.</span>
+    <span class="k">auto</span> <span class="n">printfRef</span> <span class="o">=</span> <span class="n">getLLVMFuncRef</span><span class="p">(</span><span class="n">rewriter</span><span class="p">,</span> <span class="n">parentModule</span><span class="p">,</span> <span class="n">fnName</span><span class="p">);</span>
+
+    <span class="c1">// Assuming op has operands that need to be passed as arguments</span>
+    <span class="k">auto</span> <span class="n">operands</span> <span class="o">=</span> <span class="n">op</span><span class="p">.</span><span class="n">getOperands</span><span class="p">();</span>
+
+    <span class="c1">// Create an array to hold the arguments for the LLVM::CallOp</span>
+    <span class="n">SmallVector</span><span class="o">&lt;</span><span class="n">Value</span><span class="p">,</span> <span class="mi">4</span><span class="o">&gt;</span> <span class="n">args</span><span class="p">;</span>
+    <span class="n">args</span><span class="p">.</span><span class="n">reserve</span><span class="p">(</span><span class="n">operands</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
+
+    <span class="c1">// Add operands as arguments</span>
+    <span class="k">for</span> <span class="p">(</span><span class="k">auto</span> <span class="n">operand</span> <span class="o">:</span> <span class="n">operands</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">args</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">operand</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">auto</span> <span class="n">newOp</span> <span class="o">=</span> <span class="n">rewriter</span><span class="p">.</span><span class="n">create</span><span class="o">&lt;</span><span class="n">LLVM</span><span class="o">::</span><span class="n">CallOp</span><span class="o">&gt;</span><span class="p">(</span>
+        <span class="n">op</span><span class="p">.</span><span class="n">getLoc</span><span class="p">(),</span> <span class="n">llvmFnType</span><span class="p">,</span> <span class="n">printfRef</span><span class="p">,</span> <span class="n">args</span><span class="p">);</span>
+
+    <span class="c1">// Replace the original operation with the newly created LLVM intrinsic call.</span>
+    <span class="n">rewriter</span><span class="p">.</span><span class="n">replaceOp</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">newOp</span><span class="o">-&gt;</span><span class="n">getResult</span><span class="p">(</span><span class="mi">0</span><span class="p">));</span>
+    <span class="k">return</span> <span class="nf">success</span><span class="p">();</span>
+  <span class="p">}</span>
+
+  <span class="k">static</span> <span class="n">LLVM</span><span class="o">::</span><span class="n">LLVMFunctionType</span> <span class="nf">getFnType</span><span class="p">(</span><span class="n">MLIRContext</span> <span class="o">*</span><span class="n">context</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">auto</span> <span class="n">llvmF32Ty</span> <span class="o">=</span> <span class="n">Float32Type</span><span class="o">::</span><span class="n">get</span><span class="p">(</span><span class="n">context</span><span class="p">);</span> <span class="c1">// 'mlir::Float32Type'</span>
+
+    <span class="k">auto</span> <span class="n">llvmFnType</span> <span class="o">=</span>  <span class="n">LLVM</span><span class="o">::</span><span class="n">LLVMFunctionType</span><span class="o">::</span><span class="n">get</span><span class="p">(</span>
+      <span class="n">llvmF32Ty</span><span class="p">,</span> <span class="c1">// return type.</span>
+      <span class="p">{</span><span class="n">llvmF32Ty</span><span class="p">,</span> <span class="n">llvmF32Ty</span><span class="p">},</span> <span class="c1">// parameter type.</span>
+      <span class="nb">false</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">llvmFnType</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="c1">// / Return a symbol reference to the printf function, inserting it into the</span>
+  <span class="c1">// / module if necessary.</span>
+  <span class="k">static</span> <span class="n">FlatSymbolRefAttr</span> <span class="nf">getLLVMFuncRef</span><span class="p">(</span><span class="n">PatternRewriter</span> <span class="o">&amp;</span><span class="n">rewriter</span><span class="p">,</span>
+                                             <span class="n">ModuleOp</span> <span class="k">module</span><span class="p">,</span>
+                                             <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">funcName</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">auto</span> <span class="o">*</span><span class="n">context</span> <span class="o">=</span> <span class="k">module</span><span class="p">.</span><span class="n">getContext</span><span class="p">();</span>
+    <span class="k">if</span> <span class="p">(</span><span class="k">module</span><span class="p">.</span><span class="n">lookupSymbol</span><span class="o">&lt;</span><span class="n">LLVM</span><span class="o">::</span><span class="n">LLVMFuncOp</span><span class="o">&gt;</span><span class="p">(</span><span class="n">funcName</span><span class="p">))</span>
+      <span class="k">return</span> <span class="n">SymbolRefAttr</span><span class="o">::</span><span class="n">get</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">funcName</span><span class="p">);</span>
+
+    <span class="c1">// Insert the printf function into the body of the parent module.</span>
+    <span class="n">PatternRewriter</span><span class="o">::</span><span class="n">InsertionGuard</span> <span class="n">insertGuard</span><span class="p">(</span><span class="n">rewriter</span><span class="p">);</span>
+    <span class="n">rewriter</span><span class="p">.</span><span class="n">setInsertionPointToStart</span><span class="p">(</span><span class="k">module</span><span class="p">.</span><span class="n">getBody</span><span class="p">());</span>
+    <span class="n">rewriter</span><span class="p">.</span><span class="n">create</span><span class="o">&lt;</span><span class="n">LLVM</span><span class="o">::</span><span class="n">LLVMFuncOp</span><span class="o">&gt;</span><span class="p">(</span><span class="k">module</span><span class="p">.</span><span class="n">getLoc</span><span class="p">(),</span> <span class="n">funcName</span><span class="p">,</span>
+                                      <span class="n">getFnType</span><span class="p">(</span><span class="n">context</span><span class="p">));</span>
+    <span class="k">return</span> <span class="n">SymbolRefAttr</span><span class="o">::</span><span class="n">get</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">funcName</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">};</span>
+<span class="p">}</span>
+
+<span class="c1">// ************** Patterns **********</span>
+
+<span class="k">namespace</span> <span class="p">{</span>
+<span class="c1">/// A pass converting MLIR Math operations into the SPIR-V dialect.</span>
+<span class="k">class</span> <span class="nc">ConvertArithToRISCVNNPass</span>
+    <span class="o">:</span> <span class="k">public</span> <span class="n">impl</span><span class="o">::</span><span class="n">ConvertArithToRISCVNNPassBase</span><span class="o">&lt;</span><span class="n">ConvertArithToRISCVNNPass</span><span class="o">&gt;</span>  <span class="p">{</span>
+
+  <span class="kt">void</span> <span class="n">runOnOperation</span><span class="p">()</span> <span class="k">override</span><span class="p">;</span>
+<span class="p">};</span>
+<span class="p">}</span> <span class="c1">// namespace</span>
+
+<span class="kt">void</span> <span class="n">ConvertArithToRISCVNNPass</span><span class="o">::</span><span class="n">runOnOperation</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">MLIRContext</span> <span class="o">*</span><span class="n">context</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">getContext</span><span class="p">();</span>
+  <span class="n">LLVMConversionTarget</span> <span class="n">target</span><span class="p">(</span><span class="o">*</span><span class="n">context</span><span class="p">);</span>
+
+  <span class="n">RewritePatternSet</span> <span class="n">patterns</span><span class="p">(</span><span class="n">context</span><span class="p">);</span>
+  <span class="n">patterns</span><span class="p">.</span><span class="n">insert</span><span class="o">&lt;</span><span class="n">ApproxPattern</span><span class="o">&gt;</span><span class="p">(</span><span class="n">context</span><span class="p">);</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="n">failed</span><span class="p">(</span><span class="n">applyPartialConversion</span><span class="p">(</span><span class="n">getOperation</span><span class="p">(),</span> <span class="n">target</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">patterns</span><span class="p">))))</span>
+    <span class="k">return</span> <span class="n">signalPassFailure</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">OperationPass</span><span class="o">&lt;&gt;&gt;</span> <span class="n">mlir</span><span class="o">::</span><span class="n">createConvertArithToRISCVNN</span><span class="p">()</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">make_unique</span><span class="o">&lt;</span><span class="n">ConvertArithToRISCVNNPass</span><span class="o">&gt;</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div></div>
+<p>This patch demonstrates the overall pattern matching and corresponding lowering process. Specifically, it showcases the lowering of a particular case (<code class="language-plaintext highlighter-rouge">arith.mulf {approx="exp"}</code>) into an LLVM intrinsic call (<code class="language-plaintext highlighter-rouge">llvm.riscv.floatexp.mul</code>). Certain sections of the code have been marked with <code class="language-plaintext highlighter-rouge">TODO</code> comments. Lowering to other LLVM intrinsics could be additionally implemented depending on different values of the <code class="language-plaintext highlighter-rouge">approx</code> attribute.
+One of the key challenges to writing passes effectively is to understand the
+different template structures used to select patterns and how new operations
+are sepcified.  Fortunately, there are existing passes, such as <a href="https://github.com/llvm/llvm-project/blob/main/mlir/lib/Conversion/ArithToLLVM/ArithToLLVM.cpp">ArithToLLVM</a> and <a href="https://github.com/llvm/llvm-project/blob/main/mlir/lib/Conversion/SPIRVToLLVM/SPIRVToLLVM.cpp">SPIRVToLLVM</a>, which can serve as valuable examples for study.</p>
+
+<h3 id="mlirlibconversionarithtoriscvnncmakeliststxt"><a href="">mlir/lib/Conversion/ArithToRISCVNN/CMakeLists.txt</a></h3>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>add_mlir_conversion_library(MLIRArithToRISCVNN
+  ArithToRISCVNNPass.cpp
+
+  ADDITIONAL_HEADER_DIRS
+  ${MLIR_MAIN_INCLUDE_DIR}/mlir/Dialect/Arith
+  ${MLIR_MAIN_INCLUDE_DIR}/mlir/Dialect/LLVM
+  ${MLIR_MAIN_INCLUDE_DIR}/mlir/IR
+
+  DEPENDS
+  MLIRConversionPassIncGen
+
+  LINK_LIBS PUBLIC
+  MLIRIR
+  MLIRArithDialect
+  MLIRMathDialect
+  MLIRLLVMDialect
+  MLIRPass
+  MLIRSupport
+  MLIRTransformUtils
+  )
+</code></pre></div></div>
+<p>The <code class="language-plaintext highlighter-rouge">CMakeLists.txt</code> file included in this repository provides support for compiling the new pass, along with the necessary dependencies.</p>
+
+<p>To test out this pass, follow the instructions provided in the <a href="https://github.com/debjyoti0891/CoVeriS/README.md">README</a> of the <a href="https://github.com/debjyoti0891/CoVeriS">code repository</a> after building LLVM. It’s important to note that a total of three passes are utilized to lower all operations into the LLVM Dialect. Additionally, the <code class="language-plaintext highlighter-rouge">convert-func-to-llvm</code> pass is employed to convert MLIR functions (<code class="language-plaintext highlighter-rouge">func.func</code>) into LLVM Dialect functions (<code class="language-plaintext highlighter-rouge">llvm.func</code>).</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mlir-opt <span class="nt">--help</span> | <span class="nb">grep </span>riscvnn
+249:      <span class="nt">--convert-arith-to-riscvnn</span>   -   Convert math dialect operations
+  to LLVM RISCV intrinsics <span class="k">for </span>NN
+
+mlir-opt <span class="se">\</span>
+  <span class="nt">-pass-pipeline</span><span class="o">=</span><span class="s2">"builtin.module(func.func(convert-arith-to-riscvnn,convert-arith-to-llvm,convert-math-to-llvm),convert-func-to-llvm,convert-vector-to-llvm)"</span> <span class="se">\</span>
+  benchmark.mlir <span class="o">&gt;</span> benchmark_llvm.mlir
+</code></pre></div></div>
+
+<h2 id="lowering-from-mlirllvm-to-llvm-ir">Lowering from MLIR.LLVM to LLVM IR</h2>
+<p>The code in LLVM Dialect of MLIR can be translated directly into LLVM IR using the
+<code class="language-plaintext highlighter-rouge">mlir-translate</code> tool. For our considered example, no specific changes are necessary to the tool.</p>
+
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mlir-translate <span class="nt">-mlir-to-llvmir</span> <span class="nt">-split-input-file</span> <span class="se">\</span>
+  <span class="nt">-verify-diagnostics</span> benchmark_llvm.mlir <span class="o">&gt;</span> benchmark_llvm.ll
+</code></pre></div></div>
+<h1 id="conclusion">Conclusion</h1>
+<p>In this post, we have explored the intricacies of hardware-software co-design, focusing on the implementation of an MLIR pass to optimize and transform code within the MLIR framework. The journey began with an overview of the pass’s purpose and dependencies, followed by a detailed examination of the pattern matching and lowering process involved.</p>
+
+<p>Moving forward, readers are encouraged to build LLVM and test the pass using the instructions provided in the <a href="https://github.com/debjyoti0891/CoVeriS">code repository</a>.</p>
+
+<p>In the upcoming blog post, we will delve into the process of adding support for new intrinsics and custom instructions in LLVM, specifically targeting the RISC-V architecture. Stay tuned for a deeper dive into the intricacies of integrating new instructions for the RISC-V target.</p>
+
+<h3 id="references">References</h3>
+<ul>
+  <li><a href="https://github.com/debjyoti0891/CoVeriS">Github Code Repository</a></li>
+  <li><a href="https://mlir.llvm.org/docs/PassManagement/">MLIR Pass Manager</a></li>
+  <li><a href="https://mlir.llvm.org/docs/PatternRewriter/">Pattern Rewriting in MLIR</a></li>
+  <li><a href="https://www.jeremykun.com/2023/08/10/mlir-writing-our-first-pass/">An example of MLIR Pass implementation</a></li>
+</ul>
+
+
+<a class="github-button" href="https://github.com/debjyoti0891" data-size="large" aria-label="Follow @debjyoti0891 on GitHub">Follow @debjyoti0891</a>
+<script async defer src="https://buttons.github.io/buttons.js"></script>
+   <div id="disqus_thread"></div>
+  <script>
+    var disqus_config = function () {
+      this.page.url = 'https://debjyoti0891.github.io/mlir/part2';
+      this.page.identifier = 'https://debjyoti0891.github.io/mlir/part2';
+    };
+
+    (function() {
+      var d = document, s = d.createElement('script');
+
+      s.src = 'https://bdebjyoti.disqus.com/embed.js';
+
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+ </div>
+
+<div class="related">
+  <h2>Related Posts</h2>
+  <ul class="related-posts">
+    
+      <li>
+        <h3>
+          <a href="//mlir/part4">
+            HW-SW co-design in the RISC-V Ecosystem [Part 4]: Executing Custom Instructions on Spike
+            <small>12 May 2024</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="//mlir/part3">
+            HW-SW co-design in the RISC-V Ecosystem [Part 3]: RISC-V Custom Instructions 
+            <small>22 Apr 2024</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="//mlir/part1">
+            HW-SW co-design in the RISC-V Ecosystem [Part 1]
+            <small>23 Mar 2024</small>
+          </a>
+        </h3>
+      </li>
+    
+  </ul>
+</div>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <!-- <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p> -->
+        <ul class="contact-list">
+          <li class="p-name">Debjyoti Bhattacharjee</li>
+          <li><a class="u-email" href="mailto:debjyoti [dot] bhattacharjee [at] imec [dot] be">debjyoti [dot] bhattacharjee [at] imec [dot] be</a></li>
+
+        </ul>
+      </div>
+      <div class="footer-col">
+        <p>Snapshots of ideas and things that piqued my interest. The website has information primarily focused on my research in computer architecture and systems, including high performance computing, emerging technologies, alongside design space exploration.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/debjyoti0891" title="debjyoti0891"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li><li><a rel="me" href="https://www.instagram.com/debjyoti0891" title="debjyoti0891"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#instagram"></use></svg></a></li><li><a rel="me" href="https://www.linkedin.com/in/debjyotibhattacharjee" title="debjyotibhattacharjee"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#linkedin"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+<script>
+  $(document).ready(function () {
+    mermaid.initialize({
+      startOnLoad:true,
+      theme: "default",
+    });
+    window.mermaid.init(undefined, document.querySelectorAll('.language-mermaid'));
+  });
+</script>
+
+
+
+</body>
+
+</html>

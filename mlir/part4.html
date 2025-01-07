@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>HW-SW co-design in the RISC-V Ecosystem [Part 4]: Executing Custom Instructions on Spike | Debjyoti Bhattacharjee</title>
+<meta name="generator" content="Jekyll v4.3.4" />
+<meta property="og:title" content="HW-SW co-design in the RISC-V Ecosystem [Part 4]: Executing Custom Instructions on Spike" />
+<meta name="author" content="Debjyoti Bhattacharjee" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="This is the final part of the 4 part blog series of Hardware-Software codesign, starting from MLIR to execution of custom instructions on a RISC-V Instruction set simulator (ISS). In this part, we will focus specifically on adding the custom instructions to Spike, which is the golden reference ISS for RISC-V." />
+<meta property="og:description" content="This is the final part of the 4 part blog series of Hardware-Software codesign, starting from MLIR to execution of custom instructions on a RISC-V Instruction set simulator (ISS). In this part, we will focus specifically on adding the custom instructions to Spike, which is the golden reference ISS for RISC-V." />
+<link rel="canonical" href="https://debjyoti0891.github.io/mlir/part4" />
+<meta property="og:url" content="https://debjyoti0891.github.io/mlir/part4" />
+<meta property="og:site_name" content="Debjyoti Bhattacharjee" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2024-05-12T08:00:00+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="HW-SW co-design in the RISC-V Ecosystem [Part 4]: Executing Custom Instructions on Spike" />
+<meta name="google-site-verification" content="shmIemKrYpRAIcUmw2hZzRij1uySn9s55BGBbLBsOto" />
+<meta name="msvalidate.01" content="F0966E9DC4FDEE6F087ADCDD6E5F6743" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Debjyoti Bhattacharjee"},"dateModified":"2024-05-12T08:00:00+00:00","datePublished":"2024-05-12T08:00:00+00:00","description":"This is the final part of the 4 part blog series of Hardware-Software codesign, starting from MLIR to execution of custom instructions on a RISC-V Instruction set simulator (ISS). In this part, we will focus specifically on adding the custom instructions to Spike, which is the golden reference ISS for RISC-V.","headline":"HW-SW co-design in the RISC-V Ecosystem [Part 4]: Executing Custom Instructions on Spike","mainEntityOfPage":{"@type":"WebPage","@id":"https://debjyoti0891.github.io/mlir/part4"},"publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"https://debjyoti0891.github.io/assets/D_old.jpg"},"name":"Debjyoti Bhattacharjee"},"url":"https://debjyoti0891.github.io/mlir/part4"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://debjyoti0891.github.io/feed.xml" title="Debjyoti Bhattacharjee" />
+
+<style>
+
+  <!-- pre {
+
+    border: 1px solid #ddd;
+    border-radius: 1px;
+    padding: 1em;
+    overflow-x: auto;
+}
+
+pre code {
+  background-color: #d1daf8; /* Dark gray background color */
+  color: #504a5f; /* Light gray text color */
+    display: block;
+    overflow-x: auto;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 14px;
+}
+
+/* Specific language styles */
+pre code[class*="language-"] {
+    color: #333; /* Default code color */
+} -->
+
+
+
+/* Add more language styles as needed */
+
+
+  /* Apply a different color when links are hovered */
+  <!-- a:hover {
+    color: #3e1209; /* Dark Red */
+    text-decoration: underline;
+  } -->
+
+  .button0 {
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    padding: 6px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    margin: 4px 2px;
+    cursor: pointer;
+  }
+  .button1 {
+    background-color: #4c7aaf;
+    border: none;
+    color: white;
+    padding: 6px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    margin: 4px 2px;
+    cursor: pointer;
+  }
+  .button2 {
+    background-color: #a8af4c;
+    border: none;
+    color: white;
+    padding: 6px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    margin: 4px 2px;
+    cursor: pointer;
+  }
+  .button3 {
+    background-color: #e6518f;
+    border: none;
+    color: white;
+    padding: 6px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    margin: 4px 2px;
+    cursor: pointer;
+  }
+  .button4 {
+    background-color: #5e4caf;
+    border: none;
+    color: white;
+    padding: 6px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    margin: 4px 2px;
+    cursor: pointer;
+  }
+  .button5 {
+    background-color: #7782d3;
+    border: none;
+    color: white;
+    padding: 6px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    margin: 4px 2px;
+    cursor: pointer;
+  }
+
+  .sp{
+  width: 10px;
+  padding-right: 15px;
+  background-color: #bdbbc5;
+  padding: 4px 12px;
+  }
+
+  .highlight{
+  font-family: ABeeZee, sans-serif;
+  background-color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  color: rgba(99, 82, 82, 1);
+  text-transform: none;
+  font-style: normal;
+  text-decoration: none;
+  line-height: 1.6em;
+  letter-spacing: 0.7px;
+  }
+  .headHi{
+    font-family: ABeeZee, sans-serif;
+    font-size: 26px;
+    font-weight: 600;
+    color: rgba(77, 63, 63, 1);
+    text-transform: none;
+    font-style: normal;
+    text-decoration: none;
+    line-height: 1.6em;
+    letter-spacing: 0.7px;
+}
+
+.introtext{
+    font-family: Verdana, sans-serif;
+    font-size: 16px;
+    /* font-weight: 400; */
+    color: rgba(0, 0, 0, 1);
+    text-transform: none;
+    font-style: normal;
+    text-decoration: none;
+    line-height: 1.5em;
+    letter-spacing: -0.1px;
+}
+
+.datetext{
+    font-family: Courier New, sans-serif;
+    font-size: 16px;
+    background-color: #eeeeee;
+    /* font-weight: 400; */
+    color: rgba(0, 0, 0, 1);
+    text-transform: none;
+    font-style: normal;
+    text-decoration: none;
+    line-height: 1.5em;
+    letter-spacing: -0.1px;
+}
+
+<!-- .divtext{
+  background-color: rgb(214, 226, 226);
+} -->
+
+.event-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+.event-list-item {
+  margin-bottom: 20px;
+}
+
+.event-name {
+  color: #6597ce; /* Highlight color for event name */
+}
+
+.event-location-date {
+  font-style: italic;
+  color: #6D1F0F; /* Highlight color for location/date */
+}
+
+
+.divtext {
+  background-color: #f0f0f0;
+  border: 2px solid #e5e5e5;
+  border-radius: 5px;
+  padding: 10px;
+  margin-bottom: 5px;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  color: #444;
+}
+
+.introhightext{
+    font-family: Optima, sans-serif;
+    font-size: 16px;
+    font-weight: 100;
+    color: #rgba(0, 0, 0, 1);
+    text-transform: none;
+    font-style: normal;
+    text-decoration: none;
+    line-height: 0em;
+    letter-spacing: 0px;
+}
+
+.locationtext {
+font-family: Tahoma, Geneva, sans-serif;
+font-size: 14px;
+letter-spacing: 2px;
+word-spacing: 2px;
+color: #6D1F0F;
+font-weight: normal;
+text-decoration: none;
+font-style: normal;
+font-variant: small-caps;
+text-transform: none;
+}
+
+.tag-link {
+    display: inline-block;
+    background: rgba(106,159,181,0.15);
+    padding: 0 .5rem;
+    margin-right: .5rem;
+    border-radius: 4px;
+    color: #34435e;
+    font-family: "PT Sans",Helvetica,Arial,sans-serif;
+    font-size: 90%;
+    -webkit-transition: all 0.1s ease-in-out;
+    -moz-transition: all 0.1s ease-in-out;
+    transition: all 0.1s ease-in-out;
+}
+.a {
+  color: #6369D1;
+}
+.tag-header {
+    display: inline-block;
+    padding: 0 .5rem;
+    margin-right: .5rem;
+    border-radius: 4px;
+    color: #34435e;
+    font-family: "PT Sans",Helvetica,Arial,sans-serif;
+    font-size: 90%;
+    -webkit-transition: all 0.1s ease-in-out;
+    -moz-transition: all 0.1s ease-in-out;
+    transition: all 0.1s ease-in-out;
+}
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  </style>
+
+  <!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>HW-SW co-design in the RISC-V Ecosystem [Part 4]: Executing Custom Instructions on Spike | Debjyoti Bhattacharjee</title>
+<meta name="generator" content="Jekyll v4.3.4" />
+<meta property="og:title" content="HW-SW co-design in the RISC-V Ecosystem [Part 4]: Executing Custom Instructions on Spike" />
+<meta name="author" content="Debjyoti Bhattacharjee" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="This is the final part of the 4 part blog series of Hardware-Software codesign, starting from MLIR to execution of custom instructions on a RISC-V Instruction set simulator (ISS). In this part, we will focus specifically on adding the custom instructions to Spike, which is the golden reference ISS for RISC-V." />
+<meta property="og:description" content="This is the final part of the 4 part blog series of Hardware-Software codesign, starting from MLIR to execution of custom instructions on a RISC-V Instruction set simulator (ISS). In this part, we will focus specifically on adding the custom instructions to Spike, which is the golden reference ISS for RISC-V." />
+<link rel="canonical" href="https://debjyoti0891.github.io/mlir/part4" />
+<meta property="og:url" content="https://debjyoti0891.github.io/mlir/part4" />
+<meta property="og:site_name" content="Debjyoti Bhattacharjee" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2024-05-12T08:00:00+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="HW-SW co-design in the RISC-V Ecosystem [Part 4]: Executing Custom Instructions on Spike" />
+<meta name="google-site-verification" content="shmIemKrYpRAIcUmw2hZzRij1uySn9s55BGBbLBsOto" />
+<meta name="msvalidate.01" content="F0966E9DC4FDEE6F087ADCDD6E5F6743" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Debjyoti Bhattacharjee"},"dateModified":"2024-05-12T08:00:00+00:00","datePublished":"2024-05-12T08:00:00+00:00","description":"This is the final part of the 4 part blog series of Hardware-Software codesign, starting from MLIR to execution of custom instructions on a RISC-V Instruction set simulator (ISS). In this part, we will focus specifically on adding the custom instructions to Spike, which is the golden reference ISS for RISC-V.","headline":"HW-SW co-design in the RISC-V Ecosystem [Part 4]: Executing Custom Instructions on Spike","mainEntityOfPage":{"@type":"WebPage","@id":"https://debjyoti0891.github.io/mlir/part4"},"publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"https://debjyoti0891.github.io/assets/D_old.jpg"},"name":"Debjyoti Bhattacharjee"},"url":"https://debjyoti0891.github.io/mlir/part4"}</script>
+<!-- End Jekyll SEO tag -->
+</head>
+<body><header class="site-header" style="background-color: #e6e8e6;">
+
+  <div class="wrapper"><span><a class="site-title" rel="author" href="/">
+      <img src="/assets/D_old.jpg" alt="Smiley face" height="40" >
+      Debjyoti Bhattacharjee
+    </a></span><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/personal/">
+               Personal
+            </a><a class="page-link" href="/research/">
+               Research
+            </a><a class="page-link" href="/publications/">
+               Publications
+            </a><a class="page-link" href="/blog/">
+               Blog
+            </a><a class="page-link" href="/tools/">
+               Resources
+            </a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <div class="post">
+  <h1 class="post-title">HW-SW co-design in the RISC-V Ecosystem [Part 4]: Executing Custom Instructions on Spike</h1>
+  <span class="post-date">12 May 2024</span>
+  
+  
+    <a class="tag-link"
+      href= https://debjyoti0891.github.io/tags/#compilation
+      rel="category tag">
+      #compilation
+    </a>
+  
+  
+    <a class="tag-link"
+      href= https://debjyoti0891.github.io/tags/#llvm
+      rel="category tag">
+      #llvm
+    </a>
+  
+  
+    <a class="tag-link"
+      href= https://debjyoti0891.github.io/tags/#mlir
+      rel="category tag">
+      #mlir
+    </a>
+  
+   <p>This is the final part of the 4 part blog series of Hardware-Software codesign, starting from MLIR to execution of custom instructions on a RISC-V Instruction set simulator (ISS). In this part, we will focus specifically on adding the custom instructions to <a href="https://github.com/riscv-software-src/riscv-isa-sim">Spike</a>, which is the golden reference ISS for RISC-V.</p>
+
+<p>Recall the encoding of the approximate multiplication instructions for floating point numbers from the previous <a href="/mlir/part3">post</a>. These instructions, known as <code class="language-plaintext highlighter-rouge">fmul_exp_m_s</code>, <code class="language-plaintext highlighter-rouge">fmul_exp_s</code>, <code class="language-plaintext highlighter-rouge">fmul_exp_m</code>, and <code class="language-plaintext highlighter-rouge">fmul_exp</code>, serve as proxies for approximate multiplication operations within RISC-V processors.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># instruction encoding
+fmul_exp_m_s rs2 rs1 rd 31..25=0b1111100 14..12=0b111 6..0=0b0001011
+fmul_exp_s rs2 rs1 rd 31..25=0b1011100 14..12=0b111 6..0=0b0001011
+fmul_exp_m rs2 rs1 rd 31..25=0b1101100 14..12=0b111 6..0=0b0001011
+fmul_exp rs2 rs1 rd 31..25=0b1001100 14..12=0b111 6..0=0b0001011
+</code></pre></div></div>
+<p>Based on the <a href="/mlir/part3">patch to LLVM</a> that we defined, we can create an executable that can be directly executed in spike. These commands are already available via a <a href="https://github.com/debjyoti0891/CoVeriS/blob/main/examples/Makefile">Makefile</a> in the accompanying <a href="https://github.com/debjyoti0891/CoVeriS/tree/main">github repository</a>.</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  llc <span class="nt">-march</span><span class="o">=</span>riscv64 <span class="nt">-mattr</span><span class="o">=</span>+f,+xnn <span class="nt">-target-abi</span><span class="o">=</span>lp64 <span class="nt">-O2</span> <span class="nt">-filetype</span><span class="o">=</span>asm benchmark_llvm.ll <span class="o">&gt;</span> benchmark_llvm.s
+  clang <span class="nt">-target</span> riscv64 <span class="nt">-march</span><span class="o">=</span>rv64imaf_xnn <span class="nt">-mabi</span><span class="o">=</span>lp64f <span class="nt">-I</span><span class="nb">.</span> benchmark_llvm.s <span class="o">&gt;</span> benchmark.o
+  clang <span class="nt">-target</span> riscv64-unknown-elf <span class="se">\</span>
+		<span class="nt">-march</span><span class="o">=</span>rv64imaf_xnn <span class="nt">-mabi</span><span class="o">=</span>lp64f <span class="se">\</span>
+		<span class="nt">-static</span> <span class="se">\</span>
+		<span class="nt">-Tcommon</span>/riscv.ld <span class="se">\</span>
+		<span class="nt">-nostdlib</span> <span class="nt">-nostartfiles</span> <span class="se">\</span>
+		<span class="nt">--sysroot</span><span class="o">=</span><span class="s2">"&lt;&gt;/homebrew/opt/riscv-gnu-toolchain/riscv64-unknown-elf/"</span> <span class="nt">--gcc-toolchain</span><span class="o">=</span><span class="s2">"&lt;&gt;/homebrew/opt/riscv-gnu-toolchain/"</span>  <span class="se">\</span>
+		benchmark.o spike_lib.a <span class="nt">-o</span> benchmark.elf
+  llvm-objdump <span class="nt">--mattr</span><span class="o">=</span>+xnn,+f <span class="nt">-S</span> benchmark.elf <span class="o">&gt;</span> benchmark.objdump
+</code></pre></div></div>
+
+<pre><code class="language-NASM">  cat benchmark.objdump
+  ...
+  0000000080002030 &lt;arith_func&gt;:
+  80002030: d3 87 05 f0  	fmv.w.x	fa5, a1
+  80002034: 53 07 05 f0  	fmv.w.x	fa4, a0
+  80002038: 8b 77 f7 98  	fmul_exp	fa5, fa4, fa5 # this is the custom RISC-V instruction
+  8000203c: d3 77 f7 00  	fadd.s	fa5, fa4, fa5
+  80002040: 53 85 07 e0  	fmv.x.w	a0, fa5
+  80002044: 67 80 00 00  	ret
+  ...
+</code></pre>
+
+<h3 id="adding-support-for-new-instructions-in-risc-v-spike-simulator">Adding support for new instructions in RISC-V Spike Simulator</h3>
+
+<p>Now with the instructions generated and available in the executable file (<code class="language-plaintext highlighter-rouge">benchmark.elf</code>). We need to update Spike to support these new instructions. The overall patch of Spike is available <a href="https://github.com/debjyoti0891/CoVeriS/blob/main/patches/patch_riscv_isa_sim">here</a>.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>|-- disasm
+|   |-- disasm.cc
+|   |-- isa_parser.cc
+|
+|-- riscv
+|   |-- insns
+|   |   |-- xnnmul.h
+|   |-- encoding.h
+|   |-- isa_parser.h
+|   |-- riscv.mk.in
+|
+|-- softfloat
+|   |-- f32_mulAdd.c
+|   |-- softfloat.h
+</code></pre></div></div>
+
+<ul>
+  <li>The mask and match for the instructions are defined in the <code class="language-plaintext highlighter-rouge">encoding.h</code> file.</li>
+  <li>The <code class="language-plaintext highlighter-rouge">isa_parser.cc</code> is used to selectively enable the features of the simulator, based on the ISA architecture string.</li>
+  <li>In the <code class="language-plaintext highlighter-rouge">isa_parser.h</code>, we define the extension enum <code class="language-plaintext highlighter-rouge">EXT_XNN</code>, which is used in the extension table. Similarly, <code class="language-plaintext highlighter-rouge">disasm.cc</code> defines the disassembly of the instruction if the extension is enabled.</li>
+  <li>In the <code class="language-plaintext highlighter-rouge">xnnmul.h</code> file, the behaviour of the instruction is defined. The approximate multiplication behaviour (<code class="language-plaintext highlighter-rouge">f32_nn_mul</code>) is itself defined in the <code class="language-plaintext highlighter-rouge">f32_mulAdd.c</code>. Other instruction can be added similarly.</li>
+</ul>
+
+<p>Spike can execute the generated elf in the following manner and the debug output can be seen.  The <code class="language-plaintext highlighter-rouge">xnnmul</code> is the Spike implementation of the <code class="language-plaintext highlighter-rouge">fmul_exp</code> assembly instruction.</p>
+<div class="language-shell highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  ../riscv-isa-sim/build/spike <span class="nt">--isa</span><span class="o">=</span>rv64gc_xnn <span class="nt">-d</span>  <span class="se">\</span>
+    benchmark_llvm.elf <span class="nt">-m0x80000000</span>:0x10000 <span class="nt">--pc</span> 0x80000000
+</code></pre></div></div>
+
+<div class="language-nasm highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="nf">...</span>
+  <span class="p">(</span><span class="nf">spike</span><span class="p">)</span>
+  <span class="nf">core</span>   <span class="mi">0</span><span class="p">:</span> <span class="o">&gt;&gt;&gt;&gt;</span>
+  <span class="nf">core</span>   <span class="mi">0</span><span class="p">:</span> <span class="mh">0x0000000080002030</span> <span class="p">(</span><span class="mh">0xf00587d3</span><span class="p">)</span> <span class="nv">fmv.w.x</span> <span class="nv">fa5</span><span class="p">,</span> <span class="nv">a1</span>
+  <span class="p">(</span><span class="nf">spike</span><span class="p">)</span>
+  <span class="nf">core</span>   <span class="mi">0</span><span class="p">:</span> <span class="mh">0x0000000080002034</span> <span class="p">(</span><span class="mh">0xf0050753</span><span class="p">)</span> <span class="nv">fmv.w.x</span> <span class="nv">fa4</span><span class="p">,</span> <span class="nv">a0</span>
+  <span class="p">(</span><span class="nf">spike</span><span class="p">)</span>
+  <span class="nf">core</span>   <span class="mi">0</span><span class="p">:</span> <span class="mh">0x0000000080002038</span> <span class="p">(</span><span class="mh">0x98f7778b</span><span class="p">)</span> <span class="nv">xnnmul</span>  <span class="nv">a5</span><span class="p">,</span> <span class="nv">a4</span><span class="p">,</span> <span class="nv">a5</span>
+  <span class="p">(</span><span class="nf">spike</span><span class="p">)</span>
+  <span class="nf">core</span>   <span class="mi">0</span><span class="p">:</span> <span class="mh">0x000000008000203c</span> <span class="p">(</span><span class="mh">0x00f777d3</span><span class="p">)</span> <span class="nv">fadd.s</span>  <span class="nv">fa5</span><span class="p">,</span> <span class="nv">fa4</span><span class="p">,</span> <span class="nv">fa5</span>
+  <span class="p">(</span><span class="nf">spike</span><span class="p">)</span>
+  <span class="nf">core</span>   <span class="mi">0</span><span class="p">:</span> <span class="mh">0x0000000080002040</span> <span class="p">(</span><span class="mh">0xe0078553</span><span class="p">)</span> <span class="nv">fmv.x.w</span> <span class="nv">a0</span><span class="p">,</span> <span class="nv">fa5</span>
+  <span class="p">(</span><span class="nf">spike</span><span class="p">)</span>
+  <span class="nf">...</span>
+</code></pre></div></div>
+<p>It was interesting to note that Spike by default executes boot code and then jumps to the supplied Program Counter (PC). So while tracing the instructions, you will observe code being executed at the start that is not part of the elf binary.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+<p>This completes the hardware-software co-design loop, where we started from an MLIR operation with custom attributes and eventually executed on a RISC-V ISS simulator with custom instructions implemented.
+<img src="/assets/overall_flow.png" alt="Overall MLIR to RISC-V binary flow" /></p>
+
+<p>Hardware-software co-design, powered by MLIR, LLVM, and processor simulation tools like Spike, is essential for creating efficient, customized systems. Whether you’re designing a new processor or enhancing an existing one, understanding this co-design process is key to unlocking innovation in the world of computing.</p>
+
+<h3 id="references">References</h3>
+<p>The entire blog was made possible by a variety of open-source code, tutorials and other resources. Some of the interesting ones are listed below.</p>
+<ul>
+  <li><a href="https://mlir.llvm.org/getting_started/">Getting Started - MLIR - LLVM</a></li>
+  <li><a href="https://mlir.llvm.org/docs/Tutorials/">Tutorials - MLIR - LLVM</a></li>
+  <li><a href="https://github.com/j2kun/mlir-tutorial#mlir-tutorial">MLIR onboarding tutorial for the HEIR project</a></li>
+  <li><a href="https://github.com/adam-smnk/Open-CIM-Compiler">The Open CIM Compiler</a></li>
+  <li><a href="https://llvm.org/docs/ExtendingLLVM.html">Extending LLVM:  Adding instructions, intrinsics, types, etc.</a></li>
+  <li><a href="https://github.com/riscv-software-src/riscv-isa-sim">riscv-software-src/riscv-isa-sim: Spike, a RISC-V ISA Simulator - GitHub</a></li>
+  <li><a href="https://github.com/ilya-sotnikov/riscv-asm-spike">Bare metal RISC-V assembly examples for Spike</a></li>
+</ul>
+
+
+<a class="github-button" href="https://github.com/debjyoti0891" data-size="large" aria-label="Follow @debjyoti0891 on GitHub">Follow @debjyoti0891</a>
+<script async defer src="https://buttons.github.io/buttons.js"></script>
+   <div id="disqus_thread"></div>
+  <script>
+    var disqus_config = function () {
+      this.page.url = 'https://debjyoti0891.github.io/mlir/part4';
+      this.page.identifier = 'https://debjyoti0891.github.io/mlir/part4';
+    };
+
+    (function() {
+      var d = document, s = d.createElement('script');
+
+      s.src = 'https://bdebjyoti.disqus.com/embed.js';
+
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+ </div>
+
+<div class="related">
+  <h2>Related Posts</h2>
+  <ul class="related-posts">
+    
+      <li>
+        <h3>
+          <a href="//mlir/part3">
+            HW-SW co-design in the RISC-V Ecosystem [Part 3]: RISC-V Custom Instructions 
+            <small>22 Apr 2024</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="//mlir/part2">
+            HW-SW co-design in the RISC-V Ecosystem [Part 2]: MLIR to LLVM
+            <small>09 Apr 2024</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="//mlir/part1">
+            HW-SW co-design in the RISC-V Ecosystem [Part 1]
+            <small>23 Mar 2024</small>
+          </a>
+        </h3>
+      </li>
+    
+  </ul>
+</div>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <!-- <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p> -->
+        <ul class="contact-list">
+          <li class="p-name">Debjyoti Bhattacharjee</li>
+          <li><a class="u-email" href="mailto:debjyoti [dot] bhattacharjee [at] imec [dot] be">debjyoti [dot] bhattacharjee [at] imec [dot] be</a></li>
+
+        </ul>
+      </div>
+      <div class="footer-col">
+        <p>Snapshots of ideas and things that piqued my interest. The website has information primarily focused on my research in computer architecture and systems, including high performance computing, emerging technologies, alongside design space exploration.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/debjyoti0891" title="debjyoti0891"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li><li><a rel="me" href="https://www.instagram.com/debjyoti0891" title="debjyoti0891"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#instagram"></use></svg></a></li><li><a rel="me" href="https://www.linkedin.com/in/debjyotibhattacharjee" title="debjyotibhattacharjee"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#linkedin"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+<script>
+  $(document).ready(function () {
+    mermaid.initialize({
+      startOnLoad:true,
+      theme: "default",
+    });
+    window.mermaid.init(undefined, document.querySelectorAll('.language-mermaid'));
+  });
+</script>
+
+
+
+</body>
+
+</html>
