@@ -1,22 +1,22 @@
 ---
 ---
 <div class="text-justify">{{reference}}</div>
-<button class="button0"  onclick="toggleBibtex{{entry.key}}()">Bibtex</button>
+<button class="btn btn--bibtex" onclick="toggleBibtex{{entry.key}}()">Bibtex</button>
  
 {% if entry.doi %}
-    <a href="{{ entry.doi | prepend: 'http://doi.org/' }}" target="_blank"><input class="button1" type="button" value="Paper" /></a>
+    <a class="btn btn--paper" href="{{ entry.doi | prepend: 'http://doi.org/' }}" target="_blank">Paper</a>
 {% endif %}
  
 {% if entry.preprint %}
-    <a href="{{ entry.preprint }}" target="_blank"><input class="button2" type="button" value="Preprint" /></a>
+    <a class="btn btn--preprint" href="{{ entry.preprint }}" target="_blank">Preprint</a>
 {% endif %}
  
 {% if entry.link %}
-    <a href="{{ entry.link }}" target="_blank"><input class="button4" type="button" value="PDF" /></a>
+    <a class="btn btn--pdf" href="{{ entry.link }}" target="_blank">PDF</a>
 {% endif %}
  
 {% if entry.code %}
-    <a href="{{ entry.code }}" target="_blank"><input class="button3" type="button" value="Code" /></a>
+    <a class="btn btn--code" href="{{ entry.code }}" target="_blank">Code</a>
 {% endif %}
 <div id="a{{entry.key}}" style="display: none;">
 <pre>{{entry.bibtex}}</pre>

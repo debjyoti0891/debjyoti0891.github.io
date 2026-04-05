@@ -1,2 +1,443 @@
-// Placeholder to allow defining custom styles that override everything else.
-// (Use `_sass/minima/custom-variables.scss` to override variable defaults)
+// ============================================================
+// Custom Styles — Clean rewrite
+// ============================================================
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+// ============================================================
+// 1. CSS Custom Properties — Light & Dark palettes
+// ============================================================
+
+:root {
+  --color-bg:              #ffffff;
+  --color-text:            #111111;
+  --color-text-muted:      #64748b;
+  --color-border:          #d0d7de;
+  --color-surface:         #f6f8fa;
+
+  --color-accent:          #2563eb;
+  --color-accent-hover:    #1d4ed8;
+  --color-accent-visited:  #5b21b6;
+
+  --color-heading:         #1e293b;
+  --color-date-bg:         #eef2f7;
+  --color-date-text:       #475569;
+  --color-location:        #64748b;
+  --color-event-name:      #1e40af;
+  --color-event-loc:       #4b5563;
+
+  --color-card-bg:         #f6f8fa;
+  --color-card-border:     #d0d7de;
+  --color-card-shadow:     rgba(0,0,0,0.06);
+
+  --color-header-bg:       #f6f8fa;
+  --color-header-accent:   #2563eb;
+
+  --color-btn-bibtex:      #059669;
+  --color-btn-paper:       #2563eb;
+  --color-btn-preprint:    #b45309;
+  --color-btn-code:        #dc2626;
+  --color-btn-pdf:         #7c3aed;
+  --color-btn-slides:      #4f46e5;
+
+  --color-code-bg:         #f6f8fa;
+  --color-code-border:     #d0d7de;
+
+  --color-tag-bg:          rgba(37,99,235,0.08);
+  --color-tag-text:        #2563eb;
+
+  --color-icon:            #57606a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg:              #0d1117;
+    --color-text:            #e6edf3;
+    --color-text-muted:      #8b949e;
+    --color-border:          #30363d;
+    --color-surface:         #161b22;
+
+    --color-accent:          #58a6ff;
+    --color-accent-hover:    #79c0ff;
+    --color-accent-visited:  #bc8cff;
+
+    --color-heading:         #f0f6fc;
+    --color-date-bg:         #161b22;
+    --color-date-text:       #8b949e;
+    --color-location:        #8b949e;
+    --color-event-name:      #79c0ff;
+    --color-event-loc:       #8b949e;
+
+    --color-card-bg:         #161b22;
+    --color-card-border:     #30363d;
+    --color-card-shadow:     rgba(0,0,0,0.3);
+
+    --color-header-bg:       #161b22;
+    --color-header-accent:   #58a6ff;
+
+    --color-btn-bibtex:      #3fb950;
+    --color-btn-paper:       #58a6ff;
+    --color-btn-preprint:    #d29922;
+    --color-btn-code:        #f85149;
+    --color-btn-pdf:         #bc8cff;
+    --color-btn-slides:      #79c0ff;
+
+    --color-code-bg:         #161b22;
+    --color-code-border:     #30363d;
+
+    --color-tag-bg:          rgba(88,166,255,0.1);
+    --color-tag-text:        #58a6ff;
+
+    --color-icon:            #8b949e;
+  }
+}
+
+// ============================================================
+// 2. Dark mode overrides for minima SCSS-compiled elements
+// ============================================================
+
+@media (prefers-color-scheme: dark) {
+  body {
+    color: var(--color-text);
+    background-color: var(--color-bg);
+  }
+
+  a {
+    color: var(--color-accent);
+    &:visited { color: var(--color-accent-visited); }
+    &:hover   { color: var(--color-accent-hover); text-decoration: underline; }
+  }
+
+  .site-header {
+    background-color: var(--color-header-bg);
+    border-top-color: var(--color-header-accent);
+    border-bottom-color: var(--color-border);
+  }
+  .site-title, .site-title:visited {
+    color: var(--color-text);
+  }
+  .site-nav {
+    background-color: var(--color-bg);
+    border-color: var(--color-border);
+    .menu-icon > svg path { fill: var(--color-text-muted); }
+    .page-link { color: var(--color-text); }
+  }
+
+  .site-footer { border-top-color: var(--color-border); }
+  .footer-col-wrapper, .social-links { color: var(--color-text-muted); }
+
+  // Icons
+  .grey { color: var(--color-icon); }
+  .svg-icon { fill: var(--color-icon); }
+  .social-media-list li a, .pagination li a {
+    border-color: var(--color-border);
+    &:hover { border-color: var(--color-text-muted); }
+  }
+
+  .post-meta { color: var(--color-text-muted); }
+  h1, h2, h3, h4, h5, h6 { color: var(--color-heading); }
+
+  blockquote {
+    color: var(--color-text-muted);
+    border-left-color: var(--color-border);
+  }
+
+  pre, code {
+    background-color: var(--color-code-bg);
+    border-color: var(--color-code-border);
+    color: var(--color-text);
+  }
+
+  .highlighter-rouge .highlight { background: var(--color-code-bg); }
+
+  table {
+    color: var(--color-text);
+    border-color: var(--color-border);
+    th { background-color: var(--color-surface); border-color: var(--color-border); }
+    td { border-color: var(--color-border); }
+    tr:nth-child(even) { background-color: var(--color-surface); }
+  }
+
+  hr { border-color: var(--color-border); }
+}
+
+// ============================================================
+// 2b. Borderless tables for roster/list data
+// ============================================================
+
+.page-content table {
+  border: none;
+  border-collapse: collapse;
+  width: 100%;
+
+  th {
+    border: none;
+    background: none;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.4rem 0.75rem;
+    border-bottom: 2px solid var(--color-border);
+  }
+
+  td {
+    border: none;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.95rem;
+  }
+
+  tr:nth-child(even) {
+    background-color: var(--color-surface);
+  }
+
+  tr:hover {
+    background-color: var(--color-date-bg);
+  }
+}
+
+// ============================================================
+// 3. Header — fit title + nav on one line
+// ============================================================
+
+.site-header {
+  background-color: var(--color-header-bg);
+  border-top: 5px solid var(--color-header-accent);
+
+  .wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.site-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+  font-size: 1.35rem !important;
+
+  .site-logo {
+    flex-shrink: 0;
+  }
+}
+
+// Tighten nav link spacing so all fit on one line
+@media screen and (min-width: $on-medium) {
+  .site-nav .page-link {
+    font-size: 0.92rem;
+    &:not(:last-child) {
+      margin-right: 14px;
+    }
+  }
+}
+
+// ============================================================
+// 4. Footer social icons — cleaner, larger icons
+// ============================================================
+
+.svg-icon {
+  width: 20px;
+  height: 20px;
+  padding: 2px;
+  fill: var(--color-icon);
+}
+
+.svg-icon.grey {
+  color: var(--color-icon);
+  fill: var(--color-icon);
+}
+
+.social-media-list {
+  li a {
+    padding: 6px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    &:hover {
+      border-color: var(--color-accent);
+      .svg-icon { fill: var(--color-accent); }
+    }
+  }
+}
+
+// ============================================================
+// 5. Homepage intro — float layout for natural text flow
+// ============================================================
+
+.intro-photo {
+  float: left;
+  width: 220px;
+  margin: 0.25rem 1.5rem 0.75rem 0;
+  border-radius: 6px;
+}
+
+.introtext {
+  font-size: 1rem;
+  color: var(--color-text);
+  line-height: 1.65;
+  text-align: justify;
+}
+
+.introhightext {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.divtext {
+  background-color: var(--color-card-bg);
+  border: 1px solid var(--color-card-border);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin-top: 1rem;
+  box-shadow: 0 1px 3px var(--color-card-shadow);
+  color: var(--color-text);
+  clear: both;
+}
+
+// ============================================================
+// 6. Section headings (legacy .headHi support)
+// ============================================================
+
+.headHi {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-heading);
+  line-height: 1.4;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  display: block;
+}
+
+// ============================================================
+// 7. Date & location badges
+// ============================================================
+
+.datetext {
+  font-size: 0.8rem;
+  background-color: var(--color-date-bg);
+  color: var(--color-date-text);
+  padding: 0.1rem 0.45rem;
+  border-radius: 3px;
+}
+
+.locationtext {
+  font-size: 0.88rem;
+  color: var(--color-location);
+  letter-spacing: 0.02em;
+}
+
+// ============================================================
+// 8. Events (research page) — toned-down colors
+// ============================================================
+
+.event-name {
+  color: var(--color-event-name);
+  font-weight: 500;
+}
+
+.event-location-date {
+  font-style: italic;
+  color: var(--color-event-loc);
+}
+
+// ============================================================
+// 9. Buttons
+// ============================================================
+
+.btn {
+  display: inline-block;
+  color: #fff;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-decoration: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+  background-color: var(--color-btn-slides);
+
+  &:hover, &:visited { color: #fff; text-decoration: none; opacity: 0.85; }
+}
+
+.btn--bibtex   { background-color: var(--color-btn-bibtex); }
+.btn--paper    { background-color: var(--color-btn-paper); }
+.btn--preprint { background-color: var(--color-btn-preprint); }
+.btn--code     { background-color: var(--color-btn-code); }
+.btn--pdf      { background-color: var(--color-btn-pdf); }
+.btn--slides   { background-color: var(--color-btn-slides); }
+
+.button0 { @extend .btn; background-color: var(--color-btn-bibtex); }
+.button1 { @extend .btn; background-color: var(--color-btn-paper); }
+.button2 { @extend .btn; background-color: var(--color-btn-preprint); }
+.button3 { @extend .btn; background-color: var(--color-btn-code); }
+.button4 { @extend .btn; background-color: var(--color-btn-pdf); }
+.button5 { @extend .btn; background-color: var(--color-btn-slides); }
+
+// ============================================================
+// 10. Tags
+// ============================================================
+
+.tag-link {
+  display: inline-block;
+  background: var(--color-tag-bg);
+  padding: 0.1rem 0.5rem;
+  margin-right: 0.4rem;
+  border-radius: 4px;
+  color: var(--color-tag-text);
+  font-size: 0.88em;
+  transition: opacity 0.15s ease;
+  &:hover { opacity: 0.75; text-decoration: none; }
+}
+
+.tag-header {
+  display: inline-block;
+  padding: 0 0.5rem;
+  border-radius: 4px;
+  color: var(--color-heading);
+  font-size: 0.88em;
+}
+
+// ============================================================
+// 11. Image gallery
+// ============================================================
+
+.image-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.5rem;
+}
+
+.img-gallery {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 4px;
+  transition: transform 0.3s ease;
+  &:hover { transform: scale(1.03); }
+}
+
+// ============================================================
+// 12. Mobile responsive
+// ============================================================
+
+@media screen and (max-width: $on-palm) {
+  .intro-photo {
+    float: none;
+    display: block;
+    width: 100%;
+    max-width: 260px;
+    margin: 0 auto 1rem auto;
+  }
+  .introtext {
+    text-align: left;
+  }
+  .headHi {
+    font-size: 1.25rem;
+  }
+}
