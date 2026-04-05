@@ -10,7 +10,7 @@ layout: default
 
 <p align="justify" class="introtext"><img src="/assets/me.jpg" alt="Smiley face" width="300"  align="left" style="padding-right: 20px;">
 <b>Debjyoti Bhattacharjee </b> <br>
-<span class="introhightext">COMPASS, CSA, imec<br>
+<span class="introhightext">CSA, imec<br>
 Kapeldreef 75,  Leuven 3001, Belgium</span>
 <br>
 <br>

@@ -8,8 +8,10 @@ permalink: /research/
 
 <b>Organizing Committee Member</b>
 + <em class="event-location-date">VLSI Design (VLSID) Conference </em>
+    + Tutorial: <span class="event-name">Scalable system simulations for LLM workloads </span>,2026 <a href="blob:https://github.com/5db025a4-3728-49a7-86d1-0ad8e5e5254f" target="_blank" rel="noopener noreferrer"><input class="button5" type="button" value="Slides" /></a>
++ <em class="event-location-date">VLSI Design (VLSID) Conference </em>
     + Quantum & Neuromorphic Computing Co-Chair, 2025
-    + Tutorial: <span class="event-name">Scalable system simulations for RISC-V architectures and performance analysis for machine learning workloads </span>,2025
+    + Tutorial: <span class="event-name">Scalable system simulations for RISC-V architectures and performance analysis for machine learning workloads </span>,2025 <a href="https://github.com/CSA-infra/RISCV-Scalable-Simulation-tutorial/blob/main/docs/slides/VLSID25_Tutorial_Slides_imec_CSA.pdf" target="_blank" rel="noopener noreferrer"><input class="button5" type="button" value="Slides" /></a> <a href="https://github.com/CSA-infra/RISCV-Scalable-Simulation-tutorial" target="_blank" rel="noopener noreferrer"><input class="button5" type="button" value="Code" /></a>
 + <em class="event-location-date">IEEE International Symposium on Workload Characterization (IISWC)</em>
     + Workshop: <span class="event-name">Exascale Simulation of Next-Generation Computing Architectures</span>,2023
 + <em class="event-location-date">Design Automation Conference (DAC)</em>
@@ -43,7 +45,6 @@ permalink: /research/
 
 
 <span class="headHi">Presentations and Invited Talks</span>
-+ <span class="event-name">Scalable system simulations for RISC-V architectures and performance analysis for machine learning workloads </span>, January, 2025. <a href="https://github.com/CSA-infra/RISCV-Scalable-Simulation-tutorial/blob/main/docs/slides/VLSID25_Tutorial_Slides_imec_CSA.pdf" target="_blank" rel="noopener noreferrer"><input class="button5" type="button" value="Slides" /></a> <a href="https://github.com/CSA-infra/RISCV-Scalable-Simulation-tutorial" target="_blank" rel="noopener noreferrer"><input class="button5" type="button" value="Code" /></a>
 + <span class="event-name">LaTeX Workshop</span>, supported by  <em class="event-location-date">NTU Library,</em> November, 2018.
 + Invited talk on <span class="event-name">"General purpose  logic-in-memory architecture using Resistive RAM (ReRAM)</span> at  <em class="event-location-date">Advanced Computing & Microelectronics Unit, Indian Statistical Institute, Kolkata, India</em> in October, 2018.
 + <span class="event-name">LaTeX Workshop</span>, supported by  <em class="event-location-date">NTU GSA Career Committee,</em> August, 2018.
