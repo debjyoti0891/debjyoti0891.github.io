@@ -8,7 +8,7 @@ permalink: /research/
 
 <b>Organizing Committee Member</b>
 + <em class="event-location-date">VLSI Design (VLSID) Conference </em>
-    + Tutorial: <span class="event-name">Scalable system simulations for LLM workloads </span>,2026 <a href="blob:https://github.com/5db025a4-3728-49a7-86d1-0ad8e5e5254f" target="_blank" rel="noopener noreferrer"><input class="button5" type="button" value="Slides" /></a>
+    + Tutorial: <span class="event-name">Scalable system simulations for LLM workloads </span>,2026 <a href="https://github.com/CSA-infra/RISCV-Scalable-Simulation-tutorial/blob/main/docs/slides/2026_VLSI_tutorial_imec_CSA.pdf" target="_blank" rel="noopener noreferrer"><input class="button5" type="button" value="Slides" /></a>
 + <em class="event-location-date">VLSI Design (VLSID) Conference </em>
     + Quantum & Neuromorphic Computing Co-Chair, 2025
     + Tutorial: <span class="event-name">Scalable system simulations for RISC-V architectures and performance analysis for machine learning workloads </span>,2025 <a href="https://github.com/CSA-infra/RISCV-Scalable-Simulation-tutorial/blob/main/docs/slides/VLSID25_Tutorial_Slides_imec_CSA.pdf" target="_blank" rel="noopener noreferrer"><input class="button5" type="button" value="Slides" /></a> <a href="https://github.com/CSA-infra/RISCV-Scalable-Simulation-tutorial" target="_blank" rel="noopener noreferrer"><input class="button5" type="button" value="Code" /></a>
@@ -59,6 +59,7 @@ permalink: /research/
 <span class="headHi">Teaching</span>
 
 <b>Post­graduate courses</b>
++ Basic Nanodevices (B-KUL-H0V25A) [2026]
 + Algorithms to Architecture [Tutorials + Labs] [2017, 2018, 2019]
     + Conducted labs and tutorials to teach optimization of algorithms for hardware implementation.
     + Tools used: Xilinx ISE, Vivado HLS.
