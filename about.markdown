@@ -5,7 +5,11 @@ permalink: /personal/
 ---
 <span class="headHi">Industry Positions</span><br>
 <ul style="list-style-type:square" >
-<li> Researcher, COMPASS <span class="datetext">March, 2023 - onwards</span><br>
+<li> ZAP Professor <span class="datetext">Jan 2026 - Ongoing</span><br>
+<span class="locationtext">Department of Electrical Engineering (ESAT), KU Leuven</span> <br></li>
+<li> Principal Member of Technical Staff <span class="datetext">July 2025 - Ongoing</span><br>
+<span class="locationtext">Compute System Architecture (CSA), imec, Leuven</span> <br></li>
+<li> Researcher, COMPASS <span class="datetext">2023 - 2025</span><br>
 <span class="locationtext">imec, Belgium</span> <br></li>
 <li> Research and Development Team Leader, COMPASS <span class="datetext">March, 2022 - March, 2023</span><br>
 <span class="locationtext">imec, Belgium</span> <br></li>
